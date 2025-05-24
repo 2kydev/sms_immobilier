@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -158,7 +159,7 @@ const VisitManager = () => {
 
       // Mettre à jour l'état local
       setVisits(visits.map(visit => 
-        visit.id === visitId ? { ...visit, statut: newStatus as any } : visit
+        visit.id === visitId ? { ...visit, statut: newStatus as Visit['statut'] } : visit
       ));
 
       toast({
@@ -298,9 +299,15 @@ const VisitManager = () => {
 
         if (error) throw error;
 
+        // Créer un objet Visit avec le bon typage pour scheduleVisitNotification
+        const typedVisit: Visit = {
+          ...newVisit,
+          statut: newVisit.statut as Visit['statut']
+        };
+
         // Programmer la notification pour nouvelle visite
         if (visitData.statut === 'planifiee') {
-          await scheduleVisitNotification(newVisit);
+          await scheduleVisitNotification(typedVisit);
         }
 
         toast({
