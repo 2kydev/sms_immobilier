@@ -6,6 +6,7 @@ import ClientManager from '../components/ClientManager';
 import PropertyManager from '../components/PropertyManager';
 import VisitManager from '../components/VisitManager';
 import Pipeline from '../components/Pipeline';
+import UserManagement from '../components/UserManagement';
 import Auth from '../components/Auth';
 import { useAuth } from '../contexts/AuthContext';
 
@@ -40,6 +41,8 @@ const Index = () => {
         return <VisitManager />;
       case 'pipeline':
         return <Pipeline />;
+      case 'users':
+        return <UserManagement />;
       default:
         return <Dashboard />;
     }
