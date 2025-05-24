@@ -1,12 +1,13 @@
 
 import React, { useState, useEffect } from 'react';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Button } from '@/components/ui/button';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
-import { Transaction, Client, Property, etapes, EtapeType, isValidEtape } from './types';
+import { Button } from '@/components/ui/button';
+import { Transaction, Client, Property, etapes } from './types';
+import { formatAmount } from './utils';
 
 interface TransactionDialogProps {
   isOpen: boolean;
@@ -21,175 +22,195 @@ interface TransactionDialogProps {
   onSave: (transactionData: any) => void;
 }
 
-const TransactionDialog: React.FC<TransactionDialogProps> = ({
-  isOpen,
-  onClose,
-  transaction,
-  clients,
-  properties,
-  selectedClientId,
-  selectedPropertyId,
-  onClientChange,
+const TransactionDialog = ({ 
+  isOpen, 
+  onClose, 
+  transaction, 
+  clients, 
+  properties, 
+  selectedClientId, 
+  selectedPropertyId, 
+  onClientChange, 
   onPropertyChange,
   onSave
-}) => {
+}: TransactionDialogProps) => {
   const [formData, setFormData] = useState({
-    client_id: '',
-    property_id: '',
-    valeur: 0,
+    valeur: '',
     agent: 'Marie Dupont',
-    etape: 'prospect' as EtapeType,
+    etape: 'prospect',
     notes: '',
-    probabilite: 25,
-    derniere_activite: new Date().toISOString().split('T')[0]
+    probabilite: '25'
   });
 
   useEffect(() => {
-    if (transaction?.id) {
-      // Validate and cast the etape from database
-      const etape = isValidEtape(transaction.etape) ? transaction.etape : 'prospect';
-      
+    if (transaction) {
       setFormData({
-        client_id: transaction.client_id || '',
-        property_id: transaction.property_id || '',
-        valeur: transaction.valeur,
-        agent: transaction.agent,
-        etape: etape,
+        valeur: transaction.id ? transaction.valeur.toString() : '',
+        agent: transaction.agent || 'Marie Dupont',
+        etape: transaction.etape || 'prospect',
         notes: transaction.notes || '',
-        probabilite: transaction.probabilite,
-        derniere_activite: transaction.derniere_activite
+        probabilite: transaction.probabilite?.toString() || '25'
       });
-      onClientChange(transaction.client_id || '');
-      onPropertyChange(transaction.property_id || '');
-    } else {
-      setFormData({
-        client_id: '',
-        property_id: '',
-        valeur: 0,
-        agent: 'Marie Dupont',
-        etape: 'prospect',
-        notes: '',
-        probabilite: 25,
-        derniere_activite: new Date().toISOString().split('T')[0]
-      });
-      onClientChange('');
-      onPropertyChange('');
     }
-  }, [transaction, onClientChange, onPropertyChange]);
+  }, [transaction]);
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    
+  const getSelectedClient = () => {
+    return clients.find(client => client.id === selectedClientId);
+  };
+
+  const getSelectedProperty = () => {
+    return properties.find(property => property.id === selectedPropertyId);
+  };
+
+  const handleSubmit = () => {
     const transactionData = {
-      ...formData,
-      client_id: selectedClientId || null,
-      property_id: selectedPropertyId || null,
+      client_id: selectedClientId,
+      property_id: selectedPropertyId,
+      valeur: Number(formData.valeur),
+      agent: formData.agent,
+      etape: formData.etape,
+      notes: formData.notes,
+      probabilite: Number(formData.probabilite),
+      derniere_activite: new Date().toISOString().split('T')[0]
     };
+
+    if (!transaction?.id) {
+      transactionData.date_creation = new Date().toISOString().split('T')[0];
+    }
 
     onSave(transactionData);
   };
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-md">
+      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>
             {transaction?.id ? 'Modifier la transaction' : 'Nouvelle transaction'}
           </DialogTitle>
+          <DialogDescription>
+            Gérez les détails de la transaction
+          </DialogDescription>
         </DialogHeader>
         
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="space-y-2">
-            <Label htmlFor="client">Client</Label>
-            <Select value={selectedClientId} onValueChange={onClientChange}>
-              <SelectTrigger>
-                <SelectValue placeholder="Sélectionner un client" />
-              </SelectTrigger>
-              <SelectContent>
-                {clients.map((client) => (
-                  <SelectItem key={client.id} value={client.id}>
-                    {client.prenom} {client.nom}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+        {transaction && (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="clientSelect">Client</Label>
+              <Select value={selectedClientId} onValueChange={onClientChange}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Sélectionner un client" />
+                </SelectTrigger>
+                <SelectContent>
+                  {clients.map((client) => (
+                    <SelectItem key={client.id} value={client.id}>
+                      {client.prenom} {client.nom}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="clientTelephone">Téléphone</Label>
+              <Input 
+                id="clientTelephone" 
+                value={getSelectedClient()?.telephone || ''} 
+                readOnly 
+                className="bg-gray-50"
+              />
+            </div>
+
+            <div className="space-y-2 md:col-span-2">
+              <Label htmlFor="proprieteSelect">Propriété</Label>
+              <Select value={selectedPropertyId} onValueChange={onPropertyChange}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Sélectionner une propriété" />
+                </SelectTrigger>
+                <SelectContent>
+                  {properties.map((property) => (
+                    <SelectItem key={property.id} value={property.id}>
+                      {property.titre} - {property.adresse} - {formatAmount(property.prix)}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="valeur">Montant (FCFA)</Label>
+              <Input 
+                id="valeur" 
+                type="number" 
+                value={formData.valeur}
+                onChange={(e) => setFormData(prev => ({ ...prev, valeur: e.target.value }))}
+                placeholder="Saisir le montant"
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="probabilite">Probabilité (%)</Label>
+              <Input 
+                id="probabilite" 
+                type="number" 
+                min="0"
+                max="100"
+                value={formData.probabilite}
+                onChange={(e) => setFormData(prev => ({ ...prev, probabilite: e.target.value }))}
+                placeholder="Probabilité de réussite"
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="agent">Agent responsable</Label>
+              <Select value={formData.agent} onValueChange={(value) => setFormData(prev => ({ ...prev, agent: value }))}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Agent" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="Marie Dupont">Marie Dupont</SelectItem>
+                  <SelectItem value="Pierre Leroy">Pierre Leroy</SelectItem>
+                  <SelectItem value="Sophie Martin">Sophie Martin</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="etape">Étape actuelle</Label>
+              <Select value={formData.etape} onValueChange={(value) => setFormData(prev => ({ ...prev, etape: value }))}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Étape" />
+                </SelectTrigger>
+                <SelectContent>
+                  {etapes.map((etape) => (
+                    <SelectItem key={etape.key} value={etape.key}>
+                      {etape.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-2 md:col-span-2">
+              <Label htmlFor="notes">Notes</Label>
+              <Textarea 
+                id="notes" 
+                placeholder="Notes sur la transaction..." 
+                value={formData.notes}
+                onChange={(e) => setFormData(prev => ({ ...prev, notes: e.target.value }))}
+              />
+            </div>
+
+            <div className="md:col-span-2 flex gap-2 pt-4">
+              <Button className="flex-1" onClick={handleSubmit}>
+                {transaction.id ? 'Mettre à jour' : 'Créer'}
+              </Button>
+              <Button variant="outline" onClick={onClose}>
+                Annuler
+              </Button>
+            </div>
           </div>
-          
-          <div className="space-y-2">
-            <Label htmlFor="property">Propriété</Label>
-            <Select value={selectedPropertyId} onValueChange={onPropertyChange}>
-              <SelectTrigger>
-                <SelectValue placeholder="Sélectionner une propriété" />
-              </SelectTrigger>
-              <SelectContent>
-                {properties.map((property) => (
-                  <SelectItem key={property.id} value={property.id}>
-                    {property.titre}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-          
-          <div className="space-y-2">
-            <Label htmlFor="valeur">Valeur (€)</Label>
-            <Input
-              id="valeur"
-              type="number"
-              value={formData.valeur}
-              onChange={(e) => setFormData({ ...formData, valeur: Number(e.target.value) })}
-              required
-            />
-          </div>
-          
-          <div className="space-y-2">
-            <Label htmlFor="etape">Étape</Label>
-            <Select value={formData.etape} onValueChange={(value: EtapeType) => setFormData({ ...formData, etape: value })}>
-              <SelectTrigger>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {etapes.map((etape) => (
-                  <SelectItem key={etape.key} value={etape.key}>
-                    {etape.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-          
-          <div className="space-y-2">
-            <Label htmlFor="probabilite">Probabilité (%)</Label>
-            <Input
-              id="probabilite"
-              type="number"
-              min="0"
-              max="100"
-              value={formData.probabilite}
-              onChange={(e) => setFormData({ ...formData, probabilite: Number(e.target.value) })}
-              required
-            />
-          </div>
-          
-          <div className="space-y-2">
-            <Label htmlFor="notes">Notes</Label>
-            <Textarea
-              id="notes"
-              value={formData.notes}
-              onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
-              placeholder="Notes sur la transaction..."
-            />
-          </div>
-          
-          <div className="flex justify-end space-x-2 pt-4">
-            <Button type="button" variant="outline" onClick={onClose}>
-              Annuler
-            </Button>
-            <Button type="submit">
-              Enregistrer
-            </Button>
-          </div>
-        </form>
+        )}
       </DialogContent>
     </Dialog>
   );
