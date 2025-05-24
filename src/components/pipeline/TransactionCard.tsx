@@ -1,15 +1,20 @@
 
 import React from 'react';
 import { Card } from '@/components/ui/card';
-import { Transaction } from './types';
+import { Transaction, Client, Property } from './types';
 import { formatAmount, getDaysInStage } from './utils';
 
 interface TransactionCardProps {
   transaction: Transaction;
+  clients: Client[];
+  properties: Property[];
   onClick: (transaction: Transaction) => void;
 }
 
-const TransactionCard = ({ transaction, onClick }: TransactionCardProps) => {
+const TransactionCard = ({ transaction, clients, properties, onClick }: TransactionCardProps) => {
+  const client = clients.find(c => c.id === transaction.client_id);
+  const property = properties.find(p => p.id === transaction.property_id);
+
   return (
     <Card 
       className="p-3 cursor-pointer hover:shadow-md transition-shadow border-l-4 border-l-primary"
@@ -18,15 +23,15 @@ const TransactionCard = ({ transaction, onClick }: TransactionCardProps) => {
       <div className="space-y-2">
         <div className="flex items-center justify-between">
           <p className="font-medium text-sm">
-            {transaction.clientPrenom} {transaction.clientNom}
+            {client ? `${client.prenom} ${client.nom}` : 'Client non défini'}
           </p>
           <span className="text-xs text-gray-500">
-            {getDaysInStage(transaction.derniereActivite)}j
+            {getDaysInStage(transaction.derniere_activite)}j
           </span>
         </div>
         
         <p className="text-xs text-gray-600 line-clamp-1">
-          {transaction.propriete}
+          {property ? property.titre : 'Propriété non définie'}
         </p>
         
         <div className="flex items-center justify-between">
@@ -41,7 +46,7 @@ const TransactionCard = ({ transaction, onClick }: TransactionCardProps) => {
         
         <div className="flex items-center justify-between text-xs text-gray-500">
           <span>{transaction.agent}</span>
-          <span>{transaction.clientTelephone}</span>
+          <span>{client ? client.telephone : 'N/A'}</span>
         </div>
       </div>
     </Card>

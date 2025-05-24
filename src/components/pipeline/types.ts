@@ -4,7 +4,7 @@ export interface Transaction {
   client_id: string | null;
   property_id: string | null;
   valeur: number;
-  etape: 'prospect' | 'visite' | 'offre' | 'negociation' | 'compromis' | 'finalise';
+  etape: string; // Changed from union type to string to match database
   agent: string;
   date_creation: string;
   derniere_activite: string;
