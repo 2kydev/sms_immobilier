@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -8,6 +7,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
+import { Checkbox } from '@/components/ui/checkbox';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { useForm } from 'react-hook-form';
 import { supabase } from '@/integrations/supabase/client';
@@ -31,6 +31,17 @@ interface Client {
   notes: string;
 }
 
+const TYPES_BIEN = [
+  'appartement',
+  'maison',
+  'studio',
+  'terrain',
+  'local',
+  'villa',
+  'duplex',
+  'loft'
+];
+
 const ClientManager = () => {
   const [clients, setClients] = useState<Client[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
@@ -39,6 +50,7 @@ const ClientManager = () => {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [loading, setLoading] = useState(true);
   const [quartierInputs, setQuartierInputs] = useState<string[]>(['']);
+  const [selectedTypesBien, setSelectedTypesBien] = useState<string[]>([]);
   const { toast } = useToast();
 
   const form = useForm<Client>({
@@ -113,11 +125,20 @@ const ClientManager = () => {
     setQuartierInputs(newInputs);
   };
 
+  const handleTypeBienChange = (typeBien: string, checked: boolean) => {
+    if (checked) {
+      setSelectedTypesBien([...selectedTypesBien, typeBien]);
+    } else {
+      setSelectedTypesBien(selectedTypesBien.filter(type => type !== typeBien));
+    }
+  };
+
   const openClientDialog = (client?: Client) => {
     if (client) {
       setSelectedClient(client);
       form.reset(client);
       setQuartierInputs(client.quartiers || ['']);
+      setSelectedTypesBien(client.type_bien ? client.type_bien.split(',') : []);
     } else {
       setSelectedClient(null);
       form.reset({
@@ -133,6 +154,7 @@ const ClientManager = () => {
         notes: ''
       });
       setQuartierInputs(['']);
+      setSelectedTypesBien([]);
     }
     setIsDialogOpen(true);
   };
@@ -145,7 +167,7 @@ const ClientManager = () => {
         quartiers,
         budget_min: data.budget_min || null,
         budget_max: data.budget_max || null,
-        type_bien: data.type_bien || null
+        type_bien: selectedTypesBien.length > 0 ? selectedTypesBien.join(',') : null
       };
 
       if (selectedClient) {
@@ -277,6 +299,18 @@ const ClientManager = () => {
                 {client.budget_min && client.budget_max && (
                   <p><span className="font-medium">Budget:</span> {client.budget_min.toLocaleString()}€ - {client.budget_max.toLocaleString()}€</p>
                 )}
+                {client.type_bien && (
+                  <div>
+                    <span className="font-medium">Types de biens:</span>
+                    <div className="flex flex-wrap gap-1 mt-1">
+                      {client.type_bien.split(',').map((type, index) => (
+                        <Badge key={index} variant="outline" className="text-xs">
+                          {type}
+                        </Badge>
+                      ))}
+                    </div>
+                  </div>
+                )}
                 <p><span className="font-medium">Dernier contact:</span> {new Date(client.dernier_contact).toLocaleDateString('fr-FR')}</p>
                 {client.quartiers && client.quartiers.length > 0 && (
                   <div>
@@ -301,7 +335,7 @@ const ClientManager = () => {
 
       {/* Dialog pour créer/éditer un client */}
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>
               {selectedClient ? 'Modifier le client' : 'Nouveau client'}
@@ -446,6 +480,64 @@ const ClientManager = () => {
                   </FormItem>
                 )}
               />
+
+              {/* Nouveaux champs budget */}
+              <FormField
+                control={form.control}
+                name="budget_min"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Budget minimum (€)</FormLabel>
+                    <FormControl>
+                      <Input 
+                        type="number" 
+                        placeholder="Ex: 200000"
+                        {...field} 
+                        onChange={(e) => field.onChange(Number(e.target.value) || undefined)} 
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="budget_max"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Budget maximum (€)</FormLabel>
+                    <FormControl>
+                      <Input 
+                        type="number" 
+                        placeholder="Ex: 350000"
+                        {...field} 
+                        onChange={(e) => field.onChange(Number(e.target.value) || undefined)} 
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              {/* Types de biens préférés */}
+              <div className="md:col-span-2">
+                <Label className="text-sm font-medium">Types de biens recherchés</Label>
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mt-2">
+                  {TYPES_BIEN.map((typeBien) => (
+                    <div key={typeBien} className="flex items-center space-x-2">
+                      <Checkbox
+                        id={typeBien}
+                        checked={selectedTypesBien.includes(typeBien)}
+                        onCheckedChange={(checked) => handleTypeBienChange(typeBien, checked as boolean)}
+                      />
+                      <Label htmlFor={typeBien} className="text-sm capitalize">
+                        {typeBien}
+                      </Label>
+                    </div>
+                  ))}
+                </div>
+              </div>
 
               {/* Quartiers préférés */}
               <div className="md:col-span-2">
