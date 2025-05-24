@@ -10,6 +10,7 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '
 import { useForm } from 'react-hook-form';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import VisitStatusSelect from './VisitStatusSelect';
 
 interface Visit {
   id: string;
@@ -146,16 +147,6 @@ const VisitManager = () => {
     }
   };
 
-  const getStatutLabel = (statut: string) => {
-    switch (statut) {
-      case 'planifiee': return 'Planifiée';
-      case 'realisee': return 'Réalisée';
-      case 'annulee': return 'Annulée';
-      case 'reportee': return 'Reportée';
-      default: return statut;
-    }
-  };
-
   const handleStatusChange = async (visitId: string, newStatus: string) => {
     try {
       const { error } = await supabase
@@ -167,7 +158,7 @@ const VisitManager = () => {
 
       // Mettre à jour l'état local
       setVisits(visits.map(visit => 
-        visit.id === visitId ? { ...visit, statut: newStatus as Visit['statut'] } : visit
+        visit.id === visitId ? { ...visit, statut: newStatus as any } : visit
       ));
 
       toast({
@@ -307,15 +298,9 @@ const VisitManager = () => {
 
         if (error) throw error;
 
-        // Créer un objet Visit avec le bon typage pour scheduleVisitNotification
-        const typedVisit: Visit = {
-          ...newVisit,
-          statut: newVisit.statut as Visit['statut']
-        };
-
         // Programmer la notification pour nouvelle visite
         if (visitData.statut === 'planifiee') {
-          await scheduleVisitNotification(typedVisit);
+          await scheduleVisitNotification(newVisit);
         }
 
         toast({
@@ -405,7 +390,7 @@ const VisitManager = () => {
         </Card>
       </div>
 
-      {/* Liste des visites avec sélecteur de statut intégré */}
+      {/* Liste des visites avec sélecteur de statut */}
       <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
         {filteredVisits.map((visit) => (
           <Card key={visit.id} className="card-hover">
@@ -414,22 +399,10 @@ const VisitManager = () => {
                 <CardTitle className="text-lg">
                   {visit.client_prenom} {visit.client_nom}
                 </CardTitle>
-                <div className="flex items-center gap-2">
-                  <Badge className={getStatutColor(visit.statut)}>
-                    {getStatutLabel(visit.statut)}
-                  </Badge>
-                  <Select value={visit.statut} onValueChange={(newStatus) => handleStatusChange(visit.id, newStatus)}>
-                    <SelectTrigger className="w-32">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="planifiee">Planifiée</SelectItem>
-                      <SelectItem value="realisee">Réalisée</SelectItem>
-                      <SelectItem value="annulee">Annulée</SelectItem>
-                      <SelectItem value="reportee">Reportée</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
+                <VisitStatusSelect
+                  value={visit.statut}
+                  onChange={(newStatus) => handleStatusChange(visit.id, newStatus)}
+                />
               </div>
               <CardDescription>{visit.propriete_titre}</CardDescription>
             </CardHeader>
