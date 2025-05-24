@@ -11,37 +11,37 @@ import {
   SidebarMenuItem,
 } from '@/components/ui/sidebar';
 import { 
-  chart-bar,
-  users,
-  image,
-  calendar,
-  folder
+  ChartBar,
+  Users,
+  Image,
+  Calendar,
+  Folder
 } from 'lucide-react';
 
 const menuItems = [
   {
     title: 'Tableau de Bord',
-    icon: chart-bar,
+    icon: ChartBar,
     id: 'dashboard'
   },
   {
     title: 'Clients',
-    icon: users,
+    icon: Users,
     id: 'clients'
   },
   {
     title: 'Propriétés',
-    icon: image,
+    icon: Image,
     id: 'properties'
   },
   {
     title: 'Visites',
-    icon: calendar,
+    icon: Calendar,
     id: 'visits'
   },
   {
     title: 'Pipeline',
-    icon: folder,
+    icon: Folder,
     id: 'pipeline'
   }
 ];
