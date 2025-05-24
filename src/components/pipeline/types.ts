@@ -4,7 +4,7 @@ export interface Transaction {
   client_id: string | null;
   property_id: string | null;
   valeur: number;
-  etape: string; // Changé pour accepter string depuis la DB
+  etape: string; // Keep as string for database compatibility
   agent: string;
   date_creation: string;
   derniere_activite: string;
@@ -36,7 +36,7 @@ export interface Profile {
   email: string;
   nom: string;
   prenom: string;
-  role: string; // Changé pour accepter string depuis la DB
+  role: string; // Keep as string for database compatibility
   is_active: boolean;
   created_at: string;
   updated_at: string;
@@ -69,6 +69,15 @@ export const roles = [
   { key: 'commercial', label: 'Commercial', description: 'Gestion des clients et prospects' }
 ];
 
-// Types d'union pour les valeurs valides
+// Types d'union pour les valeurs valides (used for form validation)
 export type EtapeType = 'prospect' | 'visite' | 'offre' | 'negociation' | 'compromis' | 'finalise';
 export type RoleType = 'admin' | 'directeur' | 'agent' | 'commercial';
+
+// Type guards for validation
+export const isValidEtape = (etape: string): etape is EtapeType => {
+  return etapes.some(e => e.key === etape);
+};
+
+export const isValidRole = (role: string): role is RoleType => {
+  return roles.some(r => r.key === role);
+};

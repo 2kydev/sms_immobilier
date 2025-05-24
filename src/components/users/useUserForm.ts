@@ -3,7 +3,7 @@ import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '../auth/AuthProvider';
 import { useToast } from '@/hooks/use-toast';
-import { Profile, RoleType } from '../pipeline/types';
+import { Profile, RoleType, isValidRole } from '../pipeline/types';
 
 interface UserFormData {
   email: string;
@@ -29,11 +29,14 @@ export const useUserForm = (user: Profile | null, onSave: () => void, onClose: (
 
   useEffect(() => {
     if (user) {
+      // Validate and cast the role from database
+      const role = isValidRole(user.role) ? user.role : 'agent';
+      
       setFormData({
         email: user.email,
         nom: user.nom,
         prenom: user.prenom,
-        role: user.role as RoleType,
+        role: role,
         is_active: user.is_active,
         password: ''
       });

@@ -6,7 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
-import { Transaction, Client, Property, etapes, EtapeType } from './types';
+import { Transaction, Client, Property, etapes, EtapeType, isValidEtape } from './types';
 
 interface TransactionDialogProps {
   isOpen: boolean;
@@ -46,12 +46,15 @@ const TransactionDialog: React.FC<TransactionDialogProps> = ({
 
   useEffect(() => {
     if (transaction?.id) {
+      // Validate and cast the etape from database
+      const etape = isValidEtape(transaction.etape) ? transaction.etape : 'prospect';
+      
       setFormData({
         client_id: transaction.client_id || '',
         property_id: transaction.property_id || '',
         valeur: transaction.valeur,
         agent: transaction.agent,
-        etape: transaction.etape as EtapeType,
+        etape: etape,
         notes: transaction.notes || '',
         probabilite: transaction.probabilite,
         derniere_activite: transaction.derniere_activite
