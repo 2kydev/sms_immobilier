@@ -1,12 +1,14 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Calendar } from '@/components/ui/calendar';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { CalendarDays, ChevronLeft, ChevronRight } from 'lucide-react';
+import { CalendarDays } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { supabase } from '@/integrations/supabase/client';
+import { useToast } from '@/hooks/use-toast';
 
 interface Visit {
   id: string;
@@ -26,14 +28,41 @@ interface Visit {
 }
 
 interface VisitCalendarProps {
-  visits: Visit[];
   onEditVisit: (visit: Visit) => void;
 }
 
-const VisitCalendar: React.FC<VisitCalendarProps> = ({ visits, onEditVisit }) => {
+const VisitCalendar: React.FC<VisitCalendarProps> = ({ onEditVisit }) => {
+  const [visits, setVisits] = useState<Visit[]>([]);
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(new Date());
   const [isDetailsOpen, setIsDetailsOpen] = useState(false);
   const [selectedDateVisits, setSelectedDateVisits] = useState<Visit[]>([]);
+  const [loading, setLoading] = useState(true);
+  const { toast } = useToast();
+
+  useEffect(() => {
+    fetchVisits();
+  }, []);
+
+  const fetchVisits = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('visits')
+        .select('*')
+        .order('date', { ascending: true });
+
+      if (error) throw error;
+      setVisits(data || []);
+    } catch (error) {
+      console.error('Error fetching visits:', error);
+      toast({
+        title: "Erreur",
+        description: "Impossible de charger les visites",
+        variant: "destructive"
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const getStatutColor = (statut: string) => {
     switch (statut) {
@@ -100,6 +129,10 @@ const VisitCalendar: React.FC<VisitCalendarProps> = ({ visits, onEditVisit }) =>
       }
     }
   };
+
+  if (loading) {
+    return <div className="p-6">Chargement du calendrier...</div>;
+  }
 
   return (
     <div className="space-y-6">

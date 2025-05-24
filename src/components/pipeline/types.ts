@@ -1,17 +1,17 @@
 
 export interface Transaction {
   id: number;
-  clientNom: string;
-  clientPrenom: string;
-  clientTelephone: string;
-  propriete: string;
+  client_id: string;
+  property_id: string;
   valeur: number;
   etape: 'prospect' | 'visite' | 'offre' | 'negociation' | 'compromis' | 'finalise';
   agent: string;
-  dateCreation: string;
-  derniereActivite: string;
+  date_creation: string;
+  derniere_activite: string;
   notes: string;
   probabilite: number;
+  created_at?: string;
+  updated_at?: string;
 }
 
 export interface Client {

@@ -9,63 +9,42 @@ import PipelineStage from './pipeline/PipelineStage';
 import TransactionDialog from './pipeline/TransactionDialog';
 
 const Pipeline = () => {
-  const [transactions, setTransactions] = useState<Transaction[]>([
-    {
-      id: 1,
-      clientNom: 'Martin',
-      clientPrenom: 'Jean',
-      clientTelephone: '06 12 34 56 78',
-      propriete: 'Appartement 3P - République',
-      valeur: 425000,
-      etape: 'visite',
-      agent: 'Marie Dupont',
-      dateCreation: '2024-05-15',
-      derniereActivite: '2024-05-22',
-      notes: 'Client très motivé, recherche activement',
-      probabilite: 75
-    },
-    {
-      id: 2,
-      clientNom: 'Bernard',
-      clientPrenom: 'Sophie',
-      clientTelephone: '06 98 76 54 32',
-      propriete: 'Maison 5P - Antony',
-      valeur: 650000,
-      etape: 'negociation',
-      agent: 'Pierre Leroy',
-      dateCreation: '2024-05-10',
-      derniereActivite: '2024-05-23',
-      notes: 'Négociation en cours sur le prix',
-      probabilite: 60
-    },
-    {
-      id: 3,
-      clientNom: 'Dubois',
-      clientPrenom: 'Thomas',
-      clientTelephone: '06 55 44 33 22',
-      propriete: 'Studio - Université',
-      valeur: 180000,
-      etape: 'prospect',
-      agent: 'Marie Dupont',
-      dateCreation: '2024-05-20',
-      derniereActivite: '2024-05-20',
-      notes: 'Premier contact, à relancer',
-      probabilite: 25
-    }
-  ]);
-
+  const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [clients, setClients] = useState<Client[]>([]);
   const [properties, setProperties] = useState<Property[]>([]);
   const [selectedTransaction, setSelectedTransaction] = useState<Transaction | null>(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [selectedClientId, setSelectedClientId] = useState<string>('');
   const [selectedPropertyId, setSelectedPropertyId] = useState<string>('');
+  const [loading, setLoading] = useState(true);
   const { toast } = useToast();
 
   useEffect(() => {
+    fetchTransactions();
     fetchClients();
     fetchProperties();
   }, []);
+
+  const fetchTransactions = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('transactions')
+        .select('*')
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+      setTransactions(data || []);
+    } catch (error) {
+      console.error('Error fetching transactions:', error);
+      toast({
+        title: "Erreur",
+        description: "Impossible de charger les transactions",
+        variant: "destructive"
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const fetchClients = async () => {
     try {
@@ -109,22 +88,20 @@ const Pipeline = () => {
   const openTransactionDialog = (transaction?: Transaction) => {
     if (transaction) {
       setSelectedTransaction(transaction);
-      const client = clients.find(c => c.nom === transaction.clientNom && c.prenom === transaction.clientPrenom);
-      const property = properties.find(p => p.titre === transaction.propriete);
+      const client = clients.find(c => c.id === transaction.client_id);
+      const property = properties.find(p => p.id === transaction.property_id);
       setSelectedClientId(client?.id || '');
       setSelectedPropertyId(property?.id || '');
     } else {
       setSelectedTransaction({
         id: 0,
-        clientNom: '',
-        clientPrenom: '',
-        clientTelephone: '',
-        propriete: '',
+        client_id: '',
+        property_id: '',
         valeur: 0,
         etape: 'prospect',
         agent: 'Marie Dupont',
-        dateCreation: new Date().toISOString().split('T')[0],
-        derniereActivite: new Date().toISOString().split('T')[0],
+        date_creation: new Date().toISOString().split('T')[0],
+        derniere_activite: new Date().toISOString().split('T')[0],
         notes: '',
         probabilite: 25
       });
@@ -133,6 +110,47 @@ const Pipeline = () => {
     }
     setIsDialogOpen(true);
   };
+
+  const handleSaveTransaction = async (transactionData: any) => {
+    try {
+      if (selectedTransaction?.id) {
+        const { error } = await supabase
+          .from('transactions')
+          .update(transactionData)
+          .eq('id', selectedTransaction.id);
+
+        if (error) throw error;
+        toast({
+          title: "Succès",
+          description: "Transaction mise à jour avec succès"
+        });
+      } else {
+        const { error } = await supabase
+          .from('transactions')
+          .insert([transactionData]);
+
+        if (error) throw error;
+        toast({
+          title: "Succès",
+          description: "Transaction créée avec succès"
+        });
+      }
+
+      setIsDialogOpen(false);
+      fetchTransactions();
+    } catch (error) {
+      console.error('Error saving transaction:', error);
+      toast({
+        title: "Erreur",
+        description: "Impossible de sauvegarder la transaction",
+        variant: "destructive"
+      });
+    }
+  };
+
+  if (loading) {
+    return <div className="p-6">Chargement des transactions...</div>;
+  }
 
   return (
     <div className="space-y-6">
@@ -166,6 +184,7 @@ const Pipeline = () => {
         selectedPropertyId={selectedPropertyId}
         onClientChange={setSelectedClientId}
         onPropertyChange={setSelectedPropertyId}
+        onSave={handleSaveTransaction}
       />
     </div>
   );

@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -19,6 +19,7 @@ interface TransactionDialogProps {
   selectedPropertyId: string;
   onClientChange: (clientId: string) => void;
   onPropertyChange: (propertyId: string) => void;
+  onSave: (transactionData: any) => void;
 }
 
 const TransactionDialog = ({ 
@@ -30,14 +31,52 @@ const TransactionDialog = ({
   selectedClientId, 
   selectedPropertyId, 
   onClientChange, 
-  onPropertyChange 
+  onPropertyChange,
+  onSave
 }: TransactionDialogProps) => {
+  const [formData, setFormData] = useState({
+    valeur: '',
+    agent: 'Marie Dupont',
+    etape: 'prospect',
+    notes: ''
+  });
+
+  useEffect(() => {
+    if (transaction) {
+      setFormData({
+        valeur: transaction.id ? transaction.valeur.toString() : '',
+        agent: transaction.agent || 'Marie Dupont',
+        etape: transaction.etape || 'prospect',
+        notes: transaction.notes || ''
+      });
+    }
+  }, [transaction]);
+
   const getSelectedClient = () => {
     return clients.find(client => client.id === selectedClientId);
   };
 
   const getSelectedProperty = () => {
     return properties.find(property => property.id === selectedPropertyId);
+  };
+
+  const handleSubmit = () => {
+    const transactionData = {
+      client_id: selectedClientId,
+      property_id: selectedPropertyId,
+      valeur: Number(formData.valeur),
+      agent: formData.agent,
+      etape: formData.etape,
+      notes: formData.notes,
+      probabilite: 25,
+      derniere_activite: new Date().toISOString().split('T')[0]
+    };
+
+    if (!transaction?.id) {
+      transactionData.date_creation = new Date().toISOString().split('T')[0];
+    }
+
+    onSave(transactionData);
   };
 
   return (
@@ -101,14 +140,15 @@ const TransactionDialog = ({
               <Input 
                 id="valeur" 
                 type="number" 
-                defaultValue={transaction.id ? transaction.valeur : ''}
+                value={formData.valeur}
+                onChange={(e) => setFormData(prev => ({ ...prev, valeur: e.target.value }))}
                 placeholder="Saisir le montant"
               />
             </div>
 
             <div className="space-y-2">
               <Label htmlFor="agent">Agent responsable</Label>
-              <Select defaultValue={transaction.agent}>
+              <Select value={formData.agent} onValueChange={(value) => setFormData(prev => ({ ...prev, agent: value }))}>
                 <SelectTrigger>
                   <SelectValue placeholder="Agent" />
                 </SelectTrigger>
@@ -122,7 +162,7 @@ const TransactionDialog = ({
 
             <div className="space-y-2">
               <Label htmlFor="etape">Étape actuelle</Label>
-              <Select defaultValue={transaction.etape}>
+              <Select value={formData.etape} onValueChange={(value) => setFormData(prev => ({ ...prev, etape: value }))}>
                 <SelectTrigger>
                   <SelectValue placeholder="Étape" />
                 </SelectTrigger>
@@ -138,16 +178,27 @@ const TransactionDialog = ({
 
             <div className="space-y-2">
               <Label htmlFor="derniereActivite">Dernière activité</Label>
-              <Input id="derniereActivite" type="date" defaultValue={transaction.derniereActivite} />
+              <Input 
+                id="derniereActivite" 
+                type="date" 
+                value={transaction.derniere_activite || new Date().toISOString().split('T')[0]}
+                readOnly
+                className="bg-gray-50"
+              />
             </div>
 
             <div className="space-y-2 md:col-span-2">
               <Label htmlFor="notes">Notes</Label>
-              <Textarea id="notes" placeholder="Notes sur la transaction..." defaultValue={transaction.notes} />
+              <Textarea 
+                id="notes" 
+                placeholder="Notes sur la transaction..." 
+                value={formData.notes}
+                onChange={(e) => setFormData(prev => ({ ...prev, notes: e.target.value }))}
+              />
             </div>
 
             <div className="md:col-span-2 flex gap-2 pt-4">
-              <Button className="flex-1" onClick={onClose}>
+              <Button className="flex-1" onClick={handleSubmit}>
                 {transaction.id ? 'Mettre à jour' : 'Créer'}
               </Button>
               <Button variant="outline" onClick={onClose}>
