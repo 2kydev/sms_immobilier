@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -632,9 +631,6 @@ const VisitManager = () => {
               <div className="md:col-span-2 flex gap-2 pt-4">
                 <Button type="submit" className="flex-1">
                   {selectedVisit ? 'Mettre à jour' : 'Créer'}
-                </Button>
-                <Button type="button" variant="outline" onClick={() => setIsDialogOpen(false)}>
-                  Annuler
                 </Button>
               </div>
             </form>
