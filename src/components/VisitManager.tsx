@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -11,7 +10,6 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '
 import { useForm } from 'react-hook-form';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
-import VisitStatusSelect from './VisitStatusSelect';
 
 interface Visit {
   id: string;
@@ -145,6 +143,16 @@ const VisitManager = () => {
       case 'annulee': return 'bg-red-100 text-red-800';
       case 'reportee': return 'bg-orange-100 text-orange-800';
       default: return 'bg-gray-100 text-gray-800';
+    }
+  };
+
+  const getStatutLabel = (statut: string) => {
+    switch (statut) {
+      case 'planifiee': return 'Planifiée';
+      case 'realisee': return 'Réalisée';
+      case 'annulee': return 'Annulée';
+      case 'reportee': return 'Reportée';
+      default: return statut;
     }
   };
 
@@ -397,7 +405,7 @@ const VisitManager = () => {
         </Card>
       </div>
 
-      {/* Liste des visites avec sélecteur de statut */}
+      {/* Liste des visites avec sélecteur de statut intégré */}
       <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
         {filteredVisits.map((visit) => (
           <Card key={visit.id} className="card-hover">
@@ -406,10 +414,22 @@ const VisitManager = () => {
                 <CardTitle className="text-lg">
                   {visit.client_prenom} {visit.client_nom}
                 </CardTitle>
-                <VisitStatusSelect
-                  value={visit.statut}
-                  onChange={(newStatus) => handleStatusChange(visit.id, newStatus)}
-                />
+                <div className="flex items-center gap-2">
+                  <Badge className={getStatutColor(visit.statut)}>
+                    {getStatutLabel(visit.statut)}
+                  </Badge>
+                  <Select value={visit.statut} onValueChange={(newStatus) => handleStatusChange(visit.id, newStatus)}>
+                    <SelectTrigger className="w-32">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="planifiee">Planifiée</SelectItem>
+                      <SelectItem value="realisee">Réalisée</SelectItem>
+                      <SelectItem value="annulee">Annulée</SelectItem>
+                      <SelectItem value="reportee">Reportée</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
               </div>
               <CardDescription>{visit.propriete_titre}</CardDescription>
             </CardHeader>
