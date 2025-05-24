@@ -101,9 +101,8 @@ const TransactionDialog = ({
               <Input 
                 id="valeur" 
                 type="number" 
-                value={getSelectedProperty()?.prix || transaction.valeur || ''} 
-                readOnly={!!getSelectedProperty()}
-                className={getSelectedProperty() ? "bg-gray-50" : ""}
+                defaultValue={transaction.id ? transaction.valeur : ''}
+                placeholder="Saisir le montant"
               />
             </div>
 
