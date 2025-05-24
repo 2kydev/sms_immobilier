@@ -83,7 +83,10 @@ const VisitManager = () => {
         .order('heure', { ascending: true });
 
       if (error) throw error;
-      setVisits((data || []) as Visit[]);
+      setVisits((data || []).map(visit => ({
+        ...visit,
+        statut: visit.statut as 'planifiee' | 'realisee' | 'annulee' | 'reportee'
+      })));
     } catch (error) {
       console.error('Error fetching visits:', error);
       toast({
@@ -308,9 +311,15 @@ const VisitManager = () => {
 
         if (error) throw error;
 
+        // Mapper le résultat avec le bon type pour le statut
+        const mappedVisit = {
+          ...newVisit,
+          statut: newVisit.statut as 'planifiee' | 'realisee' | 'annulee' | 'reportee'
+        };
+
         // Programmer la notification pour nouvelle visite
-        if (visitData.statut === 'planifiee') {
-          await scheduleVisitNotification(newVisit);
+        if (mappedVisit.statut === 'planifiee') {
+          await scheduleVisitNotification(mappedVisit);
         }
 
         toast({
