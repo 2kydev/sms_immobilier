@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
@@ -346,11 +345,11 @@ const ClientForm: React.FC<ClientFormProps> = ({
               name="budget_min"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Budget minimum (€)</FormLabel>
+                  <FormLabel>Budget minimum (FCFA)</FormLabel>
                   <FormControl>
                     <Input 
                       type="number" 
-                      placeholder="Ex: 200000"
+                      placeholder="Ex: 20000000"
                       {...field} 
                       onChange={(e) => field.onChange(Number(e.target.value) || undefined)} 
                     />
@@ -365,11 +364,11 @@ const ClientForm: React.FC<ClientFormProps> = ({
               name="budget_max"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Budget maximum (€)</FormLabel>
+                  <FormLabel>Budget maximum (FCFA)</FormLabel>
                   <FormControl>
                     <Input 
                       type="number" 
-                      placeholder="Ex: 350000"
+                      placeholder="Ex: 35000000"
                       {...field} 
                       onChange={(e) => field.onChange(Number(e.target.value) || undefined)} 
                     />

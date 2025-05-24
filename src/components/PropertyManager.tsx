@@ -258,7 +258,7 @@ const PropertyManager = () => {
         <Card>
           <CardContent className="pt-6">
             <div className="text-2xl font-bold text-primary">
-              {properties.reduce((sum, p) => sum + p.prix, 0).toLocaleString()}€
+              {properties.reduce((sum, p) => sum + p.prix, 0).toLocaleString()} FCFA
             </div>
             <p className="text-sm text-gray-600">Valeur totale</p>
           </CardContent>
@@ -312,9 +312,9 @@ const PropertyManager = () => {
                 </div>
                 
                 <div className="text-lg font-bold text-primary">
-                  {property.prix.toLocaleString()}€
+                  {property.prix.toLocaleString()} FCFA
                   {property.charges && (
-                    <span className="text-sm font-normal text-gray-600"> + {property.charges}€/mois</span>
+                    <span className="text-sm font-normal text-gray-600"> + {property.charges} FCFA/mois</span>
                   )}
                 </div>
 
@@ -452,7 +452,7 @@ const PropertyManager = () => {
                 name="prix"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Prix (€)</FormLabel>
+                    <FormLabel>Prix (FCFA)</FormLabel>
                     <FormControl>
                       <Input type="number" {...field} onChange={(e) => field.onChange(Number(e.target.value))} />
                     </FormControl>
@@ -466,7 +466,7 @@ const PropertyManager = () => {
                 name="charges"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Charges mensuelles (€)</FormLabel>
+                    <FormLabel>Charges mensuelles (FCFA)</FormLabel>
                     <FormControl>
                       <Input type="number" {...field} onChange={(e) => field.onChange(Number(e.target.value) || undefined)} />
                     </FormControl>
