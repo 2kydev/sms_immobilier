@@ -67,7 +67,7 @@ const VisitManager = () => {
         .order('heure', { ascending: true });
 
       if (error) throw error;
-      setVisits(data || []);
+      setVisits((data || []) as Visit[]);
     } catch (error) {
       console.error('Error fetching visits:', error);
       toast({
