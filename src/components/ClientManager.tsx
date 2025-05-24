@@ -296,8 +296,17 @@ const ClientManager = () => {
                 {client.preferred_city && (
                   <p><span className="font-medium">Ville préférée:</span> {client.preferred_city}</p>
                 )}
-                {client.budget_min && client.budget_max && (
-                  <p><span className="font-medium">Budget:</span> {client.budget_min.toLocaleString()}€ - {client.budget_max.toLocaleString()}€</p>
+                {client.quartiers && client.quartiers.length > 0 && (
+                  <div>
+                    <span className="font-medium">Quartiers:</span>
+                    <div className="flex flex-wrap gap-1 mt-1">
+                      {client.quartiers.map((quartier, index) => (
+                        <Badge key={index} variant="outline" className="text-xs">
+                          {quartier}
+                        </Badge>
+                      ))}
+                    </div>
+                  </div>
                 )}
                 {client.type_bien && (
                   <div>
@@ -311,18 +320,8 @@ const ClientManager = () => {
                     </div>
                   </div>
                 )}
-                <p><span className="font-medium">Dernier contact:</span> {new Date(client.dernier_contact).toLocaleDateString('fr-FR')}</p>
-                {client.quartiers && client.quartiers.length > 0 && (
-                  <div>
-                    <span className="font-medium">Quartiers:</span>
-                    <div className="flex flex-wrap gap-1 mt-1">
-                      {client.quartiers.map((quartier, index) => (
-                        <Badge key={index} variant="outline" className="text-xs">
-                          {quartier}
-                        </Badge>
-                      ))}
-                    </div>
-                  </div>
+                {client.budget_min && client.budget_max && (
+                  <p><span className="font-medium">Budget:</span> {client.budget_min.toLocaleString()}€ - {client.budget_max.toLocaleString()}€</p>
                 )}
                 {client.notes && (
                   <p className="text-gray-600 italic">"{client.notes.substring(0, 50)}..."</p>
@@ -454,6 +453,20 @@ const ClientManager = () => {
 
               <FormField
                 control={form.control}
+                name="adresse"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Adresse</FormLabel>
+                    <FormControl>
+                      <Input {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
                 name="preferred_city"
                 rules={{ required: "La ville préférée est obligatoire" }}
                 render={({ field }) => (
@@ -467,21 +480,61 @@ const ClientManager = () => {
                 )}
               />
 
-              <FormField
-                control={form.control}
-                name="adresse"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Adresse</FormLabel>
-                    <FormControl>
-                      <Input {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+              {/* Quartiers préférés */}
+              <div className="md:col-span-2">
+                <Label className="text-sm font-medium">Quartiers préférés</Label>
+                <div className="space-y-2 mt-2">
+                  {quartierInputs.map((quartier, index) => (
+                    <div key={index} className="flex gap-2">
+                      <Input
+                        value={quartier}
+                        onChange={(e) => updateQuartierInput(index, e.target.value)}
+                        placeholder={`Quartier ${index + 1}`}
+                        className="flex-1"
+                      />
+                      {quartierInputs.length > 1 && (
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          onClick={() => removeQuartierInput(index)}
+                        >
+                          Supprimer
+                        </Button>
+                      )}
+                    </div>
+                  ))}
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={addQuartierInput}
+                  >
+                    Ajouter un quartier
+                  </Button>
+                </div>
+              </div>
 
-              {/* Nouveaux champs budget */}
+              {/* Types de biens préférés */}
+              <div className="md:col-span-2">
+                <Label className="text-sm font-medium">Types de biens recherchés</Label>
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mt-2">
+                  {TYPES_BIEN.map((typeBien) => (
+                    <div key={typeBien} className="flex items-center space-x-2">
+                      <Checkbox
+                        id={typeBien}
+                        checked={selectedTypesBien.includes(typeBien)}
+                        onCheckedChange={(checked) => handleTypeBienChange(typeBien, checked as boolean)}
+                      />
+                      <Label htmlFor={typeBien} className="text-sm capitalize">
+                        {typeBien}
+                      </Label>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Budget */}
               <FormField
                 control={form.control}
                 name="budget_min"
@@ -519,60 +572,6 @@ const ClientManager = () => {
                   </FormItem>
                 )}
               />
-
-              {/* Types de biens préférés */}
-              <div className="md:col-span-2">
-                <Label className="text-sm font-medium">Types de biens recherchés</Label>
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mt-2">
-                  {TYPES_BIEN.map((typeBien) => (
-                    <div key={typeBien} className="flex items-center space-x-2">
-                      <Checkbox
-                        id={typeBien}
-                        checked={selectedTypesBien.includes(typeBien)}
-                        onCheckedChange={(checked) => handleTypeBienChange(typeBien, checked as boolean)}
-                      />
-                      <Label htmlFor={typeBien} className="text-sm capitalize">
-                        {typeBien}
-                      </Label>
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              {/* Quartiers préférés */}
-              <div className="md:col-span-2">
-                <Label className="text-sm font-medium">Quartiers préférés</Label>
-                <div className="space-y-2 mt-2">
-                  {quartierInputs.map((quartier, index) => (
-                    <div key={index} className="flex gap-2">
-                      <Input
-                        value={quartier}
-                        onChange={(e) => updateQuartierInput(index, e.target.value)}
-                        placeholder={`Quartier ${index + 1}`}
-                        className="flex-1"
-                      />
-                      {quartierInputs.length > 1 && (
-                        <Button
-                          type="button"
-                          variant="outline"
-                          size="sm"
-                          onClick={() => removeQuartierInput(index)}
-                        >
-                          Supprimer
-                        </Button>
-                      )}
-                    </div>
-                  ))}
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    onClick={addQuartierInput}
-                  >
-                    Ajouter un quartier
-                  </Button>
-                </div>
-              </div>
 
               <FormField
                 control={form.control}
