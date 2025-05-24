@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { supabase } from '@/integrations/supabase/client';
@@ -103,7 +102,6 @@ const Pipeline = () => {
         date_creation: new Date().toISOString().split('T')[0],
         derniere_activite: new Date().toISOString().split('T')[0],
         notes: '',
-        probabilite: 25,
         created_at: '',
         updated_at: ''
       });
@@ -157,7 +155,7 @@ const Pipeline = () => {
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <h1 className="text-3xl font-bold text-primary">Pipeline des Transactions</h1>
+        <h1 className="text-3xl font-bold text-primary">Suivi des Ventes</h1>
         <Button onClick={() => openTransactionDialog()} className="bg-primary hover:bg-primary/90">
           Nouvelle Transaction
         </Button>

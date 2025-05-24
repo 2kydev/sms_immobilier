@@ -15,7 +15,7 @@ import {
   Users,
   Image,
   Calendar,
-  Folder
+  TrendingUp
 } from 'lucide-react';
 
 const menuItems = [
@@ -40,8 +40,8 @@ const menuItems = [
     id: 'visits'
   },
   {
-    title: 'Pipeline',
-    icon: Folder,
+    title: 'Suivi des Ventes',
+    icon: TrendingUp,
     id: 'pipeline'
   }
 ];

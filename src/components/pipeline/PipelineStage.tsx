@@ -59,9 +59,9 @@ const PipelineStage = ({ etape, transactions, clients, properties, onTransaction
                   <div className="font-medium text-sm">
                     {getClientName(transaction.client_id)}
                   </div>
-                  <Badge variant="outline" className="text-xs">
-                    {transaction.probabilite}%
-                  </Badge>
+                  <span className="text-xs text-gray-500">
+                    {getDaysInStage(transaction.derniere_activite)} j
+                  </span>
                 </div>
                 
                 <div className="text-sm text-gray-600">
@@ -71,9 +71,6 @@ const PipelineStage = ({ etape, transactions, clients, properties, onTransaction
                 <div className="flex items-center justify-between">
                   <span className="font-medium text-primary">
                     {formatAmount(transaction.valeur)}
-                  </span>
-                  <span className="text-xs text-gray-500">
-                    {getDaysInStage(transaction.derniere_activite)} j
                   </span>
                 </div>
                 

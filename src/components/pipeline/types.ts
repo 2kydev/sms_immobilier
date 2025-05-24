@@ -1,15 +1,13 @@
-
 export interface Transaction {
   id: string;
   client_id: string | null;
   property_id: string | null;
   valeur: number;
-  etape: string; // Changed from union type to string to match database
+  etape: string;
   agent: string;
   date_creation: string;
   derniere_activite: string;
   notes: string | null;
-  probabilite: number;
   created_at: string;
   updated_at: string;
 }

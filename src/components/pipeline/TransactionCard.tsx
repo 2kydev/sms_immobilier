@@ -38,10 +38,6 @@ const TransactionCard = ({ transaction, clients, properties, onClick }: Transact
           <span className="text-sm font-bold text-primary">
             {formatAmount(transaction.valeur)}
           </span>
-          <div className="flex items-center gap-1">
-            <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-            <span className="text-xs text-gray-600">{transaction.probabilite}%</span>
-          </div>
         </div>
         
         <div className="flex items-center justify-between text-xs text-gray-500">

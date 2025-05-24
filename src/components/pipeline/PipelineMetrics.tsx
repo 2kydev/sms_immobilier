@@ -9,8 +9,12 @@ interface PipelineMetricsProps {
 }
 
 const PipelineMetrics = ({ transactions }: PipelineMetricsProps) => {
+  const avgValue = transactions.length > 0 
+    ? Math.round(transactions.reduce((sum, t) => sum + t.valeur, 0) / transactions.length)
+    : 0;
+
   return (
-    <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
       <Card>
         <CardContent className="pt-6">
           <div className="text-2xl font-bold text-primary">{transactions.length}</div>
@@ -27,18 +31,10 @@ const PipelineMetrics = ({ transactions }: PipelineMetricsProps) => {
       </Card>
       <Card>
         <CardContent className="pt-6">
-          <div className="text-2xl font-bold text-orange-600">
-            {Math.round(transactions.reduce((sum, t) => sum + t.probabilite, 0) / transactions.length)}%
-          </div>
-          <p className="text-sm text-gray-600">Probabilité moyenne</p>
-        </CardContent>
-      </Card>
-      <Card>
-        <CardContent className="pt-6">
           <div className="text-2xl font-bold text-blue-600">
-            {formatAmount(Math.round(transactions.reduce((sum, t) => sum + (t.valeur * t.probabilite / 100), 0)))}
+            {formatAmount(avgValue)}
           </div>
-          <p className="text-sm text-gray-600">Valeur pondérée</p>
+          <p className="text-sm text-gray-600">Valeur moyenne</p>
         </CardContent>
       </Card>
     </div>

@@ -12,7 +12,6 @@ interface TransactionFormFieldsProps {
     agent: string;
     etape: string;
     notes: string;
-    probabilite: string;
   };
   onFieldChange: (field: string, value: string) => void;
 }
@@ -28,19 +27,6 @@ const TransactionFormFields = ({ formData, onFieldChange }: TransactionFormField
           value={formData.valeur}
           onChange={(e) => onFieldChange('valeur', e.target.value)}
           placeholder="Saisir le montant"
-        />
-      </div>
-
-      <div className="space-y-2">
-        <Label htmlFor="probabilite">Probabilité (%)</Label>
-        <Input 
-          id="probabilite" 
-          type="number" 
-          min="0"
-          max="100"
-          value={formData.probabilite}
-          onChange={(e) => onFieldChange('probabilite', e.target.value)}
-          placeholder="Probabilité de réussite"
         />
       </div>
 

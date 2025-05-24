@@ -11,8 +11,7 @@ export const useTransactionForm = ({ transaction }: UseTransactionFormProps) => 
     valeur: '',
     agent: 'Marie Dupont',
     etape: 'prospect',
-    notes: '',
-    probabilite: '25'
+    notes: ''
   });
 
   useEffect(() => {
@@ -21,8 +20,7 @@ export const useTransactionForm = ({ transaction }: UseTransactionFormProps) => 
         valeur: transaction.id ? transaction.valeur.toString() : '',
         agent: transaction.agent || 'Marie Dupont',
         etape: transaction.etape || 'prospect',
-        notes: transaction.notes || '',
-        probabilite: transaction.probabilite?.toString() || '25'
+        notes: transaction.notes || ''
       });
     }
   }, [transaction]);
@@ -45,7 +43,6 @@ export const useTransactionForm = ({ transaction }: UseTransactionFormProps) => 
       agent: formData.agent,
       etape: formData.etape,
       notes: formData.notes,
-      probabilite: Number(formData.probabilite),
       derniere_activite: currentDate,
       date_creation: transaction?.id ? transaction.date_creation : currentDate
     };
