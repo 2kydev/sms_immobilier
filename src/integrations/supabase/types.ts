@@ -9,7 +9,195 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
-      [_ in never]: never
+      clients: {
+        Row: {
+          adresse: string
+          budget_max: number | null
+          budget_min: number | null
+          civilite: string
+          created_at: string
+          dernier_contact: string
+          email: string
+          id: string
+          nom: string
+          notes: string | null
+          prenom: string
+          quartiers: string[] | null
+          telephone: string
+          type: string
+          type_bien: string | null
+          updated_at: string
+        }
+        Insert: {
+          adresse: string
+          budget_max?: number | null
+          budget_min?: number | null
+          civilite: string
+          created_at?: string
+          dernier_contact?: string
+          email: string
+          id?: string
+          nom: string
+          notes?: string | null
+          prenom: string
+          quartiers?: string[] | null
+          telephone: string
+          type: string
+          type_bien?: string | null
+          updated_at?: string
+        }
+        Update: {
+          adresse?: string
+          budget_max?: number | null
+          budget_min?: number | null
+          civilite?: string
+          created_at?: string
+          dernier_contact?: string
+          email?: string
+          id?: string
+          nom?: string
+          notes?: string | null
+          prenom?: string
+          quartiers?: string[] | null
+          telephone?: string
+          type?: string
+          type_bien?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      properties: {
+        Row: {
+          adresse: string
+          agent: string
+          caracteristiques: string[] | null
+          charges: number | null
+          created_at: string
+          description: string
+          id: string
+          images: string[] | null
+          pieces: number
+          prix: number
+          quartier: string
+          statut: string
+          surface: number
+          titre: string
+          type: string
+          updated_at: string
+        }
+        Insert: {
+          adresse: string
+          agent: string
+          caracteristiques?: string[] | null
+          charges?: number | null
+          created_at?: string
+          description: string
+          id?: string
+          images?: string[] | null
+          pieces: number
+          prix: number
+          quartier: string
+          statut: string
+          surface: number
+          titre: string
+          type: string
+          updated_at?: string
+        }
+        Update: {
+          adresse?: string
+          agent?: string
+          caracteristiques?: string[] | null
+          charges?: number | null
+          created_at?: string
+          description?: string
+          id?: string
+          images?: string[] | null
+          pieces?: number
+          prix?: number
+          quartier?: string
+          statut?: string
+          surface?: number
+          titre?: string
+          type?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      visits: {
+        Row: {
+          agent: string
+          client_id: string | null
+          client_nom: string
+          client_prenom: string
+          client_telephone: string
+          created_at: string
+          date: string
+          feedback_client: string | null
+          heure: string
+          id: string
+          note_visite: number | null
+          notes: string | null
+          property_id: string | null
+          propriete_adresse: string
+          propriete_titre: string
+          statut: string
+          updated_at: string
+        }
+        Insert: {
+          agent: string
+          client_id?: string | null
+          client_nom: string
+          client_prenom: string
+          client_telephone: string
+          created_at?: string
+          date: string
+          feedback_client?: string | null
+          heure: string
+          id?: string
+          note_visite?: number | null
+          notes?: string | null
+          property_id?: string | null
+          propriete_adresse: string
+          propriete_titre: string
+          statut: string
+          updated_at?: string
+        }
+        Update: {
+          agent?: string
+          client_id?: string | null
+          client_nom?: string
+          client_prenom?: string
+          client_telephone?: string
+          created_at?: string
+          date?: string
+          feedback_client?: string | null
+          heure?: string
+          id?: string
+          note_visite?: number | null
+          notes?: string | null
+          property_id?: string | null
+          propriete_adresse?: string
+          propriete_titre?: string
+          statut?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "visits_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "visits_property_id_fkey"
+            columns: ["property_id"]
+            isOneToOne: false
+            referencedRelation: "properties"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never

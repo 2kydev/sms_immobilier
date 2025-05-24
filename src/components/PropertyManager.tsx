@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -8,9 +8,13 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } f
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
+import { useForm } from 'react-hook-form';
+import { supabase } from '@/integrations/supabase/client';
+import { useToast } from '@/hooks/use-toast';
 
 interface Property {
-  id: number;
+  id: string;
   titre: string;
   type: 'appartement' | 'maison' | 'studio' | 'terrain' | 'local';
   surface: number;
@@ -23,52 +27,60 @@ interface Property {
   description: string;
   caracteristiques: string[];
   images: string[];
-  dateAjout: string;
   agent: string;
 }
 
 const PropertyManager = () => {
-  const [properties, setProperties] = useState<Property[]>([
-    {
-      id: 1,
-      titre: 'Magnifique appartement 3 pièces avec balcon',
-      type: 'appartement',
-      surface: 75,
-      pieces: 3,
-      prix: 425000,
-      charges: 150,
-      adresse: '12 rue de la République, 75011 Paris',
-      quartier: 'République',
-      statut: 'disponible',
-      description: 'Superbe appartement situé au 3ème étage avec ascenseur, entièrement rénové, cuisine équipée, balcon avec vue dégagée.',
-      caracteristiques: ['Ascenseur', 'Balcon', 'Cuisine équipée', 'Cave', 'Double vitrage'],
-      images: ['/placeholder.svg'],
-      dateAjout: '2024-05-15',
-      agent: 'Marie Dupont'
-    },
-    {
-      id: 2,
-      titre: 'Maison familiale avec jardin',
-      type: 'maison',
-      surface: 120,
-      pieces: 5,
-      prix: 650000,
-      adresse: '45 avenue des Tilleuls, 92160 Antony',
-      quartier: 'Centre-ville Antony',
-      statut: 'sous-offre',
-      description: 'Belle maison familiale avec jardin de 200m², garage, cave et combles aménageables.',
-      caracteristiques: ['Jardin', 'Garage', 'Cave', 'Combles', 'Cheminée'],
-      images: ['/placeholder.svg'],
-      dateAjout: '2024-05-10',
-      agent: 'Pierre Leroy'
-    }
-  ]);
-
+  const [properties, setProperties] = useState<Property[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [filterType, setFilterType] = useState<string>('tous');
   const [filterStatut, setFilterStatut] = useState<string>('tous');
   const [selectedProperty, setSelectedProperty] = useState<Property | null>(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const { toast } = useToast();
+
+  const form = useForm<Property>({
+    defaultValues: {
+      titre: '',
+      type: 'appartement',
+      surface: 0,
+      pieces: 0,
+      prix: 0,
+      adresse: '',
+      quartier: '',
+      statut: 'disponible',
+      description: '',
+      caracteristiques: [],
+      images: [],
+      agent: 'Marie Dupont'
+    }
+  });
+
+  const fetchProperties = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('properties')
+        .select('*')
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+      setProperties(data || []);
+    } catch (error) {
+      console.error('Error fetching properties:', error);
+      toast({
+        title: "Erreur",
+        description: "Impossible de charger les propriétés",
+        variant: "destructive"
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchProperties();
+  }, []);
 
   const filteredProperties = properties.filter(property => {
     const matchesSearch = `${property.titre} ${property.adresse} ${property.quartier}`.toLowerCase().includes(searchTerm.toLowerCase());
@@ -99,24 +111,76 @@ const PropertyManager = () => {
   };
 
   const openPropertyDialog = (property?: Property) => {
-    setSelectedProperty(property || {
-      id: 0,
-      titre: '',
-      type: 'appartement',
-      surface: 0,
-      pieces: 0,
-      prix: 0,
-      adresse: '',
-      quartier: '',
-      statut: 'disponible',
-      description: '',
-      caracteristiques: [],
-      images: [],
-      dateAjout: new Date().toISOString().split('T')[0],
-      agent: 'Marie Dupont'
-    });
+    if (property) {
+      setSelectedProperty(property);
+      form.reset(property);
+    } else {
+      setSelectedProperty(null);
+      form.reset({
+        titre: '',
+        type: 'appartement',
+        surface: 0,
+        pieces: 0,
+        prix: 0,
+        adresse: '',
+        quartier: '',
+        statut: 'disponible',
+        description: '',
+        caracteristiques: [],
+        images: [],
+        agent: 'Marie Dupont'
+      });
+    }
     setIsDialogOpen(true);
   };
+
+  const onSubmit = async (data: Property) => {
+    try {
+      const propertyData = {
+        ...data,
+        caracteristiques: data.caracteristiques || [],
+        images: data.images || [],
+        charges: data.charges || null
+      };
+
+      if (selectedProperty) {
+        const { error } = await supabase
+          .from('properties')
+          .update(propertyData)
+          .eq('id', selectedProperty.id);
+
+        if (error) throw error;
+        toast({
+          title: "Succès",
+          description: "Propriété mise à jour avec succès"
+        });
+      } else {
+        const { error } = await supabase
+          .from('properties')
+          .insert([propertyData]);
+
+        if (error) throw error;
+        toast({
+          title: "Succès",
+          description: "Propriété créée avec succès"
+        });
+      }
+
+      setIsDialogOpen(false);
+      fetchProperties();
+    } catch (error) {
+      console.error('Error saving property:', error);
+      toast({
+        title: "Erreur",
+        description: "Impossible de sauvegarder la propriété",
+        variant: "destructive"
+      });
+    }
+  };
+
+  if (loading) {
+    return <div className="p-6">Chargement des propriétés...</div>;
+  }
 
   return (
     <div className="space-y-6">
@@ -251,7 +315,6 @@ const PropertyManager = () => {
 
                 <div className="flex justify-between items-center text-xs text-gray-500">
                   <span>Agent: {property.agent}</span>
-                  <span>{new Date(property.dateAjout).toLocaleDateString('fr-FR')}</span>
                 </div>
               </div>
             </CardContent>
@@ -264,115 +327,209 @@ const PropertyManager = () => {
         <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>
-              {selectedProperty?.id ? 'Modifier la propriété' : 'Nouvelle propriété'}
+              {selectedProperty ? 'Modifier la propriété' : 'Nouvelle propriété'}
             </DialogTitle>
             <DialogDescription>
               Renseignez les informations de la propriété
             </DialogDescription>
           </DialogHeader>
           
-          {selectedProperty && (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="space-y-2 md:col-span-2">
-                <Label htmlFor="titre">Titre</Label>
-                <Input id="titre" defaultValue={selectedProperty.titre} />
-              </div>
+          <Form {...form}>
+            <form onSubmit={form.handleSubmit(onSubmit)} className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <FormField
+                control={form.control}
+                name="titre"
+                render={({ field }) => (
+                  <FormItem className="md:col-span-2">
+                    <FormLabel>Titre</FormLabel>
+                    <FormControl>
+                      <Input {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
 
-              <div className="space-y-2">
-                <Label htmlFor="type">Type de bien</Label>
-                <Select defaultValue={selectedProperty.type}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Type" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="appartement">Appartement</SelectItem>
-                    <SelectItem value="maison">Maison</SelectItem>
-                    <SelectItem value="studio">Studio</SelectItem>
-                    <SelectItem value="terrain">Terrain</SelectItem>
-                    <SelectItem value="local">Local commercial</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
+              <FormField
+                control={form.control}
+                name="type"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Type de bien</FormLabel>
+                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Type" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        <SelectItem value="appartement">Appartement</SelectItem>
+                        <SelectItem value="maison">Maison</SelectItem>
+                        <SelectItem value="studio">Studio</SelectItem>
+                        <SelectItem value="terrain">Terrain</SelectItem>
+                        <SelectItem value="local">Local commercial</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
 
-              <div className="space-y-2">
-                <Label htmlFor="statut">Statut</Label>
-                <Select defaultValue={selectedProperty.statut}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Statut" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="disponible">Disponible</SelectItem>
-                    <SelectItem value="sous-offre">Sous offre</SelectItem>
-                    <SelectItem value="vendu">Vendu</SelectItem>
-                    <SelectItem value="loue">Loué</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
+              <FormField
+                control={form.control}
+                name="statut"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Statut</FormLabel>
+                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Statut" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        <SelectItem value="disponible">Disponible</SelectItem>
+                        <SelectItem value="sous-offre">Sous offre</SelectItem>
+                        <SelectItem value="vendu">Vendu</SelectItem>
+                        <SelectItem value="loue">Loué</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
 
-              <div className="space-y-2">
-                <Label htmlFor="surface">Surface (m²)</Label>
-                <Input id="surface" type="number" defaultValue={selectedProperty.surface} />
-              </div>
+              <FormField
+                control={form.control}
+                name="surface"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Surface (m²)</FormLabel>
+                    <FormControl>
+                      <Input type="number" {...field} onChange={(e) => field.onChange(Number(e.target.value))} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
 
-              <div className="space-y-2">
-                <Label htmlFor="pieces">Nombre de pièces</Label>
-                <Input id="pieces" type="number" defaultValue={selectedProperty.pieces} />
-              </div>
+              <FormField
+                control={form.control}
+                name="pieces"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Nombre de pièces</FormLabel>
+                    <FormControl>
+                      <Input type="number" {...field} onChange={(e) => field.onChange(Number(e.target.value))} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
 
-              <div className="space-y-2">
-                <Label htmlFor="prix">Prix (€)</Label>
-                <Input id="prix" type="number" defaultValue={selectedProperty.prix} />
-              </div>
+              <FormField
+                control={form.control}
+                name="prix"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Prix (€)</FormLabel>
+                    <FormControl>
+                      <Input type="number" {...field} onChange={(e) => field.onChange(Number(e.target.value))} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
 
-              <div className="space-y-2">
-                <Label htmlFor="charges">Charges mensuelles (€)</Label>
-                <Input id="charges" type="number" defaultValue={selectedProperty.charges} />
-              </div>
+              <FormField
+                control={form.control}
+                name="charges"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Charges mensuelles (€)</FormLabel>
+                    <FormControl>
+                      <Input type="number" {...field} onChange={(e) => field.onChange(Number(e.target.value) || undefined)} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
 
-              <div className="space-y-2 md:col-span-2">
-                <Label htmlFor="adresse">Adresse complète</Label>
-                <Input id="adresse" defaultValue={selectedProperty.adresse} />
-              </div>
+              <FormField
+                control={form.control}
+                name="adresse"
+                render={({ field }) => (
+                  <FormItem className="md:col-span-2">
+                    <FormLabel>Adresse complète</FormLabel>
+                    <FormControl>
+                      <Input {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
 
-              <div className="space-y-2">
-                <Label htmlFor="quartier">Quartier</Label>
-                <Input id="quartier" defaultValue={selectedProperty.quartier} />
-              </div>
+              <FormField
+                control={form.control}
+                name="quartier"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Quartier</FormLabel>
+                    <FormControl>
+                      <Input {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
 
-              <div className="space-y-2">
-                <Label htmlFor="agent">Agent responsable</Label>
-                <Select defaultValue={selectedProperty.agent}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Agent" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="Marie Dupont">Marie Dupont</SelectItem>
-                    <SelectItem value="Pierre Leroy">Pierre Leroy</SelectItem>
-                    <SelectItem value="Sophie Martin">Sophie Martin</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
+              <FormField
+                control={form.control}
+                name="agent"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Agent responsable</FormLabel>
+                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Agent" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        <SelectItem value="Marie Dupont">Marie Dupont</SelectItem>
+                        <SelectItem value="Pierre Leroy">Pierre Leroy</SelectItem>
+                        <SelectItem value="Sophie Martin">Sophie Martin</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
 
-              <div className="space-y-2 md:col-span-2">
-                <Label htmlFor="description">Description</Label>
-                <Textarea id="description" placeholder="Description détaillée de la propriété..." defaultValue={selectedProperty.description} />
-              </div>
-
-              <div className="space-y-2 md:col-span-2">
-                <Label htmlFor="caracteristiques">Caractéristiques</Label>
-                <Input id="caracteristiques" placeholder="Séparez par des virgules (ex: Ascenseur, Balcon, Parking...)" defaultValue={selectedProperty.caracteristiques.join(', ')} />
-              </div>
+              <FormField
+                control={form.control}
+                name="description"
+                render={({ field }) => (
+                  <FormItem className="md:col-span-2">
+                    <FormLabel>Description</FormLabel>
+                    <FormControl>
+                      <Textarea placeholder="Description détaillée de la propriété..." {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
 
               <div className="md:col-span-2 flex gap-2 pt-4">
-                <Button className="flex-1" onClick={() => setIsDialogOpen(false)}>
-                  {selectedProperty.id ? 'Mettre à jour' : 'Créer'}
+                <Button type="submit" className="flex-1">
+                  {selectedProperty ? 'Mettre à jour' : 'Créer'}
                 </Button>
-                <Button variant="outline" onClick={() => setIsDialogOpen(false)}>
+                <Button type="button" variant="outline" onClick={() => setIsDialogOpen(false)}>
                   Annuler
                 </Button>
               </div>
-            </div>
-          )}
+            </form>
+          </Form>
         </DialogContent>
       </Dialog>
     </div>

@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -8,9 +8,13 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
+import { useForm } from 'react-hook-form';
+import { supabase } from '@/integrations/supabase/client';
+import { useToast } from '@/hooks/use-toast';
 
 interface Client {
-  id: number;
+  id: string;
   civilite: string;
   nom: string;
   prenom: string;
@@ -18,50 +22,61 @@ interface Client {
   email: string;
   adresse: string;
   type: 'acheteur' | 'vendeur' | 'locataire' | 'prospect';
-  budgetMin?: number;
-  budgetMax?: number;
-  typeBien?: string;
+  budget_min?: number;
+  budget_max?: number;
+  type_bien?: string;
   quartiers?: string[];
-  dernierContact: string;
+  dernier_contact: string;
   notes: string;
 }
 
 const ClientManager = () => {
-  const [clients, setClients] = useState<Client[]>([
-    {
-      id: 1,
-      civilite: 'M.',
-      nom: 'Martin',
-      prenom: 'Jean',
-      telephone: '06 12 34 56 78',
-      email: 'jean.martin@email.com',
-      adresse: '15 rue de la Paix, 75001 Paris',
-      type: 'acheteur',
-      budgetMin: 300000,
-      budgetMax: 450000,
-      typeBien: 'Appartement',
-      quartiers: ['Centre-ville', 'Quartier Latin'],
-      dernierContact: '2024-05-20',
-      notes: 'Recherche un 3 pièces avec balcon'
-    },
-    {
-      id: 2,
-      civilite: 'Mme',
-      nom: 'Bernard',
-      prenom: 'Sophie',
-      telephone: '06 98 76 54 32',
-      email: 'sophie.bernard@email.com',
-      adresse: '8 avenue des Champs, 75008 Paris',
-      type: 'vendeur',
-      dernierContact: '2024-05-18',
-      notes: 'Souhaite vendre maison familiale'
-    }
-  ]);
-
+  const [clients, setClients] = useState<Client[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [filterType, setFilterType] = useState<string>('tous');
   const [selectedClient, setSelectedClient] = useState<Client | null>(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const { toast } = useToast();
+
+  const form = useForm<Client>({
+    defaultValues: {
+      civilite: '',
+      nom: '',
+      prenom: '',
+      telephone: '',
+      email: '',
+      adresse: '',
+      type: 'prospect',
+      dernier_contact: new Date().toISOString().split('T')[0],
+      notes: ''
+    }
+  });
+
+  const fetchClients = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('clients')
+        .select('*')
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+      setClients(data || []);
+    } catch (error) {
+      console.error('Error fetching clients:', error);
+      toast({
+        title: "Erreur",
+        description: "Impossible de charger les clients",
+        variant: "destructive"
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchClients();
+  }, []);
 
   const filteredClients = clients.filter(client => {
     const matchesSearch = `${client.prenom} ${client.nom} ${client.email}`.toLowerCase().includes(searchTerm.toLowerCase());
@@ -80,20 +95,74 @@ const ClientManager = () => {
   };
 
   const openClientDialog = (client?: Client) => {
-    setSelectedClient(client || {
-      id: 0,
-      civilite: '',
-      nom: '',
-      prenom: '',
-      telephone: '',
-      email: '',
-      adresse: '',
-      type: 'prospect',
-      dernierContact: new Date().toISOString().split('T')[0],
-      notes: ''
-    });
+    if (client) {
+      setSelectedClient(client);
+      form.reset(client);
+    } else {
+      setSelectedClient(null);
+      form.reset({
+        civilite: '',
+        nom: '',
+        prenom: '',
+        telephone: '',
+        email: '',
+        adresse: '',
+        type: 'prospect',
+        dernier_contact: new Date().toISOString().split('T')[0],
+        notes: ''
+      });
+    }
     setIsDialogOpen(true);
   };
+
+  const onSubmit = async (data: Client) => {
+    try {
+      const clientData = {
+        ...data,
+        quartiers: data.quartiers || [],
+        budget_min: data.budget_min || null,
+        budget_max: data.budget_max || null,
+        type_bien: data.type_bien || null
+      };
+
+      if (selectedClient) {
+        const { error } = await supabase
+          .from('clients')
+          .update(clientData)
+          .eq('id', selectedClient.id);
+
+        if (error) throw error;
+        toast({
+          title: "Succès",
+          description: "Client mis à jour avec succès"
+        });
+      } else {
+        const { error } = await supabase
+          .from('clients')
+          .insert([clientData]);
+
+        if (error) throw error;
+        toast({
+          title: "Succès",
+          description: "Client créé avec succès"
+        });
+      }
+
+      setIsDialogOpen(false);
+      fetchClients();
+    } catch (error) {
+      console.error('Error saving client:', error);
+      toast({
+        title: "Erreur",
+        description: "Impossible de sauvegarder le client",
+        variant: "destructive"
+      });
+    }
+  };
+
+  if (loading) {
+    return <div className="p-6">Chargement des clients...</div>;
+  }
 
   return (
     <div className="space-y-6">
@@ -179,10 +248,10 @@ const ClientManager = () => {
               <div className="space-y-2 text-sm">
                 <p><span className="font-medium">Téléphone:</span> {client.telephone}</p>
                 <p><span className="font-medium">Adresse:</span> {client.adresse}</p>
-                {client.budgetMin && client.budgetMax && (
-                  <p><span className="font-medium">Budget:</span> {client.budgetMin.toLocaleString()}€ - {client.budgetMax.toLocaleString()}€</p>
+                {client.budget_min && client.budget_max && (
+                  <p><span className="font-medium">Budget:</span> {client.budget_min.toLocaleString()}€ - {client.budget_max.toLocaleString()}€</p>
                 )}
-                <p><span className="font-medium">Dernier contact:</span> {new Date(client.dernierContact).toLocaleDateString('fr-FR')}</p>
+                <p><span className="font-medium">Dernier contact:</span> {new Date(client.dernier_contact).toLocaleDateString('fr-FR')}</p>
                 {client.notes && (
                   <p className="text-gray-600 italic">"{client.notes.substring(0, 50)}..."</p>
                 )}
@@ -197,119 +266,156 @@ const ClientManager = () => {
         <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>
-              {selectedClient?.id ? 'Modifier le client' : 'Nouveau client'}
+              {selectedClient ? 'Modifier le client' : 'Nouveau client'}
             </DialogTitle>
             <DialogDescription>
               Renseignez les informations du client
             </DialogDescription>
           </DialogHeader>
           
-          {selectedClient && (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="civilite">Civilité</Label>
-                <Select defaultValue={selectedClient.civilite}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Civilité" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="M.">M.</SelectItem>
-                    <SelectItem value="Mme">Mme</SelectItem>
-                    <SelectItem value="Mlle">Mlle</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="type">Type de client</Label>
-                <Select defaultValue={selectedClient.type}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Type" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="acheteur">Acheteur</SelectItem>
-                    <SelectItem value="vendeur">Vendeur</SelectItem>
-                    <SelectItem value="locataire">Locataire</SelectItem>
-                    <SelectItem value="prospect">Prospect</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="nom">Nom</Label>
-                <Input id="nom" defaultValue={selectedClient.nom} />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="prenom">Prénom</Label>
-                <Input id="prenom" defaultValue={selectedClient.prenom} />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="telephone">Téléphone</Label>
-                <Input id="telephone" defaultValue={selectedClient.telephone} />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="email">Email</Label>
-                <Input id="email" type="email" defaultValue={selectedClient.email} />
-              </div>
-
-              <div className="space-y-2 md:col-span-2">
-                <Label htmlFor="adresse">Adresse</Label>
-                <Input id="adresse" defaultValue={selectedClient.adresse} />
-              </div>
-
-              {(selectedClient.type === 'acheteur' || selectedClient.type === 'locataire') && (
-                <>
-                  <div className="space-y-2">
-                    <Label htmlFor="budgetMin">Budget minimum (€)</Label>
-                    <Input id="budgetMin" type="number" defaultValue={selectedClient.budgetMin} />
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="budgetMax">Budget maximum (€)</Label>
-                    <Input id="budgetMax" type="number" defaultValue={selectedClient.budgetMax} />
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="typeBien">Type de bien recherché</Label>
-                    <Select defaultValue={selectedClient.typeBien}>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Type de bien" />
-                      </SelectTrigger>
+          <Form {...form}>
+            <form onSubmit={form.handleSubmit(onSubmit)} className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <FormField
+                control={form.control}
+                name="civilite"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Civilité</FormLabel>
+                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Civilité" />
+                        </SelectTrigger>
+                      </FormControl>
                       <SelectContent>
-                        <SelectItem value="Appartement">Appartement</SelectItem>
-                        <SelectItem value="Maison">Maison</SelectItem>
-                        <SelectItem value="Studio">Studio</SelectItem>
-                        <SelectItem value="Terrain">Terrain</SelectItem>
-                        <SelectItem value="Local commercial">Local commercial</SelectItem>
+                        <SelectItem value="M.">M.</SelectItem>
+                        <SelectItem value="Mme">Mme</SelectItem>
+                        <SelectItem value="Mlle">Mlle</SelectItem>
                       </SelectContent>
                     </Select>
-                  </div>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
 
-                  <div className="space-y-2">
-                    <Label htmlFor="quartiers">Quartiers préférés</Label>
-                    <Input id="quartiers" placeholder="Séparez par des virgules" defaultValue={selectedClient.quartiers?.join(', ')} />
-                  </div>
-                </>
-              )}
+              <FormField
+                control={form.control}
+                name="type"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Type de client</FormLabel>
+                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Type" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        <SelectItem value="acheteur">Acheteur</SelectItem>
+                        <SelectItem value="vendeur">Vendeur</SelectItem>
+                        <SelectItem value="locataire">Locataire</SelectItem>
+                        <SelectItem value="prospect">Prospect</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
 
-              <div className="space-y-2 md:col-span-2">
-                <Label htmlFor="notes">Notes</Label>
-                <Textarea id="notes" placeholder="Notes et commentaires..." defaultValue={selectedClient.notes} />
-              </div>
+              <FormField
+                control={form.control}
+                name="nom"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Nom</FormLabel>
+                    <FormControl>
+                      <Input {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="prenom"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Prénom</FormLabel>
+                    <FormControl>
+                      <Input {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="telephone"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Téléphone</FormLabel>
+                    <FormControl>
+                      <Input {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="email"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Email</FormLabel>
+                    <FormControl>
+                      <Input type="email" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="adresse"
+                render={({ field }) => (
+                  <FormItem className="md:col-span-2">
+                    <FormLabel>Adresse</FormLabel>
+                    <FormControl>
+                      <Input {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="notes"
+                render={({ field }) => (
+                  <FormItem className="md:col-span-2">
+                    <FormLabel>Notes</FormLabel>
+                    <FormControl>
+                      <Textarea placeholder="Notes et commentaires..." {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
 
               <div className="md:col-span-2 flex gap-2 pt-4">
-                <Button className="flex-1" onClick={() => setIsDialogOpen(false)}>
-                  {selectedClient.id ? 'Mettre à jour' : 'Créer'}
+                <Button type="submit" className="flex-1">
+                  {selectedClient ? 'Mettre à jour' : 'Créer'}
                 </Button>
-                <Button variant="outline" onClick={() => setIsDialogOpen(false)}>
+                <Button type="button" variant="outline" onClick={() => setIsDialogOpen(false)}>
                   Annuler
                 </Button>
               </div>
-            </div>
-          )}
+            </form>
+          </Form>
         </DialogContent>
       </Dialog>
     </div>
