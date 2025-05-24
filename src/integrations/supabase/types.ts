@@ -9,47 +9,6 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
-      activity_logs: {
-        Row: {
-          action: string
-          created_at: string
-          id: string
-          new_values: Json | null
-          old_values: Json | null
-          record_id: string | null
-          table_name: string | null
-          user_id: string
-        }
-        Insert: {
-          action: string
-          created_at?: string
-          id?: string
-          new_values?: Json | null
-          old_values?: Json | null
-          record_id?: string | null
-          table_name?: string | null
-          user_id: string
-        }
-        Update: {
-          action?: string
-          created_at?: string
-          id?: string
-          new_values?: Json | null
-          old_values?: Json | null
-          record_id?: string | null
-          table_name?: string | null
-          user_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "activity_logs_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       clients: {
         Row: {
           adresse: string

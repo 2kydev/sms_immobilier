@@ -63,6 +63,8 @@ const TransactionDialog = ({
   };
 
   const handleSubmit = () => {
+    const currentDate = new Date().toISOString().split('T')[0];
+    
     const transactionData = {
       client_id: selectedClientId,
       property_id: selectedPropertyId,
@@ -71,12 +73,9 @@ const TransactionDialog = ({
       etape: formData.etape,
       notes: formData.notes,
       probabilite: Number(formData.probabilite),
-      derniere_activite: new Date().toISOString().split('T')[0]
+      derniere_activite: currentDate,
+      date_creation: transaction?.id ? transaction.date_creation : currentDate
     };
-
-    if (!transaction?.id) {
-      transactionData.date_creation = new Date().toISOString().split('T')[0];
-    }
 
     onSave(transactionData);
   };
