@@ -5,13 +5,15 @@ import { AppSidebar } from './AppSidebar';
 
 interface LayoutProps {
   children: React.ReactNode;
+  activeSection?: string;
+  onSectionChange?: (section: string) => void;
 }
 
-const Layout = ({ children }: LayoutProps) => {
+const Layout = ({ children, activeSection, onSectionChange }: LayoutProps) => {
   return (
     <SidebarProvider>
       <div className="min-h-screen flex w-full bg-gray-50">
-        <AppSidebar />
+        <AppSidebar activeSection={activeSection} onSectionChange={onSectionChange} />
         <main className="flex-1 flex flex-col">
           <header className="bg-white border-b border-gray-200 p-4 flex items-center justify-between">
             <div className="flex items-center gap-4">
