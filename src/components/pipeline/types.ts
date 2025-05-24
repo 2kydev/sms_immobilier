@@ -4,7 +4,7 @@ export interface Transaction {
   client_id: string | null;
   property_id: string | null;
   valeur: number;
-  etape: 'prospect' | 'visite' | 'offre' | 'negociation' | 'compromis' | 'finalise';
+  etape: string; // Changé pour accepter string depuis la DB
   agent: string;
   date_creation: string;
   derniere_activite: string;
@@ -36,7 +36,7 @@ export interface Profile {
   email: string;
   nom: string;
   prenom: string;
-  role: 'admin' | 'directeur' | 'agent' | 'commercial';
+  role: string; // Changé pour accepter string depuis la DB
   is_active: boolean;
   created_at: string;
   updated_at: string;
@@ -68,3 +68,7 @@ export const roles = [
   { key: 'agent', label: 'Agent', description: 'Gestion des visites et propriétés' },
   { key: 'commercial', label: 'Commercial', description: 'Gestion des clients et prospects' }
 ];
+
+// Types d'union pour les valeurs valides
+export type EtapeType = 'prospect' | 'visite' | 'offre' | 'negociation' | 'compromis' | 'finalise';
+export type RoleType = 'admin' | 'directeur' | 'agent' | 'commercial';

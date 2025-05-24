@@ -9,7 +9,7 @@ import { Switch } from '@/components/ui/switch';
 import { useAuth } from '../auth/AuthProvider';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
-import { Profile, roles } from '../pipeline/types';
+import { Profile, roles, RoleType } from '../pipeline/types';
 
 interface UserDialogProps {
   isOpen: boolean;
@@ -23,7 +23,7 @@ const UserDialog: React.FC<UserDialogProps> = ({ isOpen, onClose, user, onSave }
     email: '',
     nom: '',
     prenom: '',
-    role: 'agent' as const,
+    role: 'agent' as RoleType,
     is_active: true,
     password: ''
   });
@@ -37,7 +37,7 @@ const UserDialog: React.FC<UserDialogProps> = ({ isOpen, onClose, user, onSave }
         email: user.email,
         nom: user.nom,
         prenom: user.prenom,
-        role: user.role,
+        role: user.role as RoleType,
         is_active: user.is_active,
         password: ''
       });
@@ -184,7 +184,7 @@ const UserDialog: React.FC<UserDialogProps> = ({ isOpen, onClose, user, onSave }
           
           <div className="space-y-2">
             <Label htmlFor="role">Rôle</Label>
-            <Select value={formData.role} onValueChange={(value: any) => setFormData({ ...formData, role: value })}>
+            <Select value={formData.role} onValueChange={(value: RoleType) => setFormData({ ...formData, role: value })}>
               <SelectTrigger>
                 <SelectValue />
               </SelectTrigger>

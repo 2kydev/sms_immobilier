@@ -6,7 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
-import { Transaction, Client, Property, etapes } from './types';
+import { Transaction, Client, Property, etapes, EtapeType } from './types';
 
 interface TransactionDialogProps {
   isOpen: boolean;
@@ -38,7 +38,7 @@ const TransactionDialog: React.FC<TransactionDialogProps> = ({
     property_id: '',
     valeur: 0,
     agent: 'Marie Dupont',
-    etape: 'prospect' as const,
+    etape: 'prospect' as EtapeType,
     notes: '',
     probabilite: 25,
     derniere_activite: new Date().toISOString().split('T')[0]
@@ -51,7 +51,7 @@ const TransactionDialog: React.FC<TransactionDialogProps> = ({
         property_id: transaction.property_id || '',
         valeur: transaction.valeur,
         agent: transaction.agent,
-        etape: transaction.etape,
+        etape: transaction.etape as EtapeType,
         notes: transaction.notes || '',
         probabilite: transaction.probabilite,
         derniere_activite: transaction.derniere_activite
@@ -141,7 +141,7 @@ const TransactionDialog: React.FC<TransactionDialogProps> = ({
           
           <div className="space-y-2">
             <Label htmlFor="etape">Étape</Label>
-            <Select value={formData.etape} onValueChange={(value: any) => setFormData({ ...formData, etape: value })}>
+            <Select value={formData.etape} onValueChange={(value: EtapeType) => setFormData({ ...formData, etape: value })}>
               <SelectTrigger>
                 <SelectValue />
               </SelectTrigger>
