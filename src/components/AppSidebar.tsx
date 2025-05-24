@@ -15,34 +15,47 @@ import {
   Users,
   Image,
   Calendar,
-  Folder
+  Folder,
+  Settings
 } from 'lucide-react';
+import { useAuth } from './auth/AuthProvider';
 
 const menuItems = [
   {
     title: 'Tableau de Bord',
     icon: ChartBar,
-    id: 'dashboard'
+    id: 'dashboard',
+    allowedRoles: ['admin', 'directeur']
   },
   {
     title: 'Clients',
     icon: Users,
-    id: 'clients'
+    id: 'clients',
+    allowedRoles: ['admin', 'commercial', 'agent']
   },
   {
     title: 'Propriétés',
     icon: Image,
-    id: 'properties'
+    id: 'properties',
+    allowedRoles: ['admin', 'agent']
   },
   {
     title: 'Visites',
     icon: Calendar,
-    id: 'visits'
+    id: 'visits',
+    allowedRoles: ['admin', 'agent', 'commercial']
   },
   {
     title: 'Pipeline',
     icon: Folder,
-    id: 'pipeline'
+    id: 'pipeline',
+    allowedRoles: ['admin', 'directeur', 'commercial']
+  },
+  {
+    title: 'Utilisateurs',
+    icon: Settings,
+    id: 'users',
+    allowedRoles: ['admin']
   }
 ];
 
@@ -52,6 +65,12 @@ interface AppSidebarProps {
 }
 
 export function AppSidebar({ activeSection = 'dashboard', onSectionChange }: AppSidebarProps) {
+  const { profile } = useAuth();
+
+  const filteredMenuItems = menuItems.filter(item => 
+    !item.allowedRoles || !profile || item.allowedRoles.includes(profile.role)
+  );
+
   return (
     <Sidebar className="border-r border-gray-200">
       <SidebarContent className="bg-white">
@@ -73,7 +92,7 @@ export function AppSidebar({ activeSection = 'dashboard', onSectionChange }: App
           </SidebarGroupLabel>
           <SidebarGroupContent className="px-3">
             <SidebarMenu>
-              {menuItems.map((item) => (
+              {filteredMenuItems.map((item) => (
                 <SidebarMenuItem key={item.id}>
                   <SidebarMenuButton 
                     className={`w-full justify-start gap-3 rounded-lg px-3 py-2 text-left transition-colors ${
