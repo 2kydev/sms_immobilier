@@ -41,15 +41,16 @@ const Layout = ({ children, activeSection, onSectionChange }: LayoutProps) => {
                     <div className="text-xs text-gray-500 capitalize">{profile.role}</div>
                   </div>
                   <div className="w-8 h-8 bg-primary rounded-full flex items-center justify-center text-white text-sm font-medium">
-                    {profile.prenom[0]}{profile.nom[0]}
+                    {profile.prenom?.[0]}{profile.nom?.[0]}
                   </div>
                   <Button
                     variant="outline"
                     size="sm"
                     onClick={handleSignOut}
-                    className="text-gray-600"
+                    className="text-gray-600 hover:text-red-600 hover:border-red-300"
                   >
                     <LogOut className="w-4 h-4" />
+                    <span className="ml-2">Déconnexion</span>
                   </Button>
                 </>
               )}
