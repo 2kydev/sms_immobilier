@@ -9,6 +9,7 @@ import ClientCard from './client/ClientCard';
 import ClientForm from './client/ClientForm';
 import { Client } from './client/types';
 import { filterClients } from './client/utils';
+import { Card, CardContent } from '@/components/ui/card';
 
 const ClientManager = () => {
   const [clients, setClients] = useState<Client[]>([]);
@@ -63,7 +64,18 @@ const ClientManager = () => {
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <h1 className="text-3xl font-bold text-primary">Gestion des Clients</h1>
+        <div className="flex items-center gap-4">
+          <h1 className="text-3xl font-bold text-primary">Gestion des Clients</h1>
+          <Card>
+            <CardContent className="px-4 py-2">
+              <div className="flex items-center gap-2">
+                <span className="text-sm font-medium text-gray-600">Total:</span>
+                <span className="text-lg font-bold text-primary">{clients.length}</span>
+                <span className="text-sm text-gray-600">clients</span>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
         <Button onClick={() => openClientDialog()} className="bg-primary hover:bg-primary/90">
           Nouveau Client
         </Button>

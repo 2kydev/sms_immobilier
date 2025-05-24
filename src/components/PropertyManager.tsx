@@ -12,6 +12,7 @@ import { useForm } from 'react-hook-form';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import ImageUpload from './ImageUpload';
+import PropertyImageGallery from './PropertyImageGallery';
 
 interface Property {
   id: string;
@@ -265,7 +266,7 @@ const PropertyManager = () => {
         </Card>
       </div>
 
-      {/* Liste des propriétés */}
+      {/* Liste des propriétés avec nouvelle galerie d'images */}
       <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
         {filteredProperties.map((property) => (
           <Card key={property.id} className="card-hover cursor-pointer" onClick={() => openPropertyDialog(property)}>
@@ -285,22 +286,11 @@ const PropertyManager = () => {
             </CardHeader>
             <CardContent>
               <div className="space-y-3">
-                {/* Affichage des images si disponibles */}
-                {property.images && property.images.length > 0 && (
-                  <div className="relative">
-                    <img
-                      src={property.images[0]}
-                      alt={property.titre}
-                      className="w-full h-40 object-cover rounded-lg"
-                      loading="lazy"
-                    />
-                    {property.images.length > 1 && (
-                      <div className="absolute top-2 right-2 bg-black bg-opacity-50 text-white text-xs px-2 py-1 rounded">
-                        +{property.images.length - 1} photos
-                      </div>
-                    )}
-                  </div>
-                )}
+                {/* Nouvelle galerie d'images */}
+                <PropertyImageGallery
+                  images={property.images || []}
+                  propertyTitle={property.titre}
+                />
 
                 <div className="grid grid-cols-2 gap-4 text-sm">
                   <div>
@@ -555,7 +545,6 @@ const PropertyManager = () => {
                 )}
               />
 
-              {/* Upload d'images */}
               <div className="md:col-span-2">
                 <ImageUpload
                   images={form.watch('images') || []}

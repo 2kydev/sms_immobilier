@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -11,6 +10,7 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '
 import { useForm } from 'react-hook-form';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import VisitStatusSelect from './VisitStatusSelect';
 
 interface Visit {
   id: string;
@@ -147,6 +147,82 @@ const VisitManager = () => {
     }
   };
 
+  const handleStatusChange = async (visitId: string, newStatus: string) => {
+    try {
+      const { error } = await supabase
+        .from('visits')
+        .update({ statut: newStatus })
+        .eq('id', visitId);
+
+      if (error) throw error;
+
+      // Mettre à jour l'état local
+      setVisits(visits.map(visit => 
+        visit.id === visitId ? { ...visit, statut: newStatus as any } : visit
+      ));
+
+      toast({
+        title: "Succès",
+        description: "Statut de la visite mis à jour"
+      });
+
+      // Programmer l'email de notification si c'est une visite planifiée
+      if (newStatus === 'planifiee') {
+        const visit = visits.find(v => v.id === visitId);
+        if (visit) {
+          await scheduleVisitNotification(visit);
+        }
+      }
+    } catch (error) {
+      console.error('Error updating visit status:', error);
+      toast({
+        title: "Erreur",
+        description: "Impossible de mettre à jour le statut",
+        variant: "destructive"
+      });
+    }
+  };
+
+  const scheduleVisitNotification = async (visit: Visit) => {
+    try {
+      const { error } = await supabase.functions.invoke('schedule-visit-notification', {
+        body: {
+          visitId: visit.id,
+          agentEmail: getAgentEmail(visit.agent),
+          visitDate: visit.date,
+          visitTime: visit.heure,
+          clientName: `${visit.client_prenom} ${visit.client_nom}`,
+          clientPhone: visit.client_telephone,
+          propertyTitle: visit.propriete_titre,
+          propertyAddress: visit.propriete_adresse
+        }
+      });
+
+      if (error) throw error;
+
+      toast({
+        title: "Notification programmée",
+        description: "Un email de rappel sera envoyé 24h avant la visite"
+      });
+    } catch (error) {
+      console.error('Error scheduling notification:', error);
+      toast({
+        title: "Attention",
+        description: "La visite a été créée mais la notification email n'a pas pu être programmée",
+        variant: "destructive"
+      });
+    }
+  };
+
+  const getAgentEmail = (agentName: string) => {
+    const emailMap: { [key: string]: string } = {
+      'Marie Dupont': 'marie.dupont@agence.com',
+      'Pierre Leroy': 'pierre.leroy@agence.com',
+      'Sophie Martin': 'sophie.martin@agence.com'
+    };
+    return emailMap[agentName] || 'contact@agence.com';
+  };
+
   const openVisitDialog = (visit?: Visit) => {
     if (visit) {
       setSelectedVisit(visit);
@@ -189,7 +265,7 @@ const VisitManager = () => {
   };
 
   const formatPropertyOption = (property: Property) => {
-    return `${property.type} - ${property.surface}m² - ${property.pieces} pièces - ${property.city}, ${property.quartier} - ${property.prix.toLocaleString()}€`;
+    return `${property.type} - ${property.surface}m² - ${property.pieces} pièces - ${property.city}, ${property.quartier} - ${property.prix.toLocaleString()}FCFA`;
   };
 
   const onSubmit = async (data: Visit) => {
@@ -214,11 +290,19 @@ const VisitManager = () => {
           description: "Visite mise à jour avec succès"
         });
       } else {
-        const { error } = await supabase
+        const { data: newVisit, error } = await supabase
           .from('visits')
-          .insert([visitData]);
+          .insert([visitData])
+          .select()
+          .single();
 
         if (error) throw error;
+
+        // Programmer la notification pour nouvelle visite
+        if (visitData.statut === 'planifiee') {
+          await scheduleVisitNotification(newVisit);
+        }
+
         toast({
           title: "Succès",
           description: "Visite créée avec succès"
@@ -306,18 +390,19 @@ const VisitManager = () => {
         </Card>
       </div>
 
-      {/* Liste des visites */}
+      {/* Liste des visites avec sélecteur de statut */}
       <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
         {filteredVisits.map((visit) => (
-          <Card key={visit.id} className="card-hover cursor-pointer" onClick={() => openVisitDialog(visit)}>
+          <Card key={visit.id} className="card-hover">
             <CardHeader>
               <div className="flex items-center justify-between">
                 <CardTitle className="text-lg">
                   {visit.client_prenom} {visit.client_nom}
                 </CardTitle>
-                <Badge className={getStatutColor(visit.statut)}>
-                  {visit.statut}
-                </Badge>
+                <VisitStatusSelect
+                  value={visit.statut}
+                  onChange={(newStatus) => handleStatusChange(visit.id, newStatus)}
+                />
               </div>
               <CardDescription>{visit.propriete_titre}</CardDescription>
             </CardHeader>
@@ -334,6 +419,16 @@ const VisitManager = () => {
                 {visit.notes && (
                   <p className="text-gray-600 italic">"{visit.notes.substring(0, 50)}..."</p>
                 )}
+              </div>
+              <div className="mt-3 pt-3 border-t">
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  onClick={() => openVisitDialog(visit)}
+                  className="w-full"
+                >
+                  Modifier
+                </Button>
               </div>
             </CardContent>
           </Card>
