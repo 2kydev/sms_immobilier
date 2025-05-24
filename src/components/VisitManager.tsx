@@ -5,14 +5,8 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
-import { Calendar } from '@/components/ui/calendar';
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { CalendarIcon } from 'lucide-react';
-import { format } from 'date-fns';
-import { fr } from 'date-fns/locale';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { useForm } from 'react-hook-form';
 import { supabase } from '@/integrations/supabase/client';
@@ -20,26 +14,48 @@ import { useToast } from '@/hooks/use-toast';
 
 interface Visit {
   id: string;
+  client_id?: string;
+  property_id?: string;
   client_nom: string;
   client_prenom: string;
   client_telephone: string;
-  propriete_adresse: string;
   propriete_titre: string;
+  propriete_adresse: string;
   date: string;
   heure: string;
   statut: 'planifiee' | 'realisee' | 'annulee' | 'reportee';
   agent: string;
-  notes: string;
+  notes?: string;
   feedback_client?: string;
   note_visite?: number;
 }
 
+interface Client {
+  id: string;
+  nom: string;
+  prenom: string;
+  telephone: string;
+}
+
+interface Property {
+  id: string;
+  titre: string;
+  type: string;
+  surface: number;
+  pieces: number;
+  prix: number;
+  city: string;
+  quartier: string;
+}
+
 const VisitManager = () => {
   const [visits, setVisits] = useState<Visit[]>([]);
-  const [selectedDate, setSelectedDate] = useState<Date>(new Date());
+  const [clients, setClients] = useState<Client[]>([]);
+  const [properties, setProperties] = useState<Property[]>([]);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [filterStatut, setFilterStatut] = useState<string>('tous');
   const [selectedVisit, setSelectedVisit] = useState<Visit | null>(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const [filterStatut, setFilterStatut] = useState<string>('tous');
   const [loading, setLoading] = useState(true);
   const { toast } = useToast();
 
@@ -48,10 +64,10 @@ const VisitManager = () => {
       client_nom: '',
       client_prenom: '',
       client_telephone: '',
-      propriete_adresse: '',
       propriete_titre: '',
-      date: format(new Date(), 'yyyy-MM-dd'),
-      heure: '',
+      propriete_adresse: '',
+      date: new Date().toISOString().split('T')[0],
+      heure: '09:00',
       statut: 'planifiee',
       agent: 'Marie Dupont',
       notes: ''
@@ -75,6 +91,35 @@ const VisitManager = () => {
         description: "Impossible de charger les visites",
         variant: "destructive"
       });
+    }
+  };
+
+  const fetchClients = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('clients')
+        .select('id, nom, prenom, telephone')
+        .order('nom', { ascending: true });
+
+      if (error) throw error;
+      setClients((data || []) as Client[]);
+    } catch (error) {
+      console.error('Error fetching clients:', error);
+    }
+  };
+
+  const fetchProperties = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('properties')
+        .select('id, titre, type, surface, pieces, prix, city, quartier')
+        .eq('statut', 'disponible')
+        .order('titre', { ascending: true });
+
+      if (error) throw error;
+      setProperties((data || []) as Property[]);
+    } catch (error) {
+      console.error('Error fetching properties:', error);
     } finally {
       setLoading(false);
     }
@@ -82,12 +127,14 @@ const VisitManager = () => {
 
   useEffect(() => {
     fetchVisits();
+    fetchClients();
+    fetchProperties();
   }, []);
 
   const filteredVisits = visits.filter(visit => {
-    const matchesDate = visit.date === format(selectedDate, 'yyyy-MM-dd');
+    const matchesSearch = `${visit.client_prenom} ${visit.client_nom} ${visit.propriete_titre}`.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesStatut = filterStatut === 'tous' || visit.statut === filterStatut;
-    return matchesDate && matchesStatut;
+    return matchesSearch && matchesStatut;
   });
 
   const getStatutColor = (statut: string) => {
@@ -97,16 +144,6 @@ const VisitManager = () => {
       case 'annulee': return 'bg-red-100 text-red-800';
       case 'reportee': return 'bg-orange-100 text-orange-800';
       default: return 'bg-gray-100 text-gray-800';
-    }
-  };
-
-  const getStatutLabel = (statut: string) => {
-    switch (statut) {
-      case 'planifiee': return 'Planifiée';
-      case 'realisee': return 'Réalisée';
-      case 'annulee': return 'Annulée';
-      case 'reportee': return 'Reportée';
-      default: return statut;
     }
   };
 
@@ -120,10 +157,10 @@ const VisitManager = () => {
         client_nom: '',
         client_prenom: '',
         client_telephone: '',
-        propriete_adresse: '',
         propriete_titre: '',
-        date: format(new Date(), 'yyyy-MM-dd'),
-        heure: '',
+        propriete_adresse: '',
+        date: new Date().toISOString().split('T')[0],
+        heure: '09:00',
         statut: 'planifiee',
         agent: 'Marie Dupont',
         notes: ''
@@ -132,12 +169,37 @@ const VisitManager = () => {
     setIsDialogOpen(true);
   };
 
+  const handleClientSelect = (clientId: string) => {
+    const selectedClient = clients.find(c => c.id === clientId);
+    if (selectedClient) {
+      form.setValue('client_nom', selectedClient.nom);
+      form.setValue('client_prenom', selectedClient.prenom);
+      form.setValue('client_telephone', selectedClient.telephone);
+      form.setValue('client_id', clientId);
+    }
+  };
+
+  const handlePropertySelect = (propertyId: string) => {
+    const selectedProperty = properties.find(p => p.id === propertyId);
+    if (selectedProperty) {
+      form.setValue('propriete_titre', selectedProperty.titre);
+      form.setValue('propriete_adresse', `${selectedProperty.city} - ${selectedProperty.quartier}`);
+      form.setValue('property_id', propertyId);
+    }
+  };
+
+  const formatPropertyOption = (property: Property) => {
+    return `${property.type} - ${property.surface}m² - ${property.pieces} pièces - ${property.city}, ${property.quartier} - ${property.prix.toLocaleString()}€`;
+  };
+
   const onSubmit = async (data: Visit) => {
     try {
       const visitData = {
         ...data,
         feedback_client: data.feedback_client || null,
-        note_visite: data.note_visite || null
+        note_visite: data.note_visite || null,
+        client_id: data.client_id || null,
+        property_id: data.property_id || null
       };
 
       if (selectedVisit) {
@@ -175,9 +237,6 @@ const VisitManager = () => {
     }
   };
 
-  const visitsAujourdhui = visits.filter(v => v.date === format(new Date(), 'yyyy-MM-dd'));
-  const visitesRealiseesAujourdhui = visitsAujourdhui.filter(v => v.statut === 'realisee').length;
-
   if (loading) {
     return <div className="p-6">Chargement des visites...</div>;
   }
@@ -191,134 +250,94 @@ const VisitManager = () => {
         </Button>
       </div>
 
-      {/* Statistiques du jour */}
+      {/* Filtres et recherche */}
+      <Card>
+        <CardContent className="pt-6">
+          <div className="flex flex-col lg:flex-row gap-4">
+            <div className="flex-1">
+              <Input
+                placeholder="Rechercher une visite (client, propriété)..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="w-full"
+              />
+            </div>
+            <Select value={filterStatut} onValueChange={setFilterStatut}>
+              <SelectTrigger className="w-full lg:w-48">
+                <SelectValue placeholder="Statut" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="tous">Tous les statuts</SelectItem>
+                <SelectItem value="planifiee">Planifiée</SelectItem>
+                <SelectItem value="realisee">Réalisée</SelectItem>
+                <SelectItem value="annulee">Annulée</SelectItem>
+                <SelectItem value="reportee">Reportée</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Statistiques rapides */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         <Card>
           <CardContent className="pt-6">
-            <div className="text-2xl font-bold text-blue-600">{visitsAujourdhui.length}</div>
-            <p className="text-sm text-gray-600">Visites aujourd'hui</p>
+            <div className="text-2xl font-bold text-blue-600">{visits.filter(v => v.statut === 'planifiee').length}</div>
+            <p className="text-sm text-gray-600">Planifiées</p>
           </CardContent>
         </Card>
         <Card>
           <CardContent className="pt-6">
-            <div className="text-2xl font-bold text-green-600">{visitesRealiseesAujourdhui}</div>
+            <div className="text-2xl font-bold text-green-600">{visits.filter(v => v.statut === 'realisee').length}</div>
             <p className="text-sm text-gray-600">Réalisées</p>
           </CardContent>
         </Card>
         <Card>
           <CardContent className="pt-6">
-            <div className="text-2xl font-bold text-orange-600">{visitsAujourdhui.length - visitesRealiseesAujourdhui}</div>
-            <p className="text-sm text-gray-600">À venir</p>
+            <div className="text-2xl font-bold text-red-600">{visits.filter(v => v.statut === 'annulee').length}</div>
+            <p className="text-sm text-gray-600">Annulées</p>
           </CardContent>
         </Card>
         <Card>
           <CardContent className="pt-6">
-            <div className="text-2xl font-bold text-primary">
-              {visits.filter(v => v.note_visite).length > 0 
-                ? Math.round(visits.filter(v => v.note_visite).reduce((sum, v) => sum + (v.note_visite || 0), 0) / visits.filter(v => v.note_visite).length * 10) / 10
-                : '-'}/10
-            </div>
-            <p className="text-sm text-gray-600">Note moyenne</p>
+            <div className="text-2xl font-bold text-orange-600">{visits.filter(v => v.statut === 'reportee').length}</div>
+            <p className="text-sm text-gray-600">Reportées</p>
           </CardContent>
         </Card>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Calendrier */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Calendrier des Visites</CardTitle>
-            <CardDescription>Sélectionnez une date pour voir les visites</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <Calendar
-              mode="single"
-              selected={selectedDate}
-              onSelect={(date) => date && setSelectedDate(date)}
-              className="rounded-md border pointer-events-auto"
-              locale={fr}
-            />
-            <div className="mt-4">
-              <Select value={filterStatut} onValueChange={setFilterStatut}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Filtrer par statut" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="tous">Tous les statuts</SelectItem>
-                  <SelectItem value="planifiee">Planifiées</SelectItem>
-                  <SelectItem value="realisee">Réalisées</SelectItem>
-                  <SelectItem value="annulee">Annulées</SelectItem>
-                  <SelectItem value="reportee">Reportées</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Liste des visites */}
-        <div className="lg:col-span-2 space-y-4">
-          <Card>
+      {/* Liste des visites */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
+        {filteredVisits.map((visit) => (
+          <Card key={visit.id} className="card-hover cursor-pointer" onClick={() => openVisitDialog(visit)}>
             <CardHeader>
-              <CardTitle>
-                Visites du {format(selectedDate, 'EEEE d MMMM yyyy', { locale: fr })}
-              </CardTitle>
-              <CardDescription>
-                {filteredVisits.length} visite{filteredVisits.length > 1 ? 's' : ''} programmée{filteredVisits.length > 1 ? 's' : ''}
-              </CardDescription>
+              <div className="flex items-center justify-between">
+                <CardTitle className="text-lg">
+                  {visit.client_prenom} {visit.client_nom}
+                </CardTitle>
+                <Badge className={getStatutColor(visit.statut)}>
+                  {visit.statut}
+                </Badge>
+              </div>
+              <CardDescription>{visit.propriete_titre}</CardDescription>
             </CardHeader>
+            <CardContent>
+              <div className="space-y-2 text-sm">
+                <p><span className="font-medium">Date:</span> {new Date(visit.date).toLocaleDateString('fr-FR')}</p>
+                <p><span className="font-medium">Heure:</span> {visit.heure}</p>
+                <p><span className="font-medium">Téléphone:</span> {visit.client_telephone}</p>
+                <p><span className="font-medium">Agent:</span> {visit.agent}</p>
+                <p><span className="font-medium">Adresse:</span> {visit.propriete_adresse}</p>
+                {visit.note_visite && (
+                  <p><span className="font-medium">Note:</span> {visit.note_visite}/5</p>
+                )}
+                {visit.notes && (
+                  <p className="text-gray-600 italic">"{visit.notes.substring(0, 50)}..."</p>
+                )}
+              </div>
+            </CardContent>
           </Card>
-
-          {filteredVisits.length === 0 ? (
-            <Card>
-              <CardContent className="pt-6 text-center text-gray-500">
-                Aucune visite programmée pour cette date
-              </CardContent>
-            </Card>
-          ) : (
-            filteredVisits.map((visit) => (
-              <Card key={visit.id} className="card-hover cursor-pointer" onClick={() => openVisitDialog(visit)}>
-                <CardHeader>
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <CardTitle className="text-lg">
-                        {visit.heure} - {visit.client_prenom} {visit.client_nom}
-                      </CardTitle>
-                      <CardDescription>{visit.client_telephone}</CardDescription>
-                    </div>
-                    <Badge className={getStatutColor(visit.statut)}>
-                      {getStatutLabel(visit.statut)}
-                    </Badge>
-                  </div>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-2">
-                    <div>
-                      <p className="font-medium text-sm">{visit.propriete_titre}</p>
-                      <p className="text-sm text-gray-600">{visit.propriete_adresse}</p>
-                    </div>
-                    
-                    <div className="flex items-center justify-between text-sm">
-                      <span className="text-gray-600">Agent: {visit.agent}</span>
-                      {visit.note_visite && (
-                        <span className="text-green-600 font-medium">Note: {visit.note_visite}/10</span>
-                      )}
-                    </div>
-
-                    {visit.notes && (
-                      <p className="text-sm text-gray-600 italic">"{visit.notes}"</p>
-                    )}
-
-                    {visit.feedback_client && (
-                      <div className="bg-green-50 p-2 rounded-lg">
-                        <p className="text-sm text-green-800">Feedback: {visit.feedback_client}</p>
-                      </div>
-                    )}
-                  </div>
-                </CardContent>
-              </Card>
-            ))
-          )}
-        </div>
+        ))}
       </div>
 
       {/* Dialog pour créer/éditer une visite */}
@@ -329,70 +348,31 @@ const VisitManager = () => {
               {selectedVisit ? 'Modifier la visite' : 'Nouvelle visite'}
             </DialogTitle>
             <DialogDescription>
-              Planifiez ou modifiez une visite client
+              Programmez une visite avec un client
             </DialogDescription>
           </DialogHeader>
           
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {/* Sélection du client */}
               <FormField
                 control={form.control}
-                name="client_prenom"
+                name="client_id"
                 render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Prénom du client</FormLabel>
-                    <FormControl>
-                      <Input {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={form.control}
-                name="client_nom"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Nom du client</FormLabel>
-                    <FormControl>
-                      <Input {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={form.control}
-                name="client_telephone"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Téléphone</FormLabel>
-                    <FormControl>
-                      <Input {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={form.control}
-                name="agent"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Agent responsable</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                  <FormItem className="md:col-span-2">
+                    <FormLabel>Client *</FormLabel>
+                    <Select onValueChange={handleClientSelect} defaultValue={field.value}>
                       <FormControl>
                         <SelectTrigger>
-                          <SelectValue placeholder="Agent" />
+                          <SelectValue placeholder="Sélectionner un client" />
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        <SelectItem value="Marie Dupont">Marie Dupont</SelectItem>
-                        <SelectItem value="Pierre Leroy">Pierre Leroy</SelectItem>
-                        <SelectItem value="Sophie Martin">Sophie Martin</SelectItem>
+                        {clients.map((client) => (
+                          <SelectItem key={client.id} value={client.id}>
+                            {client.prenom} {client.nom} - {client.telephone}
+                          </SelectItem>
+                        ))}
                       </SelectContent>
                     </Select>
                     <FormMessage />
@@ -400,29 +380,27 @@ const VisitManager = () => {
                 )}
               />
 
+              {/* Sélection de la propriété */}
               <FormField
                 control={form.control}
-                name="propriete_titre"
+                name="property_id"
                 render={({ field }) => (
                   <FormItem className="md:col-span-2">
-                    <FormLabel>Propriété visitée</FormLabel>
-                    <FormControl>
-                      <Input {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={form.control}
-                name="propriete_adresse"
-                render={({ field }) => (
-                  <FormItem className="md:col-span-2">
-                    <FormLabel>Adresse de la propriété</FormLabel>
-                    <FormControl>
-                      <Input {...field} />
-                    </FormControl>
+                    <FormLabel>Propriété à visiter *</FormLabel>
+                    <Select onValueChange={handlePropertySelect} defaultValue={field.value}>
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Sélectionner une propriété" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        {properties.map((property) => (
+                          <SelectItem key={property.id} value={property.id}>
+                            {formatPropertyOption(property)}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
                     <FormMessage />
                   </FormItem>
                 )}
@@ -482,17 +460,42 @@ const VisitManager = () => {
 
               <FormField
                 control={form.control}
-                name="note_visite"
+                name="agent"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Note de la visite (/10)</FormLabel>
-                    <FormControl>
-                      <Input type="number" min="1" max="10" {...field} onChange={(e) => field.onChange(Number(e.target.value) || undefined)} />
-                    </FormControl>
+                    <FormLabel>Agent responsable</FormLabel>
+                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Agent" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        <SelectItem value="Marie Dupont">Marie Dupont</SelectItem>
+                        <SelectItem value="Pierre Leroy">Pierre Leroy</SelectItem>
+                        <SelectItem value="Sophie Martin">Sophie Martin</SelectItem>
+                      </SelectContent>
+                    </Select>
                     <FormMessage />
                   </FormItem>
                 )}
               />
+
+              {form.watch('statut') === 'realisee' && (
+                <FormField
+                  control={form.control}
+                  name="note_visite"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Note de la visite (1-5)</FormLabel>
+                      <FormControl>
+                        <Input type="number" min="1" max="5" {...field} onChange={(e) => field.onChange(Number(e.target.value))} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              )}
 
               <FormField
                 control={form.control}
@@ -508,19 +511,21 @@ const VisitManager = () => {
                 )}
               />
 
-              <FormField
-                control={form.control}
-                name="feedback_client"
-                render={({ field }) => (
-                  <FormItem className="md:col-span-2">
-                    <FormLabel>Feedback client</FormLabel>
-                    <FormControl>
-                      <Textarea placeholder="Retour du client après la visite..." {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+              {form.watch('statut') === 'realisee' && (
+                <FormField
+                  control={form.control}
+                  name="feedback_client"
+                  render={({ field }) => (
+                    <FormItem className="md:col-span-2">
+                      <FormLabel>Feedback du client</FormLabel>
+                      <FormControl>
+                        <Textarea placeholder="Retour du client après la visite..." {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              )}
 
               <div className="md:col-span-2 flex gap-2 pt-4">
                 <Button type="submit" className="flex-1">

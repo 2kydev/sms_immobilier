@@ -23,6 +23,7 @@ interface Property {
   charges?: number;
   adresse: string;
   quartier: string;
+  city: string;
   statut: 'disponible' | 'sous-offre' | 'vendu' | 'loue';
   description: string;
   caracteristiques: string[];
@@ -49,6 +50,7 @@ const PropertyManager = () => {
       prix: 0,
       adresse: '',
       quartier: '',
+      city: '',
       statut: 'disponible',
       description: '',
       caracteristiques: [],
@@ -83,7 +85,7 @@ const PropertyManager = () => {
   }, []);
 
   const filteredProperties = properties.filter(property => {
-    const matchesSearch = `${property.titre} ${property.adresse} ${property.quartier}`.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesSearch = `${property.titre} ${property.adresse} ${property.quartier} ${property.city}`.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesType = filterType === 'tous' || property.type === filterType;
     const matchesStatut = filterStatut === 'tous' || property.statut === filterStatut;
     return matchesSearch && matchesType && matchesStatut;
@@ -124,6 +126,7 @@ const PropertyManager = () => {
         prix: 0,
         adresse: '',
         quartier: '',
+        city: '',
         statut: 'disponible',
         description: '',
         caracteristiques: [],
@@ -197,7 +200,7 @@ const PropertyManager = () => {
           <div className="flex flex-col lg:flex-row gap-4">
             <div className="flex-1">
               <Input
-                placeholder="Rechercher une propriété (titre, adresse, quartier)..."
+                placeholder="Rechercher une propriété (titre, adresse, quartier, ville)..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 className="w-full"
@@ -272,7 +275,7 @@ const PropertyManager = () => {
                   <span className="text-2xl">{getTypeIcon(property.type)}</span>
                   <div>
                     <CardTitle className="text-lg line-clamp-2">{property.titre}</CardTitle>
-                    <CardDescription>{property.quartier}</CardDescription>
+                    <CardDescription>{property.city} - {property.quartier}</CardDescription>
                   </div>
                 </div>
                 <Badge className={getStatutColor(property.statut)}>
@@ -449,6 +452,21 @@ const PropertyManager = () => {
                     <FormLabel>Charges mensuelles (€)</FormLabel>
                     <FormControl>
                       <Input type="number" {...field} onChange={(e) => field.onChange(Number(e.target.value) || undefined)} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="city"
+                rules={{ required: "La ville est obligatoire" }}
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Ville *</FormLabel>
+                    <FormControl>
+                      <Input {...field} placeholder="Entrez la ville" />
                     </FormControl>
                     <FormMessage />
                   </FormItem>

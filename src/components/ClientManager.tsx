@@ -26,6 +26,7 @@ interface Client {
   budget_max?: number;
   type_bien?: string;
   quartiers?: string[];
+  preferred_city?: string;
   dernier_contact: string;
   notes: string;
 }
@@ -37,6 +38,7 @@ const ClientManager = () => {
   const [selectedClient, setSelectedClient] = useState<Client | null>(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [quartierInputs, setQuartierInputs] = useState<string[]>(['']);
   const { toast } = useToast();
 
   const form = useForm<Client>({
@@ -48,6 +50,7 @@ const ClientManager = () => {
       email: '',
       adresse: '',
       type: 'prospect',
+      preferred_city: '',
       dernier_contact: new Date().toISOString().split('T')[0],
       notes: ''
     }
@@ -94,10 +97,27 @@ const ClientManager = () => {
     }
   };
 
+  const addQuartierInput = () => {
+    setQuartierInputs([...quartierInputs, '']);
+  };
+
+  const removeQuartierInput = (index: number) => {
+    if (quartierInputs.length > 1) {
+      setQuartierInputs(quartierInputs.filter((_, i) => i !== index));
+    }
+  };
+
+  const updateQuartierInput = (index: number, value: string) => {
+    const newInputs = [...quartierInputs];
+    newInputs[index] = value;
+    setQuartierInputs(newInputs);
+  };
+
   const openClientDialog = (client?: Client) => {
     if (client) {
       setSelectedClient(client);
       form.reset(client);
+      setQuartierInputs(client.quartiers || ['']);
     } else {
       setSelectedClient(null);
       form.reset({
@@ -108,18 +128,21 @@ const ClientManager = () => {
         email: '',
         adresse: '',
         type: 'prospect',
+        preferred_city: '',
         dernier_contact: new Date().toISOString().split('T')[0],
         notes: ''
       });
+      setQuartierInputs(['']);
     }
     setIsDialogOpen(true);
   };
 
   const onSubmit = async (data: Client) => {
     try {
+      const quartiers = quartierInputs.filter(q => q.trim() !== '');
       const clientData = {
         ...data,
-        quartiers: data.quartiers || [],
+        quartiers,
         budget_min: data.budget_min || null,
         budget_max: data.budget_max || null,
         type_bien: data.type_bien || null
@@ -248,10 +271,25 @@ const ClientManager = () => {
               <div className="space-y-2 text-sm">
                 <p><span className="font-medium">Téléphone:</span> {client.telephone}</p>
                 <p><span className="font-medium">Adresse:</span> {client.adresse}</p>
+                {client.preferred_city && (
+                  <p><span className="font-medium">Ville préférée:</span> {client.preferred_city}</p>
+                )}
                 {client.budget_min && client.budget_max && (
                   <p><span className="font-medium">Budget:</span> {client.budget_min.toLocaleString()}€ - {client.budget_max.toLocaleString()}€</p>
                 )}
                 <p><span className="font-medium">Dernier contact:</span> {new Date(client.dernier_contact).toLocaleDateString('fr-FR')}</p>
+                {client.quartiers && client.quartiers.length > 0 && (
+                  <div>
+                    <span className="font-medium">Quartiers:</span>
+                    <div className="flex flex-wrap gap-1 mt-1">
+                      {client.quartiers.map((quartier, index) => (
+                        <Badge key={index} variant="outline" className="text-xs">
+                          {quartier}
+                        </Badge>
+                      ))}
+                    </div>
+                  </div>
+                )}
                 {client.notes && (
                   <p className="text-gray-600 italic">"{client.notes.substring(0, 50)}..."</p>
                 )}
@@ -325,9 +363,10 @@ const ClientManager = () => {
               <FormField
                 control={form.control}
                 name="nom"
+                rules={{ required: "Le nom est obligatoire" }}
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Nom</FormLabel>
+                    <FormLabel>Nom *</FormLabel>
                     <FormControl>
                       <Input {...field} />
                     </FormControl>
@@ -339,9 +378,10 @@ const ClientManager = () => {
               <FormField
                 control={form.control}
                 name="prenom"
+                rules={{ required: "Le prénom est obligatoire" }}
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Prénom</FormLabel>
+                    <FormLabel>Prénom *</FormLabel>
                     <FormControl>
                       <Input {...field} />
                     </FormControl>
@@ -380,9 +420,24 @@ const ClientManager = () => {
 
               <FormField
                 control={form.control}
+                name="preferred_city"
+                rules={{ required: "La ville préférée est obligatoire" }}
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Ville préférée *</FormLabel>
+                    <FormControl>
+                      <Input {...field} placeholder="Entrez la ville préférée" />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
                 name="adresse"
                 render={({ field }) => (
-                  <FormItem className="md:col-span-2">
+                  <FormItem>
                     <FormLabel>Adresse</FormLabel>
                     <FormControl>
                       <Input {...field} />
@@ -391,6 +446,41 @@ const ClientManager = () => {
                   </FormItem>
                 )}
               />
+
+              {/* Quartiers préférés */}
+              <div className="md:col-span-2">
+                <Label className="text-sm font-medium">Quartiers préférés</Label>
+                <div className="space-y-2 mt-2">
+                  {quartierInputs.map((quartier, index) => (
+                    <div key={index} className="flex gap-2">
+                      <Input
+                        value={quartier}
+                        onChange={(e) => updateQuartierInput(index, e.target.value)}
+                        placeholder={`Quartier ${index + 1}`}
+                        className="flex-1"
+                      />
+                      {quartierInputs.length > 1 && (
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          onClick={() => removeQuartierInput(index)}
+                        >
+                          Supprimer
+                        </Button>
+                      )}
+                    </div>
+                  ))}
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={addQuartierInput}
+                  >
+                    Ajouter un quartier
+                  </Button>
+                </div>
+              </div>
 
               <FormField
                 control={form.control}

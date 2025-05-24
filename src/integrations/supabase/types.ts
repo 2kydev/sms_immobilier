@@ -21,6 +21,7 @@ export type Database = {
           id: string
           nom: string
           notes: string | null
+          preferred_city: string | null
           prenom: string
           quartiers: string[] | null
           telephone: string
@@ -39,6 +40,7 @@ export type Database = {
           id?: string
           nom: string
           notes?: string | null
+          preferred_city?: string | null
           prenom: string
           quartiers?: string[] | null
           telephone: string
@@ -57,6 +59,7 @@ export type Database = {
           id?: string
           nom?: string
           notes?: string | null
+          preferred_city?: string | null
           prenom?: string
           quartiers?: string[] | null
           telephone?: string
@@ -72,6 +75,7 @@ export type Database = {
           agent: string
           caracteristiques: string[] | null
           charges: number | null
+          city: string
           created_at: string
           description: string
           id: string
@@ -90,6 +94,7 @@ export type Database = {
           agent: string
           caracteristiques?: string[] | null
           charges?: number | null
+          city: string
           created_at?: string
           description: string
           id?: string
@@ -108,6 +113,7 @@ export type Database = {
           agent?: string
           caracteristiques?: string[] | null
           charges?: number | null
+          city?: string
           created_at?: string
           description?: string
           id?: string
