@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -51,7 +50,14 @@ const VisitCalendar: React.FC<VisitCalendarProps> = ({ onEditVisit }) => {
         .order('date', { ascending: true });
 
       if (error) throw error;
-      setVisits(data || []);
+      
+      // Type cast les données pour s'assurer que le statut correspond au type attendu
+      const typedVisits = (data || []).map(visit => ({
+        ...visit,
+        statut: visit.statut as 'planifiee' | 'realisee' | 'annulee' | 'reportee'
+      }));
+      
+      setVisits(typedVisits);
     } catch (error) {
       console.error('Error fetching visits:', error);
       toast({

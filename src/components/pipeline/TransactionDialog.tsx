@@ -38,7 +38,8 @@ const TransactionDialog = ({
     valeur: '',
     agent: 'Marie Dupont',
     etape: 'prospect',
-    notes: ''
+    notes: '',
+    probabilite: '25'
   });
 
   useEffect(() => {
@@ -47,7 +48,8 @@ const TransactionDialog = ({
         valeur: transaction.id ? transaction.valeur.toString() : '',
         agent: transaction.agent || 'Marie Dupont',
         etape: transaction.etape || 'prospect',
-        notes: transaction.notes || ''
+        notes: transaction.notes || '',
+        probabilite: transaction.probabilite?.toString() || '25'
       });
     }
   }, [transaction]);
@@ -68,7 +70,7 @@ const TransactionDialog = ({
       agent: formData.agent,
       etape: formData.etape,
       notes: formData.notes,
-      probabilite: 25,
+      probabilite: Number(formData.probabilite),
       derniere_activite: new Date().toISOString().split('T')[0]
     };
 
@@ -147,6 +149,19 @@ const TransactionDialog = ({
             </div>
 
             <div className="space-y-2">
+              <Label htmlFor="probabilite">Probabilité (%)</Label>
+              <Input 
+                id="probabilite" 
+                type="number" 
+                min="0"
+                max="100"
+                value={formData.probabilite}
+                onChange={(e) => setFormData(prev => ({ ...prev, probabilite: e.target.value }))}
+                placeholder="Probabilité de réussite"
+              />
+            </div>
+
+            <div className="space-y-2">
               <Label htmlFor="agent">Agent responsable</Label>
               <Select value={formData.agent} onValueChange={(value) => setFormData(prev => ({ ...prev, agent: value }))}>
                 <SelectTrigger>
@@ -174,17 +189,6 @@ const TransactionDialog = ({
                   ))}
                 </SelectContent>
               </Select>
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="derniereActivite">Dernière activité</Label>
-              <Input 
-                id="derniereActivite" 
-                type="date" 
-                value={transaction.derniere_activite || new Date().toISOString().split('T')[0]}
-                readOnly
-                className="bg-gray-50"
-              />
             </div>
 
             <div className="space-y-2 md:col-span-2">

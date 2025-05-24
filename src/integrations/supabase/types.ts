@@ -129,6 +129,66 @@ export type Database = {
         }
         Relationships: []
       }
+      transactions: {
+        Row: {
+          agent: string
+          client_id: string | null
+          created_at: string
+          date_creation: string
+          derniere_activite: string
+          etape: string
+          id: string
+          notes: string | null
+          probabilite: number
+          property_id: string | null
+          updated_at: string
+          valeur: number
+        }
+        Insert: {
+          agent: string
+          client_id?: string | null
+          created_at?: string
+          date_creation?: string
+          derniere_activite?: string
+          etape: string
+          id?: string
+          notes?: string | null
+          probabilite?: number
+          property_id?: string | null
+          updated_at?: string
+          valeur: number
+        }
+        Update: {
+          agent?: string
+          client_id?: string | null
+          created_at?: string
+          date_creation?: string
+          derniere_activite?: string
+          etape?: string
+          id?: string
+          notes?: string | null
+          probabilite?: number
+          property_id?: string | null
+          updated_at?: string
+          valeur?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "transactions_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "transactions_property_id_fkey"
+            columns: ["property_id"]
+            isOneToOne: false
+            referencedRelation: "properties"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       visits: {
         Row: {
           agent: string

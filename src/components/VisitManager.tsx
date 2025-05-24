@@ -171,7 +171,6 @@ const VisitManager = () => {
 
       if (error) throw error;
 
-      // Mettre à jour l'état local
       setVisits(visits.map(visit => 
         visit.id === visitId ? { ...visit, statut: newStatus as any } : visit
       ));
@@ -181,7 +180,6 @@ const VisitManager = () => {
         description: "Statut de la visite mis à jour"
       });
 
-      // Programmer l'email de notification si c'est une visite planifiée
       if (newStatus === 'planifiee') {
         const visit = visits.find(v => v.id === visitId);
         if (visit) {
@@ -312,13 +310,11 @@ const VisitManager = () => {
 
         if (error) throw error;
 
-        // Mapper le résultat avec le bon type pour le statut
         const mappedVisit = {
           ...newVisit,
           statut: newVisit.statut as 'planifiee' | 'realisee' | 'annulee' | 'reportee'
         };
 
-        // Programmer la notification pour nouvelle visite
         if (mappedVisit.statut === 'planifiee') {
           await scheduleVisitNotification(mappedVisit);
         }
@@ -467,7 +463,7 @@ const VisitManager = () => {
         </TabsContent>
 
         <TabsContent value="calendar">
-          <VisitCalendar visits={visits} onEditVisit={openVisitDialog} />
+          <VisitCalendar onEditVisit={openVisitDialog} />
         </TabsContent>
       </Tabs>
 

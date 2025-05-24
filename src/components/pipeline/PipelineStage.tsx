@@ -2,7 +2,7 @@
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Transaction } from './types';
+import { Transaction, Client, Property } from './types';
 import { formatAmount, getDaysInStage } from './utils';
 
 interface PipelineStageProps {
@@ -12,12 +12,26 @@ interface PipelineStageProps {
     color: string;
   };
   transactions: Transaction[];
+  clients: Client[];
+  properties: Property[];
   onTransactionClick: (transaction: Transaction) => void;
 }
 
-const PipelineStage = ({ etape, transactions, onTransactionClick }: PipelineStageProps) => {
+const PipelineStage = ({ etape, transactions, clients, properties, onTransactionClick }: PipelineStageProps) => {
   const stageTransactions = transactions.filter(t => t.etape === etape.key);
   const totalValue = stageTransactions.reduce((sum, t) => sum + t.valeur, 0);
+
+  const getClientName = (clientId: string | null) => {
+    if (!clientId) return 'Client non défini';
+    const client = clients.find(c => c.id === clientId);
+    return client ? `${client.prenom} ${client.nom}` : 'Client introuvable';
+  };
+
+  const getPropertyTitle = (propertyId: string | null) => {
+    if (!propertyId) return 'Propriété non définie';
+    const property = properties.find(p => p.id === propertyId);
+    return property ? property.titre : 'Propriété introuvable';
+  };
 
   return (
     <Card className="h-fit">
@@ -43,7 +57,7 @@ const PipelineStage = ({ etape, transactions, onTransactionClick }: PipelineStag
               <div className="space-y-2">
                 <div className="flex items-center justify-between">
                   <div className="font-medium text-sm">
-                    Transaction #{transaction.id}
+                    {getClientName(transaction.client_id)}
                   </div>
                   <Badge variant="outline" className="text-xs">
                     {transaction.probabilite}%
@@ -51,8 +65,7 @@ const PipelineStage = ({ etape, transactions, onTransactionClick }: PipelineStag
                 </div>
                 
                 <div className="text-sm text-gray-600">
-                  <div>Client ID: {transaction.client_id}</div>
-                  <div>Propriété ID: {transaction.property_id}</div>
+                  <div>{getPropertyTitle(transaction.property_id)}</div>
                 </div>
                 
                 <div className="flex items-center justify-between">

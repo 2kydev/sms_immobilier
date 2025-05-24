@@ -50,7 +50,7 @@ const Pipeline = () => {
     try {
       const { data, error } = await supabase
         .from('clients')
-        .select('id, nom, prenom, telephone')
+        .select('id, nom, prenom, telephone, email')
         .order('nom');
 
       if (error) throw error;
@@ -69,7 +69,7 @@ const Pipeline = () => {
     try {
       const { data, error } = await supabase
         .from('properties')
-        .select('id, titre, prix, adresse')
+        .select('id, titre, prix, adresse, city, quartier')
         .eq('statut', 'disponible')
         .order('titre');
 
@@ -94,7 +94,7 @@ const Pipeline = () => {
       setSelectedPropertyId(property?.id || '');
     } else {
       setSelectedTransaction({
-        id: 0,
+        id: '',
         client_id: '',
         property_id: '',
         valeur: 0,
@@ -103,7 +103,9 @@ const Pipeline = () => {
         date_creation: new Date().toISOString().split('T')[0],
         derniere_activite: new Date().toISOString().split('T')[0],
         notes: '',
-        probabilite: 25
+        probabilite: 25,
+        created_at: '',
+        updated_at: ''
       });
       setSelectedClientId('');
       setSelectedPropertyId('');
@@ -169,6 +171,8 @@ const Pipeline = () => {
             key={etape.key}
             etape={etape}
             transactions={transactions}
+            clients={clients}
+            properties={properties}
             onTransactionClick={openTransactionDialog}
           />
         ))}

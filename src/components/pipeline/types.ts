@@ -1,17 +1,17 @@
 
 export interface Transaction {
-  id: number;
-  client_id: string;
-  property_id: string;
+  id: string;
+  client_id: string | null;
+  property_id: string | null;
   valeur: number;
   etape: 'prospect' | 'visite' | 'offre' | 'negociation' | 'compromis' | 'finalise';
   agent: string;
   date_creation: string;
   derniere_activite: string;
-  notes: string;
+  notes: string | null;
   probabilite: number;
-  created_at?: string;
-  updated_at?: string;
+  created_at: string;
+  updated_at: string;
 }
 
 export interface Client {
@@ -19,6 +19,7 @@ export interface Client {
   nom: string;
   prenom: string;
   telephone: string;
+  email: string;
 }
 
 export interface Property {
@@ -26,6 +27,8 @@ export interface Property {
   titre: string;
   prix: number;
   adresse: string;
+  city: string;
+  quartier: string;
 }
 
 export const etapes = [
