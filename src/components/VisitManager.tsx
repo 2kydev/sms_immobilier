@@ -147,6 +147,16 @@ const VisitManager = () => {
     }
   };
 
+  const getStatutLabel = (statut: string) => {
+    switch (statut) {
+      case 'planifiee': return 'Planifiée';
+      case 'realisee': return 'Réalisée';
+      case 'annulee': return 'Annulée';
+      case 'reportee': return 'Reportée';
+      default: return statut;
+    }
+  };
+
   const handleStatusChange = async (visitId: string, newStatus: string) => {
     try {
       const { error } = await supabase
@@ -390,7 +400,7 @@ const VisitManager = () => {
         </Card>
       </div>
 
-      {/* Liste des visites avec sélecteur de statut */}
+      {/* Liste des visites sans sélecteur de statut */}
       <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
         {filteredVisits.map((visit) => (
           <Card key={visit.id} className="card-hover">
@@ -399,10 +409,9 @@ const VisitManager = () => {
                 <CardTitle className="text-lg">
                   {visit.client_prenom} {visit.client_nom}
                 </CardTitle>
-                <VisitStatusSelect
-                  value={visit.statut}
-                  onChange={(newStatus) => handleStatusChange(visit.id, newStatus)}
-                />
+                <Badge className={getStatutColor(visit.statut)}>
+                  {getStatutLabel(visit.statut)}
+                </Badge>
               </div>
               <CardDescription>{visit.propriete_titre}</CardDescription>
             </CardHeader>
