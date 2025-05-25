@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Navigate } from 'react-router-dom';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -7,7 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useAuth } from '@/hooks/useAuth';
-import { useToast } = '@/components/ui/use-toast';
+import { useToast } from '@/components/ui/use-toast';
 
 const Auth = () => {
   const [isSignUp, setIsSignUp] = useState(false);
