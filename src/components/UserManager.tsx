@@ -13,7 +13,7 @@ interface UserProfile {
   email: string;
   nom: string;
   prenom: string;
-  role: UserRole;
+  role?: UserRole; // Rendre optionnel pour la compatibilité
   is_active: boolean;
   created_at: string;
 }
@@ -31,7 +31,14 @@ const UserManager = () => {
         .order('created_at', { ascending: false });
 
       if (error) throw error;
-      setUsers(data || []);
+      
+      // Assigner un rôle par défaut si pas de rôle
+      const usersWithRoles = (data || []).map(user => ({
+        ...user,
+        role: (user as any).role || 'commercial' as UserRole
+      }));
+      
+      setUsers(usersWithRoles);
     } catch (error) {
       console.error('Error fetching users:', error);
       toast({
@@ -50,12 +57,23 @@ const UserManager = () => {
 
   const updateUserRole = async (userId: string, newRole: UserRole) => {
     try {
+      // Vérifier d'abord si la colonne role existe
       const { error } = await supabase
         .from('profiles')
-        .update({ role: newRole })
+        .update({ role: newRole } as any)
         .eq('id', userId);
 
-      if (error) throw error;
+      if (error) {
+        if (error.message.includes('column "role" does not exist')) {
+          toast({
+            title: "Erreur",
+            description: "La colonne role n'existe pas encore dans la base de données. Veuillez d'abord exécuter la migration SQL.",
+            variant: "destructive"
+          });
+          return;
+        }
+        throw error;
+      }
 
       toast({
         title: "Succès",
@@ -125,8 +143,8 @@ const UserManager = () => {
                   <CardTitle className="text-lg">
                     {user.prenom} {user.nom}
                   </CardTitle>
-                  <Badge className={getRoleBadgeColor(user.role)}>
-                    {getRoleLabel(user.role)}
+                  <Badge className={getRoleBadgeColor(user.role || 'commercial')}>
+                    {getRoleLabel(user.role || 'commercial')}
                   </Badge>
                 </div>
                 <CardDescription>{user.email}</CardDescription>
