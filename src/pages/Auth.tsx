@@ -5,8 +5,9 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useAuth } from '@/hooks/useAuth';
-import { useToast } from '@/components/ui/use-toast';
+import { useToast } = '@/components/ui/use-toast';
 
 const Auth = () => {
   const [isSignUp, setIsSignUp] = useState(false);
@@ -14,6 +15,7 @@ const Auth = () => {
   const [password, setPassword] = useState('');
   const [nom, setNom] = useState('');
   const [prenom, setPrenom] = useState('');
+  const [role, setRole] = useState('commercial');
   const [loading, setLoading] = useState(false);
   
   const { user, signIn, signUp } = useAuth();
@@ -30,7 +32,7 @@ const Auth = () => {
 
     try {
       if (isSignUp) {
-        await signUp(email, password, nom, prenom);
+        await signUp(email, password, nom, prenom, role);
         toast({
           title: "Compte créé avec succès",
           description: "Vous êtes maintenant connecté",
@@ -89,6 +91,21 @@ const Auth = () => {
                       required
                     />
                   </div>
+                </div>
+                
+                <div className="space-y-2">
+                  <Label htmlFor="role">Rôle</Label>
+                  <Select value={role} onValueChange={setRole}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Sélectionnez un rôle" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="commercial">Commercial</SelectItem>
+                      <SelectItem value="agent">Agent Immobilier</SelectItem>
+                      <SelectItem value="directeur">Directeur Général</SelectItem>
+                      <SelectItem value="admin">Administrateur</SelectItem>
+                    </SelectContent>
+                  </Select>
                 </div>
               </>
             )}

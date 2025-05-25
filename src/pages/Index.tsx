@@ -6,14 +6,29 @@ import ClientManager from '../components/ClientManager';
 import PropertyManager from '../components/PropertyManager';
 import VisitManager from '../components/VisitManager';
 import Pipeline from '../components/Pipeline';
+import UserManager from '../components/UserManager';
+import RoleGuard from '../components/RoleGuard';
+import { useRole } from '../hooks/useRole';
 
 const Index = () => {
   const [activeSection, setActiveSection] = useState('dashboard');
+  const { canAccessDashboard, canAccessPipeline, canManageUsers } = useRole();
 
   const renderContent = () => {
     switch (activeSection) {
       case 'dashboard':
-        return <Dashboard />;
+        return (
+          <RoleGuard 
+            allowedRoles={['admin', 'directeur']}
+            fallback={
+              <div className="p-6 text-center">
+                <p className="text-gray-500">Vous n'avez pas accès au tableau de bord.</p>
+              </div>
+            }
+          >
+            <Dashboard />
+          </RoleGuard>
+        );
       case 'clients':
         return <ClientManager />;
       case 'properties':
@@ -21,9 +36,22 @@ const Index = () => {
       case 'visits':
         return <VisitManager />;
       case 'pipeline':
-        return <Pipeline />;
+        return (
+          <RoleGuard 
+            allowedRoles={['admin', 'directeur', 'commercial']}
+            fallback={
+              <div className="p-6 text-center">
+                <p className="text-gray-500">Vous n'avez pas accès au suivi des ventes.</p>
+              </div>
+            }
+          >
+            <Pipeline />
+          </RoleGuard>
+        );
+      case 'users':
+        return <UserManager />;
       default:
-        return <Dashboard />;
+        return canAccessDashboard() ? <Dashboard /> : <ClientManager />;
     }
   };
 
