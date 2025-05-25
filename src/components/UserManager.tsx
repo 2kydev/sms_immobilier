@@ -33,18 +33,7 @@ const UserManager = () => {
 
       if (error) throw error;
       
-      // Assurer que chaque utilisateur a un rôle, même si la colonne n'existe pas encore
-      const usersWithRoles = (data || []).map((user: any) => ({
-        id: user.id,
-        email: user.email,
-        nom: user.nom,
-        prenom: user.prenom,
-        role: user.role || 'commercial' as UserRole,
-        is_active: user.is_active,
-        created_at: user.created_at
-      }));
-      
-      setUsers(usersWithRoles);
+      setUsers(data || []);
     } catch (error) {
       console.error('Error fetching users:', error);
       toast({
@@ -63,24 +52,12 @@ const UserManager = () => {
 
   const updateUserRole = async (userId: string, newRole: UserRole) => {
     try {
-      // Essayer de mettre à jour le rôle
       const { error } = await supabase
         .from('profiles')
-        .update({ role: newRole } as any)
+        .update({ role: newRole })
         .eq('id', userId);
 
-      if (error) {
-        // Si l'erreur indique que la colonne n'existe pas, informer l'utilisateur
-        if (error.message.includes('column "role" does not exist')) {
-          toast({
-            title: "Configuration incomplète",
-            description: "La colonne 'role' n'existe pas encore dans la base de données. Veuillez exécuter les migrations SQL d'abord.",
-            variant: "destructive"
-          });
-          return;
-        }
-        throw error;
-      }
+      if (error) throw error;
 
       toast({
         title: "Succès",
@@ -126,7 +103,7 @@ const UserManager = () => {
   const getRoleBadgeColor = (role: UserRole) => {
     switch (role) {
       case 'admin': return 'bg-red-100 text-red-800 border-red-200';
-      case 'directeur': return 'bg-purple-100 text-purple-800 border-purple-200';
+      case 'dg': return 'bg-purple-100 text-purple-800 border-purple-200';
       case 'commercial': return 'bg-blue-100 text-blue-800 border-blue-200';
       case 'agent': return 'bg-green-100 text-green-800 border-green-200';
       default: return 'bg-gray-100 text-gray-800 border-gray-200';
@@ -136,7 +113,7 @@ const UserManager = () => {
   const getRoleLabel = (role: UserRole) => {
     switch (role) {
       case 'admin': return 'Administrateur';
-      case 'directeur': return 'Directeur Général';
+      case 'dg': return 'Directeur Général';
       case 'commercial': return 'Commercial';
       case 'agent': return 'Agent Immobilier';
       default: return role;
@@ -212,7 +189,7 @@ const UserManager = () => {
                     <div className="space-y-2">
                       <p className="text-sm font-medium">Changer le rôle:</p>
                       <div className="flex flex-wrap gap-2">
-                        {(['admin', 'directeur', 'commercial', 'agent'] as UserRole[]).map((roleOption) => (
+                        {(['admin', 'dg', 'commercial', 'agent'] as UserRole[]).map((roleOption) => (
                           <Button
                             key={roleOption}
                             variant={user.role === roleOption ? "default" : "outline"}

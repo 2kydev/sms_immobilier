@@ -3,7 +3,7 @@ import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from './useAuth';
 
-export type UserRole = 'admin' | 'directeur' | 'agent' | 'commercial';
+export type UserRole = 'admin' | 'dg' | 'agent' | 'commercial';
 
 export const useRole = () => {
   const { user } = useAuth();
@@ -21,7 +21,7 @@ export const useRole = () => {
       try {
         const { data, error } = await supabase
           .from('profiles')
-          .select('*')
+          .select('role')
           .eq('id', user.id)
           .single();
 
@@ -29,9 +29,7 @@ export const useRole = () => {
           console.error('Error fetching user role:', error);
           setRole('commercial');
         } else {
-          // Vérifier si la colonne role existe dans les données
-          const userRole = (data as any)?.role;
-          setRole(userRole || 'commercial');
+          setRole(data?.role || 'commercial');
         }
       } catch (error) {
         console.error('Error fetching user role:', error);
@@ -53,11 +51,11 @@ export const useRole = () => {
   };
 
   const canAccessDashboard = (): boolean => {
-    return hasAnyRole(['admin', 'directeur']);
+    return hasAnyRole(['admin', 'dg']);
   };
 
   const canAccessPipeline = (): boolean => {
-    return hasAnyRole(['admin', 'directeur', 'commercial']);
+    return hasAnyRole(['admin', 'dg', 'commercial']);
   };
 
   const canManageUsers = (): boolean => {

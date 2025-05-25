@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -86,7 +85,7 @@ const CreateUserForm = ({ onUserCreated }: CreateUserFormProps) => {
   const getRoleLabel = (role: UserRole) => {
     switch (role) {
       case 'admin': return 'Administrateur';
-      case 'directeur': return 'Directeur Général';
+      case 'dg': return 'Directeur Général';
       case 'commercial': return 'Commercial';
       case 'agent': return 'Agent Immobilier';
       default: return role;
@@ -158,7 +157,7 @@ const CreateUserForm = ({ onUserCreated }: CreateUserFormProps) => {
               <SelectContent>
                 <SelectItem value="commercial">{getRoleLabel('commercial')}</SelectItem>
                 <SelectItem value="agent">{getRoleLabel('agent')}</SelectItem>
-                <SelectItem value="directeur">{getRoleLabel('directeur')}</SelectItem>
+                <SelectItem value="dg">{getRoleLabel('dg')}</SelectItem>
                 <SelectItem value="admin">{getRoleLabel('admin')}</SelectItem>
               </SelectContent>
             </Select>
