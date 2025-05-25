@@ -28,18 +28,26 @@ export const useAuth = () => {
         setUser(session?.user ?? null);
         
         if (session?.user) {
-          // Create a profile from user metadata and auth data
-          const userProfile: UserProfile = {
-            id: session.user.id,
-            email: session.user.email || '',
-            nom: session.user.user_metadata?.nom || 'Nom',
-            prenom: session.user.user_metadata?.prenom || 'Prénom',
-            is_active: true,
-            created_at: session.user.created_at,
-            updated_at: session.user.updated_at || session.user.created_at
-          };
-          console.log('Profile created from auth data:', userProfile);
-          setProfile(userProfile);
+          // Fetch user profile with a delay to avoid deadlock
+          setTimeout(async () => {
+            try {
+              console.log('Fetching profile for user:', session.user.id);
+              const { data: profileData, error } = await supabase
+                .from('profiles')
+                .select('*')
+                .eq('id', session.user.id)
+                .maybeSingle();
+              
+              if (error) {
+                console.error('Error fetching profile:', error);
+              } else {
+                console.log('Profile fetched:', profileData);
+                setProfile(profileData);
+              }
+            } catch (error) {
+              console.error('Error fetching profile:', error);
+            }
+          }, 0);
         } else {
           setProfile(null);
         }
@@ -55,17 +63,24 @@ export const useAuth = () => {
       setUser(session?.user ?? null);
       
       if (session?.user) {
-        // Create a profile from user metadata and auth data
-        const userProfile: UserProfile = {
-          id: session.user.id,
-          email: session.user.email || '',
-          nom: session.user.user_metadata?.nom || 'Nom',
-          prenom: session.user.user_metadata?.prenom || 'Prénom',
-          is_active: true,
-          created_at: session.user.created_at,
-          updated_at: session.user.updated_at || session.user.created_at
-        };
-        setProfile(userProfile);
+        // Fetch user profile
+        setTimeout(async () => {
+          try {
+            const { data: profileData, error } = await supabase
+              .from('profiles')
+              .select('*')
+              .eq('id', session.user.id)
+              .maybeSingle();
+            
+            if (error) {
+              console.error('Error fetching profile:', error);
+            } else {
+              setProfile(profileData);
+            }
+          } catch (error) {
+            console.error('Error fetching profile:', error);
+          }
+        }, 0);
       }
       
       setLoading(false);

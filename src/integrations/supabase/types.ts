@@ -69,6 +69,36 @@ export type Database = {
         }
         Relationships: []
       }
+      profiles: {
+        Row: {
+          created_at: string
+          email: string
+          id: string
+          is_active: boolean
+          nom: string
+          prenom: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          email: string
+          id: string
+          is_active?: boolean
+          nom?: string
+          prenom?: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          email?: string
+          id?: string
+          is_active?: boolean
+          nom?: string
+          prenom?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       properties: {
         Row: {
           adresse: string
