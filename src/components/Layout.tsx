@@ -2,7 +2,6 @@
 import React, { useState } from 'react';
 import { Sidebar, SidebarContent, SidebarProvider, SidebarTrigger } from '@/components/ui/sidebar';
 import { AppSidebar } from './AppSidebar';
-import UserMenu from './UserMenu';
 
 interface LayoutProps {
   children: React.ReactNode;
@@ -21,7 +20,6 @@ const Layout = ({ children, activeSection, onSectionChange }: LayoutProps) => {
               <SidebarTrigger />
               <h1 className="text-2xl font-bold text-primary">CRM Immobilier</h1>
             </div>
-            <UserMenu />
           </header>
           <div className="flex-1 p-6">
             {children}

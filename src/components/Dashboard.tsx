@@ -5,30 +5,41 @@ import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContaine
 
 const Dashboard = () => {
   const propertyData = [
-    { name: 'Appartements', value: 45, color: '#1e40af' },
-    { name: 'Maisons', value: 32, color: '#b59f3b' },
-    { name: 'Terrains', value: 23, color: '#6b7280' }
+    { name: 'Appartements', value: 68, color: '#1e40af' },
+    { name: 'Maisons', value: 45, color: '#b59f3b' },
+    { name: 'Terrains', value: 28, color: '#6b7280' },
+    { name: 'Locaux commerciaux', value: 15, color: '#dc2626' }
   ];
 
   const monthlyData = [
-    { month: 'Jan', transactions: 12, revenue: 2400000 },
-    { month: 'Fév', transactions: 15, revenue: 3200000 },
-    { month: 'Mar', transactions: 18, revenue: 3800000 },
-    { month: 'Avr', transactions: 22, revenue: 4500000 },
-    { month: 'Mai', transactions: 19, revenue: 4100000 }
+    { month: 'Jan', transactions: 18, revenue: 3200000 },
+    { month: 'Fév', transactions: 22, revenue: 4100000 },
+    { month: 'Mar', transactions: 25, revenue: 4800000 },
+    { month: 'Avr', transactions: 28, revenue: 5200000 },
+    { month: 'Mai', transactions: 31, revenue: 5900000 },
+    { month: 'Jun', transactions: 26, revenue: 4700000 }
   ];
 
   const clientTypes = [
-    { type: 'Acheteurs', count: 156 },
-    { type: 'Vendeurs', count: 89 },
-    { type: 'Locataires', count: 234 },
-    { type: 'Prospects', count: 67 }
+    { type: 'Acheteurs', count: 189 },
+    { type: 'Vendeurs', count: 124 },
+    { type: 'Locataires', count: 267 },
+    { type: 'Prospects', count: 95 }
   ];
 
   const upcomingVisits = [
-    { id: 1, client: 'Jean Martin', property: 'Appartement 3P - Centre ville', time: '14:00', agent: 'Marie Dupont' },
-    { id: 2, client: 'Sophie Bernard', property: 'Maison 5P - Quartier résidentiel', time: '16:30', agent: 'Pierre Leroy' },
-    { id: 3, client: 'Thomas Dubois', property: 'Studio - Proche université', time: '17:45', agent: 'Marie Dupont' }
+    { id: 1, client: 'Marie Dubois', property: 'Villa 6P - Quartier résidentiel', time: '09:30', agent: 'Sophie Martin' },
+    { id: 2, client: 'Jean-Pierre Moreau', property: 'Appartement 4P - Centre ville', time: '11:00', agent: 'Thomas Leroy' },
+    { id: 3, client: 'Caroline Blanc', property: 'Maison 5P - Proche écoles', time: '14:30', agent: 'Marie Dupont' },
+    { id: 4, client: 'Alexandre Rousseau', property: 'Studio - Campus universitaire', time: '16:15', agent: 'Pierre Bernard' },
+    { id: 5, client: 'Isabelle Garcia', property: 'Duplex 3P - Vue mer', time: '17:45', agent: 'Sophie Martin' }
+  ];
+
+  const recentActivity = [
+    { id: 1, action: 'Nouvelle visite programmée', client: 'M. Durand', time: '2h', type: 'visit' },
+    { id: 2, action: 'Offre acceptée', property: 'Appartement T3 - Voltaire', time: '4h', type: 'offer' },
+    { id: 3, action: 'Nouveau prospect enregistré', client: 'Mme Leblanc', time: '6h', type: 'client' },
+    { id: 4, action: 'Propriété mise en ligne', property: 'Villa T5 - Les Jardins', time: '1j', type: 'property' }
   ];
 
   return (
@@ -36,53 +47,58 @@ const Dashboard = () => {
       <div className="flex items-center justify-between">
         <h1 className="text-3xl font-bold text-primary">Tableau de Bord</h1>
         <div className="text-sm text-gray-500">
-          Dernière mise à jour: {new Date().toLocaleDateString('fr-FR')}
+          Dernière mise à jour: {new Date().toLocaleDateString('fr-FR', { 
+            weekday: 'long', 
+            year: 'numeric', 
+            month: 'long', 
+            day: 'numeric' 
+          })}
         </div>
       </div>
 
       {/* KPIs */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        <Card className="card-hover">
+        <Card className="card-hover border-l-4 border-l-blue-500">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium text-gray-600">Propriétés Actives</CardTitle>
-            <div className="h-4 w-4 text-primary">🏠</div>
+            <div className="h-4 w-4 text-blue-600">🏠</div>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-primary">127</div>
-            <p className="text-xs text-green-600">+12% ce mois</p>
+            <div className="text-2xl font-bold text-blue-600">156</div>
+            <p className="text-xs text-green-600">+18% ce mois</p>
           </CardContent>
         </Card>
 
-        <Card className="card-hover">
+        <Card className="card-hover border-l-4 border-l-green-500">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium text-gray-600">Visites Cette Semaine</CardTitle>
-            <div className="h-4 w-4 text-primary">📅</div>
+            <div className="h-4 w-4 text-green-600">📅</div>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-primary">23</div>
-            <p className="text-xs text-blue-600">5 aujourd'hui</p>
+            <div className="text-2xl font-bold text-green-600">31</div>
+            <p className="text-xs text-blue-600">8 aujourd'hui</p>
           </CardContent>
         </Card>
 
-        <Card className="card-hover">
+        <Card className="card-hover border-l-4 border-l-yellow-500">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium text-gray-600">CA du Mois</CardTitle>
-            <div className="h-4 w-4 text-accent">💰</div>
+            <div className="h-4 w-4 text-yellow-600">💰</div>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-primary">4,1M€</div>
-            <p className="text-xs text-green-600">+8% vs mois dernier</p>
+            <div className="text-2xl font-bold text-yellow-600">5,9M€</div>
+            <p className="text-xs text-green-600">+13% vs mois dernier</p>
           </CardContent>
         </Card>
 
-        <Card className="card-hover">
+        <Card className="card-hover border-l-4 border-l-purple-500">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium text-gray-600">Nouveaux Clients</CardTitle>
-            <div className="h-4 w-4 text-primary">👥</div>
+            <div className="h-4 w-4 text-purple-600">👥</div>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-primary">34</div>
-            <p className="text-xs text-green-600">+15% ce mois</p>
+            <div className="text-2xl font-bold text-purple-600">42</div>
+            <p className="text-xs text-green-600">+22% ce mois</p>
           </CardContent>
         </Card>
       </div>
@@ -113,7 +129,7 @@ const Dashboard = () => {
                 <Tooltip />
               </PieChart>
             </ResponsiveContainer>
-            <div className="flex justify-center gap-4 mt-4">
+            <div className="flex justify-center gap-4 mt-4 flex-wrap">
               {propertyData.map((item, index) => (
                 <div key={index} className="flex items-center gap-2">
                   <div className="w-3 h-3 rounded-full" style={{ backgroundColor: item.color }}></div>
@@ -128,7 +144,7 @@ const Dashboard = () => {
         <Card>
           <CardHeader>
             <CardTitle>Évolution du Chiffre d'Affaires</CardTitle>
-            <CardDescription>Transactions et revenus par mois</CardDescription>
+            <CardDescription>Transactions et revenus sur 6 mois</CardDescription>
           </CardHeader>
           <CardContent>
             <ResponsiveContainer width="100%" height={300}>
@@ -151,7 +167,7 @@ const Dashboard = () => {
         </Card>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Segmentation clients */}
         <Card>
           <CardHeader>
@@ -177,16 +193,42 @@ const Dashboard = () => {
             <CardTitle>Visites Programmées Aujourd'hui</CardTitle>
             <CardDescription>Planning des visites</CardDescription>
           </CardHeader>
-          <CardContent className="space-y-4">
+          <CardContent className="space-y-3 max-h-80 overflow-y-auto">
             {upcomingVisits.map((visit) => (
-              <div key={visit.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+              <div key={visit.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
                 <div>
                   <p className="font-medium text-sm">{visit.client}</p>
-                  <p className="text-xs text-gray-600">{visit.property}</p>
+                  <p className="text-xs text-gray-600 truncate">{visit.property}</p>
                 </div>
                 <div className="text-right">
                   <p className="text-sm font-medium text-primary">{visit.time}</p>
                   <p className="text-xs text-gray-500">{visit.agent}</p>
+                </div>
+              </div>
+            ))}
+          </CardContent>
+        </Card>
+
+        {/* Activité récente */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Activité Récente</CardTitle>
+            <CardDescription>Dernières actions dans le CRM</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-3 max-h-80 overflow-y-auto">
+            {recentActivity.map((activity) => (
+              <div key={activity.id} className="flex items-start gap-3 p-3 bg-gray-50 rounded-lg">
+                <div className={`w-2 h-2 rounded-full mt-2 ${
+                  activity.type === 'visit' ? 'bg-blue-500' :
+                  activity.type === 'offer' ? 'bg-green-500' :
+                  activity.type === 'client' ? 'bg-purple-500' : 'bg-yellow-500'
+                }`}></div>
+                <div className="flex-1">
+                  <p className="text-sm font-medium">{activity.action}</p>
+                  <p className="text-xs text-gray-600">
+                    {activity.client || activity.property}
+                  </p>
+                  <p className="text-xs text-gray-400">Il y a {activity.time}</p>
                 </div>
               </div>
             ))}
