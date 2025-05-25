@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -30,7 +29,10 @@ const UserProfile = () => {
           .single();
 
         if (error) throw error;
-        setProfile(data);
+        setProfile({
+          ...data,
+          role: data.role as UserRole
+        });
       } catch (error) {
         console.error('Error fetching profile:', error);
       } finally {
@@ -53,7 +55,10 @@ const UserProfile = () => {
         },
         (payload) => {
           if (payload.eventType === 'UPDATE' && payload.new) {
-            setProfile(payload.new as UserProfileData);
+            setProfile({
+              ...payload.new,
+              role: payload.new.role as UserRole
+            } as UserProfileData);
           }
         }
       )
