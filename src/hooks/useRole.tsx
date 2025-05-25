@@ -21,18 +21,15 @@ export const useRole = () => {
       try {
         const { data, error } = await supabase
           .from('profiles')
-          .select('*')
+          .select('role')
           .eq('id', user.id)
           .single();
 
         if (error) {
           console.error('Error fetching user role:', error);
-          // Si la colonne role n'existe pas, assigner le rôle par défaut
           setRole('commercial');
         } else {
-          // Vérifier si la propriété role existe dans les données
-          const userRole = (data as any)?.role || 'commercial';
-          setRole(userRole);
+          setRole(data.role || 'commercial');
         }
       } catch (error) {
         console.error('Error fetching user role:', error);
@@ -65,6 +62,10 @@ export const useRole = () => {
     return hasRole('admin');
   };
 
+  const isAdmin = (): boolean => {
+    return hasRole('admin');
+  };
+
   return {
     role,
     loading,
@@ -73,5 +74,6 @@ export const useRole = () => {
     canAccessDashboard,
     canAccessPipeline,
     canManageUsers,
+    isAdmin,
   };
 };
