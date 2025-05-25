@@ -28,15 +28,20 @@ const UserManager = () => {
     try {
       const { data, error } = await supabase
         .from('profiles')
-        .select('id, email, nom, prenom, role, is_active, created_at')
+        .select('*')
         .order('created_at', { ascending: false });
 
       if (error) throw error;
       
-      // Assurer que chaque utilisateur a un rôle
-      const usersWithRoles = (data || []).map(user => ({
-        ...user,
-        role: user.role || 'commercial' as UserRole
+      // Assurer que chaque utilisateur a un rôle, même si la colonne n'existe pas encore
+      const usersWithRoles = (data || []).map((user: any) => ({
+        id: user.id,
+        email: user.email,
+        nom: user.nom,
+        prenom: user.prenom,
+        role: user.role || 'commercial' as UserRole,
+        is_active: user.is_active,
+        created_at: user.created_at
       }));
       
       setUsers(usersWithRoles);
@@ -58,12 +63,24 @@ const UserManager = () => {
 
   const updateUserRole = async (userId: string, newRole: UserRole) => {
     try {
+      // Essayer de mettre à jour le rôle
       const { error } = await supabase
         .from('profiles')
-        .update({ role: newRole })
+        .update({ role: newRole } as any)
         .eq('id', userId);
 
-      if (error) throw error;
+      if (error) {
+        // Si l'erreur indique que la colonne n'existe pas, informer l'utilisateur
+        if (error.message.includes('column "role" does not exist')) {
+          toast({
+            title: "Configuration incomplète",
+            description: "La colonne 'role' n'existe pas encore dans la base de données. Veuillez exécuter les migrations SQL d'abord.",
+            variant: "destructive"
+          });
+          return;
+        }
+        throw error;
+      }
 
       toast({
         title: "Succès",

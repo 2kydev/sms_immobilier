@@ -21,7 +21,7 @@ export const useRole = () => {
       try {
         const { data, error } = await supabase
           .from('profiles')
-          .select('role')
+          .select('*')
           .eq('id', user.id)
           .single();
 
@@ -29,7 +29,9 @@ export const useRole = () => {
           console.error('Error fetching user role:', error);
           setRole('commercial');
         } else {
-          setRole(data?.role || 'commercial');
+          // Vérifier si la colonne role existe dans les données
+          const userRole = (data as any)?.role;
+          setRole(userRole || 'commercial');
         }
       } catch (error) {
         console.error('Error fetching user role:', error);
