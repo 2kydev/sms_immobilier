@@ -4,7 +4,6 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useAuth } from '@/hooks/useAuth';
 import { toast } from 'sonner';
 
@@ -18,7 +17,6 @@ const AuthForm = ({ mode, onModeChange }: AuthFormProps) => {
   const [password, setPassword] = useState('');
   const [nom, setNom] = useState('');
   const [prenom, setPrenom] = useState('');
-  const [role, setRole] = useState<string>('agent');
   const [loading, setLoading] = useState(false);
   const { signIn, signUp } = useAuth();
 
@@ -39,7 +37,7 @@ const AuthForm = ({ mode, onModeChange }: AuthFormProps) => {
           toast.success('Connexion réussie !');
         }
       } else {
-        const { error } = await signUp(email, password, { nom, prenom, role });
+        const { error } = await signUp(email, password, { nom, prenom });
         if (error) {
           if (error.message.includes('User already registered')) {
             toast.error('Un utilisateur avec cet email existe déjà');
@@ -95,20 +93,6 @@ const AuthForm = ({ mode, onModeChange }: AuthFormProps) => {
                     required
                   />
                 </div>
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="role">Rôle</Label>
-                <Select value={role} onValueChange={setRole}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Sélectionnez un rôle" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="agent">Agent</SelectItem>
-                    <SelectItem value="commercial">Commercial</SelectItem>
-                    <SelectItem value="directeur">Directeur</SelectItem>
-                    <SelectItem value="admin">Administrateur</SelectItem>
-                  </SelectContent>
-                </Select>
               </div>
             </>
           )}

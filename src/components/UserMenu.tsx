@@ -20,13 +20,6 @@ const UserMenu = () => {
 
   if (!profile) return null;
 
-  const roleLabels = {
-    admin: 'Administrateur',
-    directeur: 'Directeur',
-    agent: 'Agent',
-    commercial: 'Commercial'
-  };
-
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
@@ -36,7 +29,7 @@ const UserMenu = () => {
           </div>
           <div className="text-left hidden md:block">
             <div className="text-sm font-medium">{profile.prenom} {profile.nom}</div>
-            <div className="text-xs text-gray-500">{roleLabels[profile.role]}</div>
+            <div className="text-xs text-gray-500">Utilisateur</div>
           </div>
         </Button>
       </DropdownMenuTrigger>
@@ -44,7 +37,6 @@ const UserMenu = () => {
         <div className="px-2 py-1.5">
           <p className="text-sm font-medium">{profile.prenom} {profile.nom}</p>
           <p className="text-xs text-gray-500">{profile.email}</p>
-          <p className="text-xs text-gray-500">{roleLabels[profile.role]}</p>
         </div>
         <DropdownMenuSeparator />
         <DropdownMenuItem>

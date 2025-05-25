@@ -8,7 +8,6 @@ export interface UserProfile {
   email: string;
   nom: string;
   prenom: string;
-  role: 'admin' | 'directeur' | 'agent' | 'commercial';
   is_active: boolean;
   created_at: string;
   updated_at: string;
@@ -68,7 +67,7 @@ export const useAuth = () => {
     return () => subscription.unsubscribe();
   }, []);
 
-  const signUp = async (email: string, password: string, userData: { nom: string; prenom: string; role?: string }) => {
+  const signUp = async (email: string, password: string, userData: { nom: string; prenom: string }) => {
     console.log('Signing up user with data:', { email, userData });
     const { data, error } = await supabase.auth.signUp({
       email,
