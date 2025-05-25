@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -33,7 +34,13 @@ const UserManager = () => {
 
       if (error) throw error;
       
-      setUsers(data || []);
+      // Cast the role field to UserRole type
+      const typedUsers = (data || []).map(user => ({
+        ...user,
+        role: user.role as UserRole
+      }));
+      
+      setUsers(typedUsers);
     } catch (error) {
       console.error('Error fetching users:', error);
       toast({

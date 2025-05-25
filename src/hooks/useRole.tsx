@@ -29,7 +29,7 @@ export const useRole = () => {
           console.error('Error fetching user role:', error);
           setRole('commercial');
         } else {
-          setRole(data?.role || 'commercial');
+          setRole((data?.role as UserRole) || 'commercial');
         }
       } catch (error) {
         console.error('Error fetching user role:', error);
