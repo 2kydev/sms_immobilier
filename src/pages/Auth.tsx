@@ -85,8 +85,9 @@ const Auth = () => {
           
           <div className="mt-4 p-4 bg-blue-50 rounded-lg">
             <p className="text-sm text-blue-800 text-center">
-              <strong>Note :</strong> L'inscription publique est désactivée. 
-              Contactez votre administrateur pour créer un compte.
+              <strong>Note :</strong>  
+              Vous n'avez pas encore de compte ? 
+              Veuillez contacter votre administrateur système pour demander la création d'un compte utilisateur.
             </p>
           </div>
         </CardContent>
