@@ -62,19 +62,11 @@ interface Agent {
   statut: string;
 }
 
-interface UserProfile {
-  id: string;
-  email: string;
-  nom: string;
-  prenom: string;
-}
-
 const VisitManager = () => {
   const [visits, setVisits] = useState<Visit[]>([]);
   const [clients, setClients] = useState<Client[]>([]);
   const [properties, setProperties] = useState<Property[]>([]);
   const [agents, setAgents] = useState<Agent[]>([]);
-  const [userProfiles, setUserProfiles] = useState<UserProfile[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [filterStatut, setFilterStatut] = useState<string>('tous');
   const [selectedVisit, setSelectedVisit] = useState<Visit | null>(null);
@@ -165,21 +157,6 @@ const VisitManager = () => {
       setAgents((data || []) as Agent[]);
     } catch (error) {
       console.error('Error fetching agents:', error);
-    }
-  };
-
-  const fetchUserProfiles = async () => {
-    try {
-      const { data, error } = await supabase
-        .from('profiles')
-        .select('id, email, nom, prenom')
-        .eq('is_active', true)
-        .order('nom', { ascending: true });
-
-      if (error) throw error;
-      setUserProfiles((data || []) as UserProfile[]);
-    } catch (error) {
-      console.error('Error fetching user profiles:', error);
     } finally {
       setLoading(false);
     }
@@ -190,7 +167,6 @@ const VisitManager = () => {
     fetchClients();
     fetchProperties();
     fetchAgents();
-    fetchUserProfiles();
   }, []);
 
   const filteredVisits = visits.filter(visit => {
@@ -221,8 +197,13 @@ const VisitManager = () => {
 
   const scheduleVisitNotification = async (visit: Visit) => {
     try {
+      // Trouver l'agent par nom ou utiliser l'email de notification
       const selectedAgent = agents.find(a => a.nom === visit.agent);
-      const agentEmail = selectedAgent?.email || visit.notification_email || 'contact@agence.com';
+      const agentEmail = selectedAgent?.email || visit.notification_email;
+
+      if (!agentEmail) {
+        throw new Error('Aucun email trouvé pour l\'agent sélectionné');
+      }
 
       const { error } = await supabase.functions.invoke('schedule-visit-notification', {
         body: {
@@ -265,8 +246,8 @@ const VisitManager = () => {
       }]);
 
       toast({
-        title: "Attention",
-        description: "La visite a été créée mais la notification email n'a pas pu être programmée",
+        title: "Erreur",
+        description: error instanceof Error ? error.message : "La notification email n'a pas pu être programmée",
         variant: "destructive"
       });
     }
@@ -313,6 +294,14 @@ const VisitManager = () => {
       form.setValue('propriete_titre', selectedProperty.titre);
       form.setValue('propriete_adresse', `${selectedProperty.city} - ${selectedProperty.quartier}`);
       form.setValue('property_id', propertyId);
+    }
+  };
+
+  const handleAgentSelect = (agentName: string) => {
+    const selectedAgent = agents.find(a => a.nom === agentName);
+    if (selectedAgent) {
+      form.setValue('agent', agentName);
+      form.setValue('notification_email', selectedAgent.email);
     }
   };
 
@@ -642,7 +631,7 @@ const VisitManager = () => {
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Agent responsable</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                    <Select onValueChange={handleAgentSelect} defaultValue={field.value}>
                       <FormControl>
                         <SelectTrigger>
                           <SelectValue placeholder="Sélectionner un agent" />
@@ -725,13 +714,13 @@ const VisitManager = () => {
                             <Select onValueChange={field.onChange} defaultValue={field.value}>
                               <FormControl>
                                 <SelectTrigger>
-                                  <SelectValue placeholder="Sélectionner un utilisateur" />
+                                  <SelectValue placeholder="Sélectionner un agent" />
                                 </SelectTrigger>
                               </FormControl>
                               <SelectContent>
-                                {userProfiles.map((profile) => (
-                                  <SelectItem key={profile.id} value={profile.email}>
-                                    {profile.prenom} {profile.nom} - {profile.email}
+                                {agents.filter(agent => agent.statut === 'actif').map((agent) => (
+                                  <SelectItem key={agent.id} value={agent.email}>
+                                    {agent.nom} - {agent.email}
                                   </SelectItem>
                                 ))}
                               </SelectContent>
