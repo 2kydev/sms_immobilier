@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { Sidebar, SidebarContent, SidebarGroup, SidebarGroupContent, SidebarGroupLabel, SidebarMenu, SidebarMenuButton, SidebarMenuItem } from '@/components/ui/sidebar';
-import { ChartBar, Users, Image, Calendar, TrendingUp } from 'lucide-react';
+import { ChartBar, Users, Image, Calendar, TrendingUp, UserCheck } from 'lucide-react';
 
 const menuItems = [
   {
@@ -23,6 +23,11 @@ const menuItems = [
     title: 'Visites',
     icon: Calendar,
     id: 'visits'
+  },
+  {
+    title: 'Agents',
+    icon: UserCheck,
+    id: 'agents'
   },
   {
     title: 'Suivi des Ventes',
