@@ -7,6 +7,7 @@ import PropertyManager from '../components/PropertyManager';
 import VisitManager from '../components/VisitManager';
 import Pipeline from '../components/Pipeline';
 import UserManager from '../components/UserManager';
+import AgentManager from '../components/AgentManager';
 import RoleGuard from '../components/RoleGuard';
 import { useRole } from '../hooks/useRole';
 
@@ -35,6 +36,19 @@ const Index = () => {
         return <PropertyManager />;
       case 'visits':
         return <VisitManager />;
+      case 'agents':
+        return (
+          <RoleGuard 
+            allowedRoles={['admin', 'dg']}
+            fallback={
+              <div className="p-6 text-center">
+                <p className="text-gray-500">Vous n'avez pas accès à la gestion des agents.</p>
+              </div>
+            }
+          >
+            <AgentManager />
+          </RoleGuard>
+        );
       case 'pipeline':
         return (
           <RoleGuard 
