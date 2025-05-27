@@ -30,14 +30,37 @@ const PropertyImageGallery: React.FC<PropertyImageGalleryProps> = ({
   const goToPrevious = () => {
     if (selectedImageIndex !== null && selectedImageIndex > 0) {
       setSelectedImageIndex(selectedImageIndex - 1);
+    } else if (selectedImageIndex === 0) {
+      setSelectedImageIndex(images.length - 1);
     }
   };
 
   const goToNext = () => {
     if (selectedImageIndex !== null && selectedImageIndex < images.length - 1) {
       setSelectedImageIndex(selectedImageIndex + 1);
+    } else if (selectedImageIndex === images.length - 1) {
+      setSelectedImageIndex(0);
     }
   };
+
+  const handleKeyDown = (event: KeyboardEvent) => {
+    if (selectedImageIndex === null) return;
+    
+    if (event.key === 'ArrowLeft') {
+      goToPrevious();
+    } else if (event.key === 'ArrowRight') {
+      goToNext();
+    } else if (event.key === 'Escape') {
+      closeImageModal();
+    }
+  };
+
+  React.useEffect(() => {
+    if (selectedImageIndex !== null) {
+      document.addEventListener('keydown', handleKeyDown);
+      return () => document.removeEventListener('keydown', handleKeyDown);
+    }
+  }, [selectedImageIndex]);
 
   if (!images || images.length === 0) {
     return (
@@ -56,6 +79,10 @@ const PropertyImageGallery: React.FC<PropertyImageGalleryProps> = ({
           className="w-full h-40 object-cover rounded-lg cursor-pointer hover:opacity-90 transition-opacity"
           loading="lazy"
           onClick={() => openImageModal(0)}
+          onError={(e) => {
+            console.error('Image failed to load:', images[0]);
+            e.currentTarget.src = '/placeholder.svg';
+          }}
         />
         
         {selectedImageIndex !== null && (
@@ -76,6 +103,10 @@ const PropertyImageGallery: React.FC<PropertyImageGalleryProps> = ({
                   src={images[selectedImageIndex]}
                   alt={`${propertyTitle} - Image ${selectedImageIndex + 1}`}
                   className="max-w-full max-h-[80vh] object-contain"
+                  onError={(e) => {
+                    console.error('Image failed to load in modal:', images[selectedImageIndex]);
+                    e.currentTarget.src = '/placeholder.svg';
+                  }}
                 />
               </div>
             </DialogContent>
@@ -87,7 +118,7 @@ const PropertyImageGallery: React.FC<PropertyImageGalleryProps> = ({
 
   return (
     <div className="relative">
-      <Carousel className="w-full">
+      <Carousel className="w-full" opts={{ loop: true }}>
         <CarouselContent>
           {images.map((image, index) => (
             <CarouselItem key={index}>
@@ -97,12 +128,16 @@ const PropertyImageGallery: React.FC<PropertyImageGalleryProps> = ({
                 className="w-full h-40 object-cover rounded-lg cursor-pointer hover:opacity-90 transition-opacity"
                 loading="lazy"
                 onClick={() => openImageModal(index)}
+                onError={(e) => {
+                  console.error('Image failed to load:', image);
+                  e.currentTarget.src = '/placeholder.svg';
+                }}
               />
             </CarouselItem>
           ))}
         </CarouselContent>
-        <CarouselPrevious className="left-2" />
-        <CarouselNext className="right-2" />
+        <CarouselPrevious className="left-2 bg-white/80 hover:bg-white" />
+        <CarouselNext className="right-2 bg-white/80 hover:bg-white" />
       </Carousel>
       
       <div className="absolute top-2 right-2 bg-black bg-opacity-50 text-white text-xs px-2 py-1 rounded">
@@ -127,29 +162,29 @@ const PropertyImageGallery: React.FC<PropertyImageGalleryProps> = ({
                 src={images[selectedImageIndex]}
                 alt={`${propertyTitle} - Image ${selectedImageIndex + 1}`}
                 className="max-w-full max-h-[80vh] object-contain"
+                onError={(e) => {
+                  console.error('Image failed to load in modal:', images[selectedImageIndex]);
+                  e.currentTarget.src = '/placeholder.svg';
+                }}
               />
               
-              {selectedImageIndex > 0 && (
-                <Button
-                  variant="outline"
-                  size="icon"
-                  onClick={goToPrevious}
-                  className="absolute left-4 top-1/2 -translate-y-1/2 bg-black/50 border-white/20 text-white hover:bg-black/70"
-                >
-                  <ChevronLeft className="h-4 w-4" />
-                </Button>
-              )}
+              <Button
+                variant="outline"
+                size="icon"
+                onClick={goToPrevious}
+                className="absolute left-4 top-1/2 -translate-y-1/2 bg-black/50 border-white/20 text-white hover:bg-black/70"
+              >
+                <ChevronLeft className="h-4 w-4" />
+              </Button>
               
-              {selectedImageIndex < images.length - 1 && (
-                <Button
-                  variant="outline"
-                  size="icon"
-                  onClick={goToNext}
-                  className="absolute right-4 top-1/2 -translate-y-1/2 bg-black/50 border-white/20 text-white hover:bg-black/70"
-                >
-                  <ChevronRight className="h-4 w-4" />
-                </Button>
-              )}
+              <Button
+                variant="outline"
+                size="icon"
+                onClick={goToNext}
+                className="absolute right-4 top-1/2 -translate-y-1/2 bg-black/50 border-white/20 text-white hover:bg-black/70"
+              >
+                <ChevronRight className="h-4 w-4" />
+              </Button>
               
               <div className="absolute bottom-4 left-1/2 -translate-x-1/2 bg-black/50 text-white text-sm px-3 py-1 rounded">
                 {selectedImageIndex + 1} / {images.length}

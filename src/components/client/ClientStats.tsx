@@ -9,7 +9,13 @@ interface ClientStatsProps {
 
 const ClientStats: React.FC<ClientStatsProps> = ({ clients }) => {
   return (
-    <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+    <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
+      <Card>
+        <CardContent className="pt-6">
+          <div className="text-2xl font-bold text-primary">{clients.length}</div>
+          <p className="text-sm text-gray-600">Total Clients</p>
+        </CardContent>
+      </Card>
       <Card>
         <CardContent className="pt-6">
           <div className="text-2xl font-bold text-green-600">{clients.filter(c => c.type === 'acheteur').length}</div>
