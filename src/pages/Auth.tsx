@@ -47,7 +47,7 @@ const Auth = () => {
       <Card className="w-full max-w-md">
         <CardHeader className="space-y-1">
           <CardTitle className="text-2xl text-center text-primary">
-            CRM Immobilier
+            Nouvelle SMS Immobilier
           </CardTitle>
           <CardDescription className="text-center">
             Connectez-vous à votre compte
