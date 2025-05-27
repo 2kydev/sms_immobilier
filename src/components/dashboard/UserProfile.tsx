@@ -1,30 +1,36 @@
+
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { UserRole } from '@/hooks/useRole';
+
 interface UserProfileData {
   nom: string;
   prenom: string;
   role: UserRole;
   email: string;
 }
+
 const UserProfile = () => {
-  const {
-    user
-  } = useAuth();
+  const { user } = useAuth();
   const [profile, setProfile] = useState<UserProfileData | null>(null);
   const [loading, setLoading] = useState(true);
+
   useEffect(() => {
     const fetchProfile = async () => {
       if (!user) return;
+
       try {
-        const {
-          data,
-          error
-        } = await supabase.from('profiles').select('nom, prenom, role, email').eq('id', user.id).single();
+        const { data, error } = await supabase
+          .from('profiles')
+          .select('nom, prenom, role, email')
+          .eq('id', user.id)
+          .single();
+
         if (error) throw error;
+
         setProfile({
           ...data,
           role: data.role as UserRole
@@ -35,26 +41,32 @@ const UserProfile = () => {
         setLoading(false);
       }
     };
+
     fetchProfile();
 
     // Set up real-time subscription for profile updates
-    const channel = supabase.channel('profile-changes').on('postgres_changes', {
-      event: '*',
-      schema: 'public',
-      table: 'profiles',
-      filter: `id=eq.${user?.id}`
-    }, payload => {
-      if (payload.eventType === 'UPDATE' && payload.new) {
-        setProfile({
-          ...payload.new,
-          role: payload.new.role as UserRole
-        } as UserProfileData);
-      }
-    }).subscribe();
+    const channel = supabase
+      .channel('profile-changes')
+      .on('postgres_changes', {
+        event: '*',
+        schema: 'public',
+        table: 'profiles',
+        filter: `id=eq.${user?.id}`
+      }, (payload) => {
+        if (payload.eventType === 'UPDATE' && payload.new) {
+          setProfile({
+            ...payload.new,
+            role: payload.new.role as UserRole
+          } as UserProfileData);
+        }
+      })
+      .subscribe();
+
     return () => {
       supabase.removeChannel(channel);
     };
   }, [user]);
+
   const getRoleLabel = (role: UserRole) => {
     switch (role) {
       case 'admin':
@@ -69,6 +81,7 @@ const UserProfile = () => {
         return role;
     }
   };
+
   const getRoleBadgeColor = (role: UserRole) => {
     switch (role) {
       case 'admin':
@@ -83,26 +96,56 @@ const UserProfile = () => {
         return 'bg-gray-100 text-gray-800 border-gray-200';
     }
   };
+
   if (loading) {
-    return <Card>
+    return (
+      <Card>
         <CardHeader>
           <CardTitle>Profil utilisateur</CardTitle>
         </CardHeader>
         <CardContent>
           <p className="text-sm text-gray-500">Chargement...</p>
         </CardContent>
-      </Card>;
+      </Card>
+    );
   }
+
   if (!profile) {
-    return <Card>
+    return (
+      <Card>
         <CardHeader>
           <CardTitle>Profil utilisateur</CardTitle>
         </CardHeader>
         <CardContent>
           <p className="text-sm text-gray-500">Aucune donnée de profil trouvée</p>
         </CardContent>
-      </Card>;
+      </Card>
+    );
   }
-  return;
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle>Profil utilisateur</CardTitle>
+        <CardDescription>Informations de votre compte</CardDescription>
+      </CardHeader>
+      <CardContent>
+        <div className="space-y-4">
+          <div className="flex items-center justify-between">
+            <div>
+              <h3 className="text-lg font-semibold">
+                {profile.prenom} {profile.nom}
+              </h3>
+              <p className="text-sm text-gray-600">{profile.email}</p>
+            </div>
+            <Badge className={getRoleBadgeColor(profile.role)}>
+              {getRoleLabel(profile.role)}
+            </Badge>
+          </div>
+        </div>
+      </CardContent>
+    </Card>
+  );
 };
+
 export default UserProfile;

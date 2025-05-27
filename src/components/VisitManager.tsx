@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -8,10 +9,11 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Textarea } from '@/components/ui/textarea';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Switch } from '@/components/ui/switch';
 import { useForm } from 'react-hook-form';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
-import { Calendar, Users, List } from 'lucide-react';
+import { Calendar, Users, List, Mail, Clock } from 'lucide-react';
 import VisitCalendar from './VisitCalendar';
 
 interface Visit {
@@ -29,6 +31,9 @@ interface Visit {
   agent: string;
   notes?: string;
   feedback_client?: string;
+  notification_enabled?: boolean;
+  notification_delay_hours?: number;
+  notification_email?: string;
 }
 
 interface Client {
@@ -49,10 +54,27 @@ interface Property {
   quartier: string;
 }
 
+interface Agent {
+  id: string;
+  nom: string;
+  email: string;
+  telephone: string;
+  statut: string;
+}
+
+interface UserProfile {
+  id: string;
+  email: string;
+  nom: string;
+  prenom: string;
+}
+
 const VisitManager = () => {
   const [visits, setVisits] = useState<Visit[]>([]);
   const [clients, setClients] = useState<Client[]>([]);
   const [properties, setProperties] = useState<Property[]>([]);
+  const [agents, setAgents] = useState<Agent[]>([]);
+  const [userProfiles, setUserProfiles] = useState<UserProfile[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [filterStatut, setFilterStatut] = useState<string>('tous');
   const [selectedVisit, setSelectedVisit] = useState<Visit | null>(null);
@@ -71,8 +93,11 @@ const VisitManager = () => {
       date: new Date().toISOString().split('T')[0],
       heure: '09:00',
       statut: 'planifiee',
-      agent: 'Marie Dupont',
-      notes: ''
+      agent: '',
+      notes: '',
+      notification_enabled: false,
+      notification_delay_hours: 24,
+      notification_email: ''
     }
   });
 
@@ -125,6 +150,36 @@ const VisitManager = () => {
       setProperties((data || []) as Property[]);
     } catch (error) {
       console.error('Error fetching properties:', error);
+    }
+  };
+
+  const fetchAgents = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('agents')
+        .select('*')
+        .eq('statut', 'actif')
+        .order('nom', { ascending: true });
+
+      if (error) throw error;
+      setAgents((data || []) as Agent[]);
+    } catch (error) {
+      console.error('Error fetching agents:', error);
+    }
+  };
+
+  const fetchUserProfiles = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('id, email, nom, prenom')
+        .eq('is_active', true)
+        .order('nom', { ascending: true });
+
+      if (error) throw error;
+      setUserProfiles((data || []) as UserProfile[]);
+    } catch (error) {
+      console.error('Error fetching user profiles:', error);
     } finally {
       setLoading(false);
     }
@@ -134,6 +189,8 @@ const VisitManager = () => {
     fetchVisits();
     fetchClients();
     fetchProperties();
+    fetchAgents();
+    fetchUserProfiles();
   }, []);
 
   const filteredVisits = visits.filter(visit => {
@@ -162,46 +219,15 @@ const VisitManager = () => {
     }
   };
 
-  const handleStatusChange = async (visitId: string, newStatus: string) => {
-    try {
-      const { error } = await supabase
-        .from('visits')
-        .update({ statut: newStatus })
-        .eq('id', visitId);
-
-      if (error) throw error;
-
-      setVisits(visits.map(visit => 
-        visit.id === visitId ? { ...visit, statut: newStatus as any } : visit
-      ));
-
-      toast({
-        title: "Succès",
-        description: "Statut de la visite mis à jour"
-      });
-
-      if (newStatus === 'planifiee') {
-        const visit = visits.find(v => v.id === visitId);
-        if (visit) {
-          await scheduleVisitNotification(visit);
-        }
-      }
-    } catch (error) {
-      console.error('Error updating visit status:', error);
-      toast({
-        title: "Erreur",
-        description: "Impossible de mettre à jour le statut",
-        variant: "destructive"
-      });
-    }
-  };
-
   const scheduleVisitNotification = async (visit: Visit) => {
     try {
+      const selectedAgent = agents.find(a => a.nom === visit.agent);
+      const agentEmail = selectedAgent?.email || visit.notification_email || 'contact@agence.com';
+
       const { error } = await supabase.functions.invoke('schedule-visit-notification', {
         body: {
           visitId: visit.id,
-          agentEmail: getAgentEmail(visit.agent),
+          agentEmail: agentEmail,
           visitDate: visit.date,
           visitTime: visit.heure,
           clientName: `${visit.client_prenom} ${visit.client_nom}`,
@@ -213,27 +239,37 @@ const VisitManager = () => {
 
       if (error) throw error;
 
+      // Log the email
+      await supabase.from('email_logs').insert([{
+        visit_id: visit.id,
+        recipient_email: agentEmail,
+        email_type: 'visit_reminder',
+        status: 'sent',
+        sent_at: new Date().toISOString()
+      }]);
+
       toast({
         title: "Notification programmée",
-        description: "Un email de rappel sera envoyé 24h avant la visite"
+        description: `Un email de rappel sera envoyé à ${agentEmail}`
       });
     } catch (error) {
       console.error('Error scheduling notification:', error);
+      
+      // Log the failed email
+      await supabase.from('email_logs').insert([{
+        visit_id: visit.id || '',
+        recipient_email: visit.notification_email || '',
+        email_type: 'visit_reminder',
+        status: 'failed',
+        error_message: error instanceof Error ? error.message : 'Unknown error'
+      }]);
+
       toast({
         title: "Attention",
         description: "La visite a été créée mais la notification email n'a pas pu être programmée",
         variant: "destructive"
       });
     }
-  };
-
-  const getAgentEmail = (agentName: string) => {
-    const emailMap: { [key: string]: string } = {
-      'Marie Dupont': 'marie.dupont@agence.com',
-      'Pierre Leroy': 'pierre.leroy@agence.com',
-      'Sophie Martin': 'sophie.martin@agence.com'
-    };
-    return emailMap[agentName] || 'contact@agence.com';
   };
 
   const openVisitDialog = (visit?: Visit) => {
@@ -251,8 +287,11 @@ const VisitManager = () => {
         date: new Date().toISOString().split('T')[0],
         heure: '09:00',
         statut: 'planifiee',
-        agent: 'Marie Dupont',
-        notes: ''
+        agent: '',
+        notes: '',
+        notification_enabled: false,
+        notification_delay_hours: 24,
+        notification_email: ''
       });
     }
     setIsDialogOpen(true);
@@ -315,7 +354,7 @@ const VisitManager = () => {
           statut: newVisit.statut as 'planifiee' | 'realisee' | 'annulee' | 'reportee'
         };
 
-        if (mappedVisit.statut === 'planifiee') {
+        if (mappedVisit.statut === 'planifiee' && mappedVisit.notification_enabled) {
           await scheduleVisitNotification(mappedVisit);
         }
 
@@ -350,8 +389,14 @@ const VisitManager = () => {
         </Button>
       </div>
 
-      {/* Statistiques rapides */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+      {/* Statistiques réorganisées */}
+      <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
+        <Card>
+          <CardContent className="pt-6">
+            <div className="text-2xl font-bold text-primary">{visits.length}</div>
+            <p className="text-sm text-gray-600">Total Visites</p>
+          </CardContent>
+        </Card>
         <Card>
           <CardContent className="pt-6">
             <div className="text-2xl font-bold text-green-600">{visits.filter(v => v.statut === 'planifiee').length}</div>
@@ -420,7 +465,7 @@ const VisitManager = () => {
             </CardContent>
           </Card>
 
-          {/* Liste des visites réorganisée */}
+          {/* Liste des visites */}
           <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
             {filteredVisits.map((visit) => (
               <Card key={visit.id} className="card-hover">
@@ -445,6 +490,12 @@ const VisitManager = () => {
                       <p className="text-gray-600 italic">"{visit.notes.substring(0, 50)}..."</p>
                     )}
                     <p><span className="font-medium">Agent:</span> {visit.agent}</p>
+                    {visit.notification_enabled && (
+                      <p className="flex items-center gap-1 text-blue-600">
+                        <Mail className="h-3 w-3" />
+                        <span className="text-xs">Notification activée</span>
+                      </p>
+                    )}
                   </div>
                   <div className="mt-3 pt-3 border-t">
                     <Button 
@@ -469,7 +520,7 @@ const VisitManager = () => {
 
       {/* Dialog pour créer/éditer une visite */}
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>
               {selectedVisit ? 'Modifier la visite' : 'Nouvelle visite'}
@@ -594,19 +645,105 @@ const VisitManager = () => {
                     <Select onValueChange={field.onChange} defaultValue={field.value}>
                       <FormControl>
                         <SelectTrigger>
-                          <SelectValue placeholder="Agent" />
+                          <SelectValue placeholder="Sélectionner un agent" />
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        <SelectItem value="Marie Dupont">Marie Dupont</SelectItem>
-                        <SelectItem value="Pierre Leroy">Pierre Leroy</SelectItem>
-                        <SelectItem value="Sophie Martin">Sophie Martin</SelectItem>
+                        {agents.map((agent) => (
+                          <SelectItem key={agent.id} value={agent.nom}>
+                            {agent.nom} - {agent.email}
+                          </SelectItem>
+                        ))}
                       </SelectContent>
                     </Select>
                     <FormMessage />
                   </FormItem>
                 )}
               />
+
+              {/* Section Notifications Email */}
+              <div className="md:col-span-2 border-t pt-4">
+                <h3 className="text-lg font-medium mb-4 flex items-center gap-2">
+                  <Mail className="h-5 w-5" />
+                  Notifications Email
+                </h3>
+                
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <FormField
+                    control={form.control}
+                    name="notification_enabled"
+                    render={({ field }) => (
+                      <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-sm">
+                        <div className="space-y-0.5">
+                          <FormLabel>Activer les notifications</FormLabel>
+                          <div className="text-[0.8rem] text-muted-foreground">
+                            Envoyer un rappel par email
+                          </div>
+                        </div>
+                        <FormControl>
+                          <Switch
+                            checked={field.value}
+                            onCheckedChange={field.onChange}
+                          />
+                        </FormControl>
+                      </FormItem>
+                    )}
+                  />
+
+                  {form.watch('notification_enabled') && (
+                    <>
+                      <FormField
+                        control={form.control}
+                        name="notification_delay_hours"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Délai de notification</FormLabel>
+                            <Select onValueChange={(value) => field.onChange(Number(value))} defaultValue={field.value?.toString()}>
+                              <FormControl>
+                                <SelectTrigger>
+                                  <SelectValue placeholder="Délai" />
+                                </SelectTrigger>
+                              </FormControl>
+                              <SelectContent>
+                                <SelectItem value="1">1 heure avant</SelectItem>
+                                <SelectItem value="24">1 jour avant</SelectItem>
+                                <SelectItem value="48">2 jours avant</SelectItem>
+                                <SelectItem value="72">3 jours avant</SelectItem>
+                              </SelectContent>
+                            </Select>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+
+                      <FormField
+                        control={form.control}
+                        name="notification_email"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Email de notification</FormLabel>
+                            <Select onValueChange={field.onChange} defaultValue={field.value}>
+                              <FormControl>
+                                <SelectTrigger>
+                                  <SelectValue placeholder="Sélectionner un utilisateur" />
+                                </SelectTrigger>
+                              </FormControl>
+                              <SelectContent>
+                                {userProfiles.map((profile) => (
+                                  <SelectItem key={profile.id} value={profile.email}>
+                                    {profile.prenom} {profile.nom} - {profile.email}
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    </>
+                  )}
+                </div>
+              </div>
 
               <FormField
                 control={form.control}

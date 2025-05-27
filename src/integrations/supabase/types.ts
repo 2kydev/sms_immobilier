@@ -9,6 +9,36 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      agents: {
+        Row: {
+          created_at: string
+          email: string
+          id: string
+          nom: string
+          statut: string
+          telephone: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          email: string
+          id?: string
+          nom: string
+          statut?: string
+          telephone: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          email?: string
+          id?: string
+          nom?: string
+          statut?: string
+          telephone?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       clients: {
         Row: {
           adresse: string
@@ -68,6 +98,50 @@ export type Database = {
           updated_at?: string
         }
         Relationships: []
+      }
+      email_logs: {
+        Row: {
+          created_at: string
+          email_type: string
+          error_message: string | null
+          id: string
+          recipient_email: string
+          sent_at: string | null
+          status: string
+          updated_at: string
+          visit_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          email_type?: string
+          error_message?: string | null
+          id?: string
+          recipient_email: string
+          sent_at?: string | null
+          status?: string
+          updated_at?: string
+          visit_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          email_type?: string
+          error_message?: string | null
+          id?: string
+          recipient_email?: string
+          sent_at?: string | null
+          status?: string
+          updated_at?: string
+          visit_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "email_logs_visit_id_fkey"
+            columns: ["visit_id"]
+            isOneToOne: false
+            referencedRelation: "visits"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       profiles: {
         Row: {
@@ -236,6 +310,9 @@ export type Database = {
           id: string
           note_visite: number | null
           notes: string | null
+          notification_delay_hours: number | null
+          notification_email: string | null
+          notification_enabled: boolean | null
           property_id: string | null
           propriete_adresse: string
           propriete_titre: string
@@ -255,6 +332,9 @@ export type Database = {
           id?: string
           note_visite?: number | null
           notes?: string | null
+          notification_delay_hours?: number | null
+          notification_email?: string | null
+          notification_enabled?: boolean | null
           property_id?: string | null
           propriete_adresse: string
           propriete_titre: string
@@ -274,6 +354,9 @@ export type Database = {
           id?: string
           note_visite?: number | null
           notes?: string | null
+          notification_delay_hours?: number | null
+          notification_email?: string | null
+          notification_enabled?: boolean | null
           property_id?: string | null
           propriete_adresse?: string
           propriete_titre?: string

@@ -6,7 +6,8 @@ const resend = new Resend(Deno.env.get("RESEND_API_KEY"));
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+  "Access-Control-Allow-Headers":
+    "authorization, x-client-info, apikey, content-type",
 };
 
 interface VisitNotificationRequest {
@@ -26,56 +27,110 @@ const handler = async (req: Request): Promise<Response> => {
   }
 
   try {
-    const body: VisitNotificationRequest = await req.json();
-    
-    console.log("Scheduling visit notification:", body);
+    const { 
+      visitId, 
+      agentEmail, 
+      visitDate, 
+      visitTime, 
+      clientName, 
+      clientPhone, 
+      propertyTitle, 
+      propertyAddress 
+    }: VisitNotificationRequest = await req.json();
 
-    // Calculer la date d'envoi (24h avant la visite)
-    const visitDateTime = new Date(`${body.visitDate}T${body.visitTime}`);
-    const notificationDate = new Date(visitDateTime.getTime() - 24 * 60 * 60 * 1000);
-    
-    // Pour la démo, nous envoyons l'email immédiatement
-    // Dans un environnement de production, vous utiliseriez un service de planification
+    const visitDateTime = new Date(`${visitDate}T${visitTime}`);
+    const formattedDate = visitDateTime.toLocaleDateString('fr-FR', {
+      weekday: 'long',
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric'
+    });
+
     const emailResponse = await resend.emails.send({
-      from: "CRM Immobilier <onboarding@resend.dev>",
-      to: [body.agentEmail],
-      subject: `Rappel: Visite programmée demain - ${body.propertyTitle}`,
+      from: "Nouvelle SMS Immobilier <noreply@agence.com>",
+      to: [agentEmail],
+      subject: `Rappel de visite - ${clientName} - ${propertyTitle}`,
       html: `
-        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-          <h2 style="color: #2563eb;">Rappel de visite programmée</h2>
-          
-          <div style="background: #f8fafc; padding: 20px; border-radius: 8px; margin: 20px 0;">
-            <h3 style="margin-top: 0;">Détails de la visite</h3>
-            <p><strong>Date:</strong> ${new Date(body.visitDate).toLocaleDateString('fr-FR')}</p>
-            <p><strong>Heure:</strong> ${body.visitTime}</p>
-            <p><strong>Propriété:</strong> ${body.propertyTitle}</p>
-            <p><strong>Adresse:</strong> ${body.propertyAddress}</p>
+        <!DOCTYPE html>
+        <html>
+        <head>
+          <meta charset="utf-8">
+          <meta name="viewport" content="width=device-width, initial-scale=1.0">
+          <title>Rappel de visite</title>
+          <style>
+            body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; margin: 0; padding: 20px; background-color: #f4f4f4; }
+            .container { max-width: 600px; margin: 0 auto; background: white; border-radius: 8px; overflow: hidden; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+            .header { background: linear-gradient(135deg, #1e40af, #3b82f6); color: white; padding: 30px; text-align: center; }
+            .content { padding: 30px; }
+            .visit-info { background: #f8fafc; border-left: 4px solid #1e40af; padding: 20px; margin: 20px 0; border-radius: 4px; }
+            .info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin: 20px 0; }
+            .info-item { padding: 10px; background: #f1f5f9; border-radius: 4px; }
+            .info-label { font-weight: bold; color: #1e40af; font-size: 12px; text-transform: uppercase; }
+            .info-value { margin-top: 5px; }
+            .footer { background: #f8fafc; padding: 20px; text-align: center; color: #64748b; font-size: 14px; }
+            .button { display: inline-block; background: #1e40af; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; margin: 20px 0; }
+          </style>
+        </head>
+        <body>
+          <div class="container">
+            <div class="header">
+              <h1>🏠 Rappel de Visite</h1>
+              <p>Nouvelle SMS Immobilier</p>
+            </div>
+            
+            <div class="content">
+              <p>Bonjour,</p>
+              
+              <p>Nous vous rappelons qu'une visite est programmée <strong>demain</strong> :</p>
+              
+              <div class="visit-info">
+                <h3>📅 Détails de la visite</h3>
+                <p><strong>Date :</strong> ${formattedDate}</p>
+                <p><strong>Heure :</strong> ${visitTime}</p>
+              </div>
+
+              <div class="info-grid">
+                <div class="info-item">
+                  <div class="info-label">👤 Client</div>
+                  <div class="info-value">
+                    <strong>${clientName}</strong><br>
+                    📞 ${clientPhone}
+                  </div>
+                </div>
+                
+                <div class="info-item">
+                  <div class="info-label">🏡 Propriété</div>
+                  <div class="info-value">
+                    <strong>${propertyTitle}</strong><br>
+                    📍 ${propertyAddress}
+                  </div>
+                </div>
+              </div>
+
+              <p><strong>Points à vérifier avant la visite :</strong></p>
+              <ul>
+                <li>✅ Confirmer la présence du client</li>
+                <li>✅ Préparer les documents de la propriété</li>
+                <li>✅ Vérifier l'accès à la propriété</li>
+                <li>✅ Prévoir les clés et badges d'accès</li>
+              </ul>
+
+              <p>Bonne visite !</p>
+            </div>
+            
+            <div class="footer">
+              <p><strong>Nouvelle SMS Immobilier</strong></p>
+              <p>CRM Immobilier - Système de notification automatique</p>
+            </div>
           </div>
-
-          <div style="background: #f0f9ff; padding: 20px; border-radius: 8px; margin: 20px 0;">
-            <h3 style="margin-top: 0;">Informations client</h3>
-            <p><strong>Nom:</strong> ${body.clientName}</p>
-            <p><strong>Téléphone:</strong> ${body.clientPhone}</p>
-          </div>
-
-          <p style="margin-top: 30px;">
-            Cette visite est programmée pour demain. N'oubliez pas de vous préparer et de contacter le client si nécessaire.
-          </p>
-
-          <p style="color: #6b7280; font-size: 14px; margin-top: 30px;">
-            Cet email a été envoyé automatiquement par votre CRM Immobilier.
-          </p>
-        </div>
+        </body>
+        </html>
       `,
     });
 
     console.log("Email sent successfully:", emailResponse);
 
-    return new Response(JSON.stringify({ 
-      success: true, 
-      messageId: emailResponse.data?.id,
-      scheduledFor: notificationDate.toISOString()
-    }), {
+    return new Response(JSON.stringify(emailResponse), {
       status: 200,
       headers: {
         "Content-Type": "application/json",
@@ -85,10 +140,7 @@ const handler = async (req: Request): Promise<Response> => {
   } catch (error: any) {
     console.error("Error in schedule-visit-notification function:", error);
     return new Response(
-      JSON.stringify({ 
-        error: error.message,
-        details: "Assurez-vous que la clé API Resend est configurée"
-      }),
+      JSON.stringify({ error: error.message }),
       {
         status: 500,
         headers: { "Content-Type": "application/json", ...corsHeaders },
