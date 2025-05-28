@@ -27,6 +27,12 @@ const handler = async (req: Request): Promise<Response> => {
   }
 
   try {
+    console.log("Starting notification process...");
+    
+    if (!Deno.env.get("RESEND_API_KEY")) {
+      throw new Error("RESEND_API_KEY environment variable is not set");
+    }
+
     const { 
       visitId, 
       agentEmail, 
@@ -38,6 +44,15 @@ const handler = async (req: Request): Promise<Response> => {
       propertyAddress 
     }: VisitNotificationRequest = await req.json();
 
+    console.log("Notification data:", {
+      visitId,
+      agentEmail,
+      visitDate,
+      visitTime,
+      clientName,
+      propertyTitle
+    });
+
     const visitDateTime = new Date(`${visitDate}T${visitTime}`);
     const formattedDate = visitDateTime.toLocaleDateString('fr-FR', {
       weekday: 'long',
@@ -45,6 +60,8 @@ const handler = async (req: Request): Promise<Response> => {
       month: 'long',
       day: 'numeric'
     });
+
+    console.log("Sending email to:", agentEmail);
 
     const emailResponse = await resend.emails.send({
       from: "Nouvelle SMS Immobilier <noreply@agence.com>",
@@ -81,7 +98,7 @@ const handler = async (req: Request): Promise<Response> => {
             <div class="content">
               <p>Bonjour,</p>
               
-              <p>Nous vous rappelons qu'une visite est programmée <strong>demain</strong> :</p>
+              <p>Nous vous rappelons qu'une visite est programmée :</p>
               
               <div class="visit-info">
                 <h3>📅 Détails de la visite</h3>

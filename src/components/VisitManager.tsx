@@ -205,7 +205,11 @@ const VisitManager = () => {
         throw new Error('Aucun email trouvé pour l\'agent sélectionné');
       }
 
-      const { error } = await supabase.functions.invoke('schedule-visit-notification', {
+      console.log('Scheduling notification for visit:', visit.id);
+      console.log('Agent email:', agentEmail);
+      console.log('Visit date:', visit.date, 'time:', visit.heure);
+
+      const { data, error } = await supabase.functions.invoke('schedule-visit-notification', {
         body: {
           visitId: visit.id,
           agentEmail: agentEmail,
@@ -218,7 +222,12 @@ const VisitManager = () => {
         }
       });
 
-      if (error) throw error;
+      if (error) {
+        console.error('Error from edge function:', error);
+        throw error;
+      }
+
+      console.log('Notification scheduled successfully:', data);
 
       // Log the email
       await supabase.from('email_logs').insert([{
@@ -325,6 +334,13 @@ const VisitManager = () => {
           .eq('id', selectedVisit.id);
 
         if (error) throw error;
+
+        // Si la visite est planifiée et que les notifications sont activées, programmer la notification
+        if (visitData.statut === 'planifiee' && visitData.notification_enabled) {
+          const updatedVisit = { ...selectedVisit, ...visitData };
+          await scheduleVisitNotification(updatedVisit);
+        }
+
         toast({
           title: "Succès",
           description: "Visite mise à jour avec succès"
@@ -343,6 +359,7 @@ const VisitManager = () => {
           statut: newVisit.statut as 'planifiee' | 'realisee' | 'annulee' | 'reportee'
         };
 
+        // Si la visite est planifiée et que les notifications sont activées, programmer la notification
         if (mappedVisit.statut === 'planifiee' && mappedVisit.notification_enabled) {
           await scheduleVisitNotification(mappedVisit);
         }
