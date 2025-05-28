@@ -10,7 +10,7 @@ import VisitCalendar from './VisitCalendar';
 import VisitCard from './visit/VisitCard';
 import VisitFilters from './visit/VisitFilters';
 import VisitForm from './visit/VisitForm';
-import { VisitStats } from './visit/VisitStats';
+import VisitStats from './visit/VisitStats';
 
 interface Visit {
   id: string;
