@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -208,6 +207,7 @@ const VisitManager = () => {
       console.log('Scheduling notification for visit:', visit.id);
       console.log('Agent email:', agentEmail);
       console.log('Visit date:', visit.date, 'time:', visit.heure);
+      console.log('Notification delay:', visit.notification_delay_hours, 'hours');
 
       const { data, error } = await supabase.functions.invoke('schedule-visit-notification', {
         body: {
@@ -218,7 +218,8 @@ const VisitManager = () => {
           clientName: `${visit.client_prenom} ${visit.client_nom}`,
           clientPhone: visit.client_telephone,
           propertyTitle: visit.propriete_titre,
-          propertyAddress: visit.propriete_adresse
+          propertyAddress: visit.propriete_adresse,
+          notificationDelayHours: visit.notification_delay_hours || 24
         }
       });
 
@@ -229,23 +230,27 @@ const VisitManager = () => {
 
       console.log('Notification scheduled successfully:', data);
 
-      // Log the email
+      // Log the scheduled email
       await supabase.from('email_logs').insert([{
         visit_id: visit.id,
         recipient_email: agentEmail,
         email_type: 'visit_reminder',
-        status: 'sent',
-        sent_at: new Date().toISOString()
+        status: 'scheduled',
+        sent_at: null
       }]);
 
+      // Calculer et afficher quand la notification sera envoyée
+      const visitDateTime = new Date(`${visit.date}T${visit.heure}`);
+      const notificationTime = new Date(visitDateTime.getTime() - ((visit.notification_delay_hours || 24) * 60 * 60 * 1000));
+      
       toast({
         title: "Notification programmée",
-        description: `Un email de rappel sera envoyé à ${agentEmail}`
+        description: `Un email de rappel sera envoyé à ${agentEmail} le ${notificationTime.toLocaleDateString('fr-FR')} à ${notificationTime.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}`
       });
     } catch (error) {
       console.error('Error scheduling notification:', error);
       
-      // Log the failed email
+      // Log the failed scheduling
       await supabase.from('email_logs').insert([{
         visit_id: visit.id || '',
         recipient_email: visit.notification_email || '',
@@ -256,7 +261,7 @@ const VisitManager = () => {
 
       toast({
         title: "Erreur",
-        description: error instanceof Error ? error.message : "La notification email n'a pas pu être programmée",
+        description: error instanceof Error ? error.message : "La notification n'a pas pu être programmée",
         variant: "destructive"
       });
     }
