@@ -63,8 +63,9 @@ const handler = async (req: Request): Promise<Response> => {
 
     console.log("Sending email to:", agentEmail);
 
+    // Utiliser onboarding@resend.dev qui est un domaine vérifié par défaut
     const emailResponse = await resend.emails.send({
-      from: "Nouvelle SMS Immobilier <noreply@agence.com>",
+      from: "SMS Immobilier <onboarding@resend.dev>",
       to: [agentEmail],
       subject: `Rappel de visite - ${clientName} - ${propertyTitle}`,
       html: `
@@ -92,7 +93,7 @@ const handler = async (req: Request): Promise<Response> => {
           <div class="container">
             <div class="header">
               <h1>🏠 Rappel de Visite</h1>
-              <p>Nouvelle SMS Immobilier</p>
+              <p>SMS Immobilier</p>
             </div>
             
             <div class="content">
@@ -136,7 +137,7 @@ const handler = async (req: Request): Promise<Response> => {
             </div>
             
             <div class="footer">
-              <p><strong>Nouvelle SMS Immobilier</strong></p>
+              <p><strong>SMS Immobilier</strong></p>
               <p>CRM Immobilier - Système de notification automatique</p>
             </div>
           </div>
@@ -146,6 +147,12 @@ const handler = async (req: Request): Promise<Response> => {
     });
 
     console.log("Email sent successfully:", emailResponse);
+
+    // Vérifier s'il y a une erreur dans la réponse
+    if (emailResponse.error) {
+      console.error("Resend API error:", emailResponse.error);
+      throw new Error(`Email sending failed: ${emailResponse.error.message}`);
+    }
 
     return new Response(JSON.stringify(emailResponse), {
       status: 200,
