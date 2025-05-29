@@ -99,28 +99,18 @@ const DashboardCharts = ({ propertyTypes, monthlyData, clientTypes }: DashboardC
           </CardHeader>
           <CardContent>
             <ResponsiveContainer width="100%" height={350}>
-              <PieChart>
-                <Pie 
-                  data={clientTypesWithPercentage} 
-                  cx="50%" 
-                  cy="50%" 
-                  labelLine={false}
-                  label={({ type, percentage }) => `${type} ${percentage}%`}
-                  outerRadius={120} 
-                  fill="#8884d8" 
-                  dataKey="count"
-                >
-                  {clientTypesWithPercentage.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                  ))}
-                </Pie>
+              <BarChart data={clientTypesWithPercentage} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
+                <CartesianGrid strokeDasharray="3 3" />
+                <XAxis dataKey="type" />
+                <YAxis />
                 <Tooltip 
-                  formatter={(value, name, props) => [
-                    `${value} clients (${props.payload.percentage}%)`,
+                  formatter={(value, name) => [
+                    `${value} clients`,
                     'Nombre de clients'
                   ]}
                 />
-              </PieChart>
+                <Bar dataKey="count" fill="#1e40af" />
+              </BarChart>
             </ResponsiveContainer>
           </CardContent>
         </Card>
