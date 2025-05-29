@@ -7,10 +7,19 @@ import PipelineMetrics from './pipeline/PipelineMetrics';
 import PipelineStage from './pipeline/PipelineStage';
 import TransactionDialog from './pipeline/TransactionDialog';
 
+interface Agent {
+  id: string;
+  nom: string;
+  email: string;
+  telephone: string;
+  statut: string;
+}
+
 const Pipeline = () => {
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [clients, setClients] = useState<Client[]>([]);
   const [properties, setProperties] = useState<Property[]>([]);
+  const [agents, setAgents] = useState<Agent[]>([]);
   const [selectedTransaction, setSelectedTransaction] = useState<Transaction | null>(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [selectedClientId, setSelectedClientId] = useState<string>('');
@@ -22,6 +31,7 @@ const Pipeline = () => {
     fetchTransactions();
     fetchClients();
     fetchProperties();
+    fetchAgents();
   }, []);
 
   const fetchTransactions = async () => {
@@ -84,6 +94,25 @@ const Pipeline = () => {
     }
   };
 
+  const fetchAgents = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('agents')
+        .select('*')
+        .order('nom', { ascending: true });
+
+      if (error) throw error;
+      setAgents(data || []);
+    } catch (error) {
+      console.error('Error fetching agents:', error);
+      toast({
+        title: "Erreur",
+        description: "Impossible de charger les agents",
+        variant: "destructive"
+      });
+    }
+  };
+
   const openTransactionDialog = (transaction?: Transaction) => {
     if (transaction) {
       setSelectedTransaction(transaction);
@@ -98,7 +127,7 @@ const Pipeline = () => {
         property_id: '',
         valeur: 0,
         etape: 'prospect',
-        agent: 'Marie Dupont',
+        agent: '',
         date_creation: new Date().toISOString().split('T')[0],
         derniere_activite: new Date().toISOString().split('T')[0],
         notes: '',
@@ -182,6 +211,7 @@ const Pipeline = () => {
         transaction={selectedTransaction}
         clients={clients}
         properties={properties}
+        agents={agents}
         selectedClientId={selectedClientId}
         selectedPropertyId={selectedPropertyId}
         onClientChange={setSelectedClientId}

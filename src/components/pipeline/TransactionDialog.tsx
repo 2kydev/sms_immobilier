@@ -8,12 +8,21 @@ import TransactionClientInfo from './TransactionClientInfo';
 import TransactionPropertyInfo from './TransactionPropertyInfo';
 import TransactionFormFields from './TransactionFormFields';
 
+interface Agent {
+  id: string;
+  nom: string;
+  email: string;
+  telephone: string;
+  statut: string;
+}
+
 interface TransactionDialogProps {
   isOpen: boolean;
   onClose: () => void;
   transaction: Transaction | null;
   clients: Client[];
   properties: Property[];
+  agents: Agent[];
   selectedClientId: string;
   selectedPropertyId: string;
   onClientChange: (clientId: string) => void;
@@ -27,6 +36,7 @@ const TransactionDialog = ({
   transaction, 
   clients, 
   properties, 
+  agents,
   selectedClientId, 
   selectedPropertyId, 
   onClientChange, 
@@ -36,6 +46,11 @@ const TransactionDialog = ({
   const { formData, updateFormData, createTransactionData } = useTransactionForm({ transaction });
 
   const handleSubmit = () => {
+    if (!formData.agent) {
+      alert('Veuillez sélectionner un agent responsable');
+      return;
+    }
+
     const transactionData = createTransactionData(selectedClientId, selectedPropertyId, transaction);
     onSave(transactionData);
   };
@@ -69,6 +84,7 @@ const TransactionDialog = ({
             <TransactionFormFields
               formData={formData}
               onFieldChange={updateFormData}
+              agents={agents}
             />
 
             <div className="md:col-span-2 flex gap-2 pt-4">
