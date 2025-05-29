@@ -21,6 +21,15 @@ interface DashboardChartsProps {
 }
 
 const DashboardCharts = ({ propertyTypes, monthlyData, clientTypes }: DashboardChartsProps) => {
+  // Préparer les données pour le graphique en secteurs avec pourcentages
+  const totalClients = clientTypes.reduce((sum, item) => sum + item.count, 0);
+  const clientTypesWithPercentage = clientTypes.map(item => ({
+    ...item,
+    percentage: totalClients > 0 ? ((item.count / totalClients) * 100).toFixed(1) : 0
+  }));
+
+  const COLORS = ['#1e40af', '#b59f3b', '#6b7280', '#dc2626', '#059669'];
+
   return (
     <>
       {/* Graphiques et données */}
@@ -82,21 +91,36 @@ const DashboardCharts = ({ propertyTypes, monthlyData, clientTypes }: DashboardC
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Segmentation clients */}
-        <Card>
+        {/* Segmentation clients - 2/3 de l'espace */}
+        <Card className="lg:col-span-2">
           <CardHeader>
             <CardTitle>Segmentation des Clients</CardTitle>
             <CardDescription>Répartition par type de client</CardDescription>
           </CardHeader>
           <CardContent>
-            <ResponsiveContainer width="100%" height={250}>
-              <BarChart data={clientTypes}>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="type" />
-                <YAxis />
-                <Tooltip />
-                <Bar dataKey="count" fill="#1e40af" />
-              </BarChart>
+            <ResponsiveContainer width="100%" height={350}>
+              <PieChart>
+                <Pie 
+                  data={clientTypesWithPercentage} 
+                  cx="50%" 
+                  cy="50%" 
+                  labelLine={false}
+                  label={({ type, percentage }) => `${type} ${percentage}%`}
+                  outerRadius={120} 
+                  fill="#8884d8" 
+                  dataKey="count"
+                >
+                  {clientTypesWithPercentage.map((entry, index) => (
+                    <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                  ))}
+                </Pie>
+                <Tooltip 
+                  formatter={(value, name, props) => [
+                    `${value} clients (${props.payload.percentage}%)`,
+                    'Nombre de clients'
+                  ]}
+                />
+              </PieChart>
             </ResponsiveContainer>
           </CardContent>
         </Card>

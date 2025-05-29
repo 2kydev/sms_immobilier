@@ -15,6 +15,9 @@ interface UpcomingVisitsProps {
 }
 
 const UpcomingVisits = ({ upcomingVisits }: UpcomingVisitsProps) => {
+  // Limiter à 5 visites
+  const limitedVisits = upcomingVisits.slice(0, 5);
+
   return (
     <Card>
       <CardHeader>
@@ -25,8 +28,8 @@ const UpcomingVisits = ({ upcomingVisits }: UpcomingVisitsProps) => {
         <CardDescription>Planning des visites</CardDescription>
       </CardHeader>
       <CardContent className="space-y-3 max-h-80 overflow-y-auto">
-        {upcomingVisits.length > 0 ? (
-          upcomingVisits.map(visit => (
+        {limitedVisits.length > 0 ? (
+          limitedVisits.map(visit => (
             <div key={visit.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
               <div>
                 <p className="font-medium text-sm">{visit.client}</p>

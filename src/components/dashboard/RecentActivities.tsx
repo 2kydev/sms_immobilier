@@ -13,6 +13,9 @@ interface RecentActivitiesProps {
 }
 
 const RecentActivities = ({ recentActivities }: RecentActivitiesProps) => {
+  // Limiter à 5 activités
+  const limitedActivities = recentActivities.slice(0, 5);
+
   return (
     <Card>
       <CardHeader>
@@ -20,8 +23,8 @@ const RecentActivities = ({ recentActivities }: RecentActivitiesProps) => {
         <CardDescription>Dernières actions dans le CRM</CardDescription>
       </CardHeader>
       <CardContent className="space-y-3 max-h-80 overflow-y-auto">
-        {recentActivities.length > 0 ? (
-          recentActivities.map(activity => (
+        {limitedActivities.length > 0 ? (
+          limitedActivities.map(activity => (
             <div key={activity.id} className="flex items-start gap-3 p-3 bg-gray-50 rounded-lg">
               <div className={`w-2 h-2 rounded-full mt-2 ${
                 activity.type === 'transaction' ? 'bg-blue-500' : 

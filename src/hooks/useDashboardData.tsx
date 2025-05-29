@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 
@@ -77,12 +76,12 @@ export const useDashboardData = () => {
     const activities = [];
 
     try {
-      // Dernières transactions créées
+      // Dernières transactions créées (limite 2)
       const { data: recentTransactions } = await supabase
         .from('transactions')
         .select('*, clients(nom, prenom), properties(titre)')
         .order('created_at', { ascending: false })
-        .limit(5);
+        .limit(2);
 
       if (recentTransactions) {
         recentTransactions.forEach(transaction => {
@@ -97,12 +96,12 @@ export const useDashboardData = () => {
         });
       }
 
-      // Dernières propriétés ajoutées
+      // Dernières propriétés ajoutées (limite 2)
       const { data: recentProperties } = await supabase
         .from('properties')
         .select('*')
         .order('created_at', { ascending: false })
-        .limit(3);
+        .limit(2);
 
       if (recentProperties) {
         recentProperties.forEach(property => {
@@ -117,13 +116,13 @@ export const useDashboardData = () => {
         });
       }
 
-      // Dernières ventes finalisées
+      // Dernières ventes finalisées (limite 1)
       const { data: closedDeals } = await supabase
         .from('transactions')
         .select('*, clients(nom, prenom), properties(titre)')
         .eq('etape', 'conclue')
         .order('updated_at', { ascending: false })
-        .limit(2);
+        .limit(1);
 
       if (closedDeals) {
         closedDeals.forEach(deal => {
@@ -138,10 +137,10 @@ export const useDashboardData = () => {
         });
       }
 
-      // Trier par date de création et prendre les 10 plus récentes
+      // Trier par date de création et prendre les 5 plus récentes
       return activities
         .sort((a, b) => new Date(b.time).getTime() - new Date(a.time).getTime())
-        .slice(0, 10);
+        .slice(0, 5);
 
     } catch (error) {
       console.error('Error fetching recent activities:', error);
@@ -248,7 +247,7 @@ export const useDashboardData = () => {
         });
       }
 
-      // Récupérer les visites à venir aujourd'hui
+      // Récupérer les 5 prochaines visites d'aujourd'hui
       const today = new Date().toISOString().split('T')[0];
       const { data: todayVisits } = await supabase
         .from('visits')
@@ -267,7 +266,7 @@ export const useDashboardData = () => {
         date: visit.date
       })) || [];
 
-      // Récupérer les activités récentes dynamiques depuis la base de données
+      // Récupérer les 5 activités récentes dynamiques depuis la base de données
       const recentActivities = await fetchRecentActivities();
 
       setDashboardData({
