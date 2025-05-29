@@ -13,30 +13,6 @@ const Dashboard = () => {
     return <div className="p-6">Chargement du tableau de bord...</div>;
   }
 
-  // Calculer le total des clients pour la segmentation
-  const totalClients = dashboardData.clientTypes.reduce((sum, item) => sum + item.count, 0);
-  const clientTypesWithPercentage = dashboardData.clientTypes.map(item => ({
-    ...item,
-    percentage: totalClients > 0 ? ((item.count / totalClients) * 100).toFixed(1) : 0
-  }));
-
-  const CustomLabel = (props: any) => {
-    const { x, y, width, height, value, payload } = props;
-    return (
-      <text
-        x={x + width / 2}
-        y={y + height / 2}
-        fill="#fff"
-        textAnchor="middle"
-        dominantBaseline="middle"
-        fontSize="12"
-        fontWeight="bold"
-      >
-        {payload.percentage}%
-      </text>
-    );
-  };
-
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
@@ -67,57 +43,67 @@ const Dashboard = () => {
         clientTypes={dashboardData.clientTypes}
       />
 
-      {/* Nouvelle disposition : Segmentation clients (2/3) + Visites et Activités (1/3) */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-        {/* Segmentation clients - 8/12 (2/3) de l'espace */}
-        <div className="lg:col-span-8">
-          <div className="card bg-card text-card-foreground shadow-sm rounded-lg border">
+      {/* Nouvelle disposition : 3 sections égales (1/3 chacune) */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* Segmentation clients - 1/3 de l'espace */}
+        <div className="lg:col-span-1">
+          <div className="card bg-card text-card-foreground shadow-sm rounded-lg border h-full">
             <div className="flex flex-col space-y-1.5 p-6">
-              <h3 className="text-2xl font-semibold leading-none tracking-tight">Segmentation des Clients</h3>
-              <p className="text-sm text-muted-foreground">Répartition par type de client</p>
+              <h3 className="text-xl font-semibold leading-none tracking-tight">Segmentation des Clients</h3>
+              <p className="text-sm text-muted-foreground">Répartition par type</p>
             </div>
             <div className="p-6 pt-0">
-              <div style={{ width: '100%', height: '350px' }}>
+              <div style={{ width: '100%', height: '300px' }}>
                 <div className="recharts-responsive-container" style={{ width: '100%', height: '100%' }}>
-                  <div className="recharts-wrapper" style={{ position: 'relative', cursor: 'default', width: '100%', height: '350px' }}>
-                    <svg className="recharts-surface" width="100%" height="350" viewBox="0 0 800 350">
+                  <div className="recharts-wrapper" style={{ position: 'relative', cursor: 'default', width: '100%', height: '300px' }}>
+                    <svg className="recharts-surface" width="100%" height="300" viewBox="0 0 400 300">
                       <g className="recharts-cartesian-grid">
-                        {Array.from({ length: 6 }, (_, i) => (
-                          <line key={i} strokeDasharray="3 3" stroke="#e0e7ff" x1={80 + i * 120} y1={20} x2={80 + i * 120} y2={330} />
+                        {Array.from({ length: dashboardData.clientTypes.length + 1 }, (_, i) => (
+                          <line key={i} strokeDasharray="3 3" stroke="#e0e7ff" x1={50 + i * (300 / dashboardData.clientTypes.length)} y1={20} x2={50 + i * (300 / dashboardData.clientTypes.length)} y2={280} />
                         ))}
-                        {Array.from({ length: 8 }, (_, i) => (
-                          <line key={i} strokeDasharray="3 3" stroke="#e0e7ff" x1={80} y1={20 + i * 38.75} x2={720} y2={20 + i * 38.75} />
+                        {Array.from({ length: 6 }, (_, i) => (
+                          <line key={i} strokeDasharray="3 3" stroke="#e0e7ff" x1={50} y1={20 + i * 43.33} x2={350} y2={20 + i * 43.33} />
                         ))}
                       </g>
                       <g className="recharts-xAxis">
-                        {clientTypesWithPercentage.map((item, index) => (
-                          <text key={index} x={140 + index * 160} y={345} textAnchor="middle" fill="#666" fontSize="12">
-                            {item.type}
-                          </text>
-                        ))}
+                        {dashboardData.clientTypes.map((item, index) => {
+                          const totalClients = dashboardData.clientTypes.reduce((sum, c) => sum + c.count, 0);
+                          const percentage = totalClients > 0 ? ((item.count / totalClients) * 100).toFixed(1) : 0;
+                          const xPos = 50 + (index + 0.5) * (300 / dashboardData.clientTypes.length);
+                          return (
+                            <text key={index} x={xPos} y={295} textAnchor="middle" fill="#666" fontSize="10">
+                              {item.type}
+                            </text>
+                          );
+                        })}
                       </g>
                       <g className="recharts-bar">
-                        {clientTypesWithPercentage.map((item, index) => {
-                          const barHeight = (item.count / Math.max(...clientTypesWithPercentage.map(c => c.count))) * 300;
+                        {dashboardData.clientTypes.map((item, index) => {
+                          const totalClients = dashboardData.clientTypes.reduce((sum, c) => sum + c.count, 0);
+                          const percentage = totalClients > 0 ? ((item.count / totalClients) * 100).toFixed(1) : 0;
+                          const barHeight = totalClients > 0 ? (item.count / Math.max(...dashboardData.clientTypes.map(c => c.count))) * 240 : 0;
+                          const barWidth = 300 / dashboardData.clientTypes.length * 0.6;
+                          const xPos = 50 + index * (300 / dashboardData.clientTypes.length) + (300 / dashboardData.clientTypes.length - barWidth) / 2;
+                          
                           return (
                             <g key={index}>
                               <rect
-                                x={110 + index * 160}
-                                y={330 - barHeight}
-                                width={60}
+                                x={xPos}
+                                y={280 - barHeight}
+                                width={barWidth}
                                 height={barHeight}
                                 fill="#1e40af"
                               />
                               <text
-                                x={140 + index * 160}
-                                y={330 - barHeight / 2}
+                                x={xPos + barWidth / 2}
+                                y={280 - barHeight / 2}
                                 textAnchor="middle"
                                 dominantBaseline="middle"
                                 fill="#fff"
                                 fontSize="12"
                                 fontWeight="bold"
                               >
-                                {item.percentage}%
+                                {percentage}%
                               </text>
                             </g>
                           );
@@ -131,9 +117,13 @@ const Dashboard = () => {
           </div>
         </div>
 
-        {/* Modules Visites et Activités - 4/12 (1/3) de l'espace */}
-        <div className="lg:col-span-4 space-y-6">
+        {/* Visites aujourd'hui - 1/3 de l'espace */}
+        <div className="lg:col-span-1">
           <UpcomingVisits upcomingVisits={dashboardData.upcomingVisits} />
+        </div>
+
+        {/* Activités récentes - 1/3 de l'espace */}
+        <div className="lg:col-span-1">
           <RecentActivities recentActivities={dashboardData.recentActivities} />
         </div>
       </div>
