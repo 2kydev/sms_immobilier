@@ -6,6 +6,7 @@ import { supabase } from '@/integrations/supabase/client';
 import DashboardStats from './dashboard/DashboardStats';
 import UserProfile from './dashboard/UserProfile';
 import UserPreferences from './dashboard/UserPreferences';
+
 interface DashboardData {
   totalProperties: number;
   totalClients: number;
@@ -34,7 +35,15 @@ interface DashboardData {
     agent: string;
     date: string;
   }>;
+  recentActivities: Array<{
+    id: string;
+    action: string;
+    description: string;
+    time: string;
+    type: string;
+  }>;
 }
+
 const Dashboard = () => {
   const [dashboardData, setDashboardData] = useState<DashboardData>({
     totalProperties: 0,
@@ -45,9 +54,11 @@ const Dashboard = () => {
     propertyTypes: [],
     clientTypes: [],
     monthlyData: [],
-    upcomingVisits: []
+    upcomingVisits: [],
+    recentActivities: []
   });
   const [loading, setLoading] = useState(true);
+
   const fetchDashboardData = async () => {
     try {
       // Récupérer le nombre total de propriétés
@@ -78,17 +89,27 @@ const Dashboard = () => {
         head: true
       }).gte('date', startOfWeek.toISOString().split('T')[0]).lte('date', endOfWeek.toISOString().split('T')[0]).eq('statut', 'planifiee');
 
-      // Récupérer les données des transactions pour le CA mensuel
+      // Récupérer les données des transactions pour le CA mensuel en FCFA
       const currentMonth = new Date().getMonth() + 1;
       const currentYear = new Date().getFullYear();
       const lastMonth = currentMonth === 1 ? 12 : currentMonth - 1;
       const lastMonthYear = currentMonth === 1 ? currentYear - 1 : currentYear;
-      const {
-        data: currentMonthTransactions
-      } = await supabase.from('transactions').select('valeur').eq('etape', 'fermee').gte('date_creation', `${currentYear}-${currentMonth.toString().padStart(2, '0')}-01`);
-      const {
-        data: lastMonthTransactions
-      } = await supabase.from('transactions').select('valeur').eq('etape', 'fermee').gte('date_creation', `${lastMonthYear}-${lastMonth.toString().padStart(2, '0')}-01`).lt('date_creation', `${currentYear}-${currentMonth.toString().padStart(2, '0')}-01`);
+
+      // CA du mois en cours - transactions finalisées (conclues)
+      const { data: currentMonthTransactions } = await supabase
+        .from('transactions')
+        .select('valeur')
+        .eq('etape', 'conclue')
+        .gte('date_creation', `${currentYear}-${currentMonth.toString().padStart(2, '0')}-01`);
+
+      // CA du mois précédent pour comparaison
+      const { data: lastMonthTransactions } = await supabase
+        .from('transactions')
+        .select('valeur')
+        .eq('etape', 'conclue')
+        .gte('date_creation', `${lastMonthYear}-${lastMonth.toString().padStart(2, '0')}-01`)
+        .lt('date_creation', `${currentYear}-${currentMonth.toString().padStart(2, '0')}-01`);
+
       const monthlyRevenue = currentMonthTransactions?.reduce((sum, t) => sum + t.valeur, 0) || 0;
       const lastMonthRevenue = lastMonthTransactions?.reduce((sum, t) => sum + t.valeur, 0) || 0;
 
@@ -155,6 +176,10 @@ const Dashboard = () => {
         agent: visit.agent,
         date: visit.date
       })) || [];
+
+      // Récupérer les activités récentes dynamiques depuis la base de données
+      const recentActivities = await fetchRecentActivities();
+
       setDashboardData({
         totalProperties: propertiesCount || 0,
         totalClients: clientsCount || 0,
@@ -164,7 +189,8 @@ const Dashboard = () => {
         propertyTypes,
         clientTypes,
         monthlyData,
-        upcomingVisits
+        upcomingVisits,
+        recentActivities
       });
     } catch (error) {
       console.error('Error fetching dashboard data:', error);
@@ -172,86 +198,157 @@ const Dashboard = () => {
       setLoading(false);
     }
   };
+
+  const fetchRecentActivities = async () => {
+    const activities = [];
+
+    try {
+      // Dernières transactions créées
+      const { data: recentTransactions } = await supabase
+        .from('transactions')
+        .select('*, clients(nom, prenom), properties(titre)')
+        .order('created_at', { ascending: false })
+        .limit(5);
+
+      if (recentTransactions) {
+        recentTransactions.forEach(transaction => {
+          const timeAgo = getTimeAgo(transaction.created_at);
+          activities.push({
+            id: `transaction-${transaction.id}`,
+            action: 'Nouvelle transaction créée',
+            description: `${transaction.clients?.prenom} ${transaction.clients?.nom} - ${transaction.properties?.titre}`,
+            time: timeAgo,
+            type: 'transaction'
+          });
+        });
+      }
+
+      // Dernières propriétés ajoutées
+      const { data: recentProperties } = await supabase
+        .from('properties')
+        .select('*')
+        .order('created_at', { ascending: false })
+        .limit(3);
+
+      if (recentProperties) {
+        recentProperties.forEach(property => {
+          const timeAgo = getTimeAgo(property.created_at);
+          activities.push({
+            id: `property-${property.id}`,
+            action: 'Nouvelle propriété ajoutée',
+            description: property.titre,
+            time: timeAgo,
+            type: 'property'
+          });
+        });
+      }
+
+      // Dernières ventes finalisées
+      const { data: closedDeals } = await supabase
+        .from('transactions')
+        .select('*, clients(nom, prenom), properties(titre)')
+        .eq('etape', 'conclue')
+        .order('updated_at', { ascending: false })
+        .limit(2);
+
+      if (closedDeals) {
+        closedDeals.forEach(deal => {
+          const timeAgo = getTimeAgo(deal.updated_at);
+          activities.push({
+            id: `deal-${deal.id}`,
+            action: 'Vente finalisée',
+            description: `${deal.clients?.prenom} ${deal.clients?.nom} - ${deal.properties?.titre}`,
+            time: timeAgo,
+            type: 'deal'
+          });
+        });
+      }
+
+      // Trier par date de création et prendre les 10 plus récentes
+      return activities
+        .sort((a, b) => new Date(b.time).getTime() - new Date(a.time).getTime())
+        .slice(0, 10);
+
+    } catch (error) {
+      console.error('Error fetching recent activities:', error);
+      return [];
+    }
+  };
+
+  const getTimeAgo = (dateString: string) => {
+    const now = new Date();
+    const date = new Date(dateString);
+    const diffTime = Math.abs(now.getTime() - date.getTime());
+    const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+    const diffHours = Math.floor(diffTime / (1000 * 60 * 60));
+    const diffMinutes = Math.floor(diffTime / (1000 * 60));
+
+    if (diffDays > 0) {
+      return `${diffDays}j`;
+    } else if (diffHours > 0) {
+      return `${diffHours}h`;
+    } else if (diffMinutes > 0) {
+      return `${diffMinutes}min`;
+    } else {
+      return 'maintenant';
+    }
+  };
+
   useEffect(() => {
     fetchDashboardData();
 
     // Configurer la mise à jour en temps réel
-    const channel = supabase.channel('dashboard-changes').on('postgres_changes', {
-      event: '*',
-      schema: 'public',
-      table: 'properties'
-    }, fetchDashboardData).on('postgres_changes', {
-      event: '*',
-      schema: 'public',
-      table: 'clients'
-    }, fetchDashboardData).on('postgres_changes', {
-      event: '*',
-      schema: 'public',
-      table: 'visits'
-    }, fetchDashboardData).on('postgres_changes', {
-      event: '*',
-      schema: 'public',
-      table: 'transactions'
-    }, fetchDashboardData).subscribe();
+    const channel = supabase
+      .channel('dashboard-changes')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'properties' }, fetchDashboardData)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'clients' }, fetchDashboardData)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'visits' }, fetchDashboardData)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'transactions' }, fetchDashboardData)
+      .subscribe();
+
     return () => {
       supabase.removeChannel(channel);
     };
   }, []);
-  const recentActivity = [{
-    id: 1,
-    action: 'Nouvelle visite programmée',
-    client: 'M. Durand',
-    time: '2h',
-    type: 'visit'
-  }, {
-    id: 2,
-    action: 'Offre acceptée',
-    property: 'Appartement T3 - Voltaire',
-    time: '4h',
-    type: 'offer'
-  }, {
-    id: 3,
-    action: 'Nouveau prospect enregistré',
-    client: 'Mme Leblanc',
-    time: '6h',
-    type: 'client'
-  }, {
-    id: 4,
-    action: 'Propriété mise en ligne',
-    property: 'Villa T5 - Les Jardins',
-    time: '1j',
-    type: 'property'
-  }];
+
   const getRevenueChange = () => {
-    if (dashboardData.lastMonthRevenue === 0) return {
-      percentage: 0,
-      isPositive: true
-    };
+    if (dashboardData.lastMonthRevenue === 0) return { percentage: 0, isPositive: true };
     const change = (dashboardData.monthlyRevenue - dashboardData.lastMonthRevenue) / dashboardData.lastMonthRevenue * 100;
     return {
       percentage: Math.abs(change),
       isPositive: change >= 0
     };
   };
+
+  const formatCurrencyFCFA = (amount: number) => {
+    if (amount >= 1000000) {
+      return `${(amount / 1000000).toFixed(1)}M FCFA`;
+    }
+    if (amount >= 1000) {
+      return `${(amount / 1000).toFixed(1)}k FCFA`;
+    }
+    return `${amount.toLocaleString('fr-FR')} FCFA`;
+  };
+
   const revenueChange = getRevenueChange();
+
   if (loading) {
     return <div className="p-6">Chargement du tableau de bord...</div>;
   }
-  return <div className="space-y-6">
+
+  return (
+    <div className="space-y-6">
       <div className="flex items-center justify-between">
         <h1 className="text-3xl font-bold text-primary">Tableau de Bord</h1>
         <div className="text-sm text-gray-500">
           Dernière mise à jour: {new Date().toLocaleDateString('fr-FR', {
-          weekday: 'long',
-          year: 'numeric',
-          month: 'long',
-          day: 'numeric'
-        })}
+            weekday: 'long',
+            year: 'numeric',
+            month: 'long',
+            day: 'numeric'
+          })}
         </div>
       </div>
-
-      {/* Profil utilisateur et préférences */}
-      
 
       {/* KPIs Principaux - Vue d'ensemble moderne */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
@@ -296,8 +393,8 @@ const Dashboard = () => {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-yellow-100 text-sm">CA Mensuel</p>
-                <p className="text-2xl font-bold">
-                  {(dashboardData.monthlyRevenue / 1000000).toFixed(1)}M€
+                <p className="text-xl font-bold">
+                  {formatCurrencyFCFA(dashboardData.monthlyRevenue)}
                 </p>
                 <div className="flex items-center gap-1 text-xs">
                   <TrendingUp className={`h-3 w-3 ${revenueChange.isPositive ? 'text-green-200' : 'text-red-200'}`} />
@@ -400,26 +497,36 @@ const Dashboard = () => {
           </CardContent>
         </Card>
 
-        {/* Activité récente */}
+        {/* Activité récente dynamique */}
         <Card>
           <CardHeader>
             <CardTitle>Activité Récente</CardTitle>
             <CardDescription>Dernières actions dans le CRM</CardDescription>
           </CardHeader>
           <CardContent className="space-y-3 max-h-80 overflow-y-auto">
-            {recentActivity.map(activity => <div key={activity.id} className="flex items-start gap-3 p-3 bg-gray-50 rounded-lg">
-                <div className={`w-2 h-2 rounded-full mt-2 ${activity.type === 'visit' ? 'bg-blue-500' : activity.type === 'offer' ? 'bg-green-500' : activity.type === 'client' ? 'bg-purple-500' : 'bg-yellow-500'}`}></div>
-                <div className="flex-1">
-                  <p className="text-sm font-medium">{activity.action}</p>
-                  <p className="text-xs text-gray-600">
-                    {activity.client || activity.property}
-                  </p>
-                  <p className="text-xs text-gray-400">Il y a {activity.time}</p>
+            {dashboardData.recentActivities.length > 0 ? (
+              dashboardData.recentActivities.map(activity => (
+                <div key={activity.id} className="flex items-start gap-3 p-3 bg-gray-50 rounded-lg">
+                  <div className={`w-2 h-2 rounded-full mt-2 ${
+                    activity.type === 'transaction' ? 'bg-blue-500' : 
+                    activity.type === 'deal' ? 'bg-green-500' : 
+                    activity.type === 'property' ? 'bg-yellow-500' : 'bg-purple-500'
+                  }`}></div>
+                  <div className="flex-1">
+                    <p className="text-sm font-medium">{activity.action}</p>
+                    <p className="text-xs text-gray-600">{activity.description}</p>
+                    <p className="text-xs text-gray-400">Il y a {activity.time}</p>
+                  </div>
                 </div>
-              </div>)}
+              ))
+            ) : (
+              <p className="text-center text-gray-500 py-4">Aucune activité récente</p>
+            )}
           </CardContent>
         </Card>
       </div>
-    </div>;
+    </div>
+  );
 };
+
 export default Dashboard;
