@@ -21,7 +21,7 @@ interface DashboardChartsProps {
 }
 
 const DashboardCharts = ({ propertyTypes, monthlyData, clientTypes }: DashboardChartsProps) => {
-  // Préparer les données pour le graphique en secteurs avec pourcentages
+  // Préparer les données pour le graphique en barres avec pourcentages
   const totalClients = clientTypes.reduce((sum, item) => sum + item.count, 0);
   const clientTypesWithPercentage = clientTypes.map(item => ({
     ...item,
@@ -31,7 +31,13 @@ const DashboardCharts = ({ propertyTypes, monthlyData, clientTypes }: DashboardC
   const COLORS = ['#1e40af', '#b59f3b', '#6b7280', '#dc2626', '#059669'];
 
   const CustomLabel = (props: any) => {
-    const { x, y, width, height, value, payload } = props;
+    const { x, y, width, height, payload } = props;
+    
+    // Vérifier que payload existe et a une propriété percentage
+    if (!payload || !payload.percentage) {
+      return null;
+    }
+    
     return (
       <text
         x={x + width / 2}
