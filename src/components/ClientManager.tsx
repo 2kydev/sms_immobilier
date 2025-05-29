@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { supabase } from '@/integrations/supabase/client';
@@ -10,7 +9,6 @@ import ClientForm from './client/ClientForm';
 import { Client } from './client/types';
 import { filterClients } from './client/utils';
 import { Card, CardContent } from '@/components/ui/card';
-
 const ClientManager = () => {
   const [clients, setClients] = useState<Client[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
@@ -18,15 +16,17 @@ const ClientManager = () => {
   const [selectedClient, setSelectedClient] = useState<Client | null>(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [loading, setLoading] = useState(true);
-  const { toast } = useToast();
-
+  const {
+    toast
+  } = useToast();
   const fetchClients = async () => {
     try {
-      const { data, error } = await supabase
-        .from('clients')
-        .select('*')
-        .order('created_at', { ascending: false });
-
+      const {
+        data,
+        error
+      } = await supabase.from('clients').select('*').order('created_at', {
+        ascending: false
+      });
       if (error) throw error;
       setClients((data || []) as Client[]);
     } catch (error) {
@@ -40,40 +40,27 @@ const ClientManager = () => {
       setLoading(false);
     }
   };
-
   useEffect(() => {
     fetchClients();
   }, []);
-
   const filteredClients = filterClients(clients, searchTerm, filterType);
-
   const openClientDialog = (client?: Client) => {
     setSelectedClient(client || null);
     setIsDialogOpen(true);
   };
-
   const closeClientDialog = () => {
     setIsDialogOpen(false);
     setSelectedClient(null);
   };
-
   if (loading) {
     return <div className="p-6">Chargement des clients...</div>;
   }
-
-  return (
-    <div className="space-y-6">
+  return <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-4">
           <h1 className="text-3xl font-bold text-primary">Gestion des Clients</h1>
           <Card>
-            <CardContent className="px-4 py-2">
-              <div className="flex items-center gap-2">
-                <span className="text-sm font-medium text-gray-600">Total:</span>
-                <span className="text-lg font-bold text-primary">{clients.length}</span>
-                <span className="text-sm text-gray-600">clients</span>
-              </div>
-            </CardContent>
+            
           </Card>
         </div>
         <Button onClick={() => openClientDialog()} className="bg-primary hover:bg-primary/90">
@@ -81,33 +68,15 @@ const ClientManager = () => {
         </Button>
       </div>
 
-      <ClientFilters
-        searchTerm={searchTerm}
-        setSearchTerm={setSearchTerm}
-        filterType={filterType}
-        setFilterType={setFilterType}
-      />
+      <ClientFilters searchTerm={searchTerm} setSearchTerm={setSearchTerm} filterType={filterType} setFilterType={setFilterType} />
 
       <ClientStats clients={clients} />
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {filteredClients.map((client) => (
-          <ClientCard
-            key={client.id}
-            client={client}
-            onClick={() => openClientDialog(client)}
-          />
-        ))}
+        {filteredClients.map(client => <ClientCard key={client.id} client={client} onClick={() => openClientDialog(client)} />)}
       </div>
 
-      <ClientForm
-        isOpen={isDialogOpen}
-        onClose={closeClientDialog}
-        selectedClient={selectedClient}
-        onSuccess={fetchClients}
-      />
-    </div>
-  );
+      <ClientForm isOpen={isDialogOpen} onClose={closeClientDialog} selectedClient={selectedClient} onSuccess={fetchClients} />
+    </div>;
 };
-
 export default ClientManager;
