@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, LineChart, Line } from 'recharts';
+import { BarChart, Bar, XAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, LineChart, Line, YAxis, LabelList } from 'recharts';
 
 interface DashboardChartsProps {
   propertyTypes: Array<{
@@ -29,6 +29,23 @@ const DashboardCharts = ({ propertyTypes, monthlyData, clientTypes }: DashboardC
   }));
 
   const COLORS = ['#1e40af', '#b59f3b', '#6b7280', '#dc2626', '#059669'];
+
+  const CustomLabel = (props: any) => {
+    const { x, y, width, height, value, payload } = props;
+    return (
+      <text
+        x={x + width / 2}
+        y={y + height / 2}
+        fill="#fff"
+        textAnchor="middle"
+        dominantBaseline="middle"
+        fontSize="12"
+        fontWeight="bold"
+      >
+        {payload.percentage}%
+      </text>
+    );
+  };
 
   return (
     <>
@@ -90,6 +107,7 @@ const DashboardCharts = ({ propertyTypes, monthlyData, clientTypes }: DashboardC
         </Card>
       </div>
 
+      {/* Nouvelle ligne avec segmentation clients (2/3) */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Segmentation clients - 2/3 de l'espace */}
         <Card className="lg:col-span-2">
@@ -102,14 +120,15 @@ const DashboardCharts = ({ propertyTypes, monthlyData, clientTypes }: DashboardC
               <BarChart data={clientTypesWithPercentage} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
                 <CartesianGrid strokeDasharray="3 3" />
                 <XAxis dataKey="type" />
-                <YAxis />
                 <Tooltip 
                   formatter={(value, name) => [
                     `${value} clients`,
                     'Nombre de clients'
                   ]}
                 />
-                <Bar dataKey="count" fill="#1e40af" />
+                <Bar dataKey="count" fill="#1e40af">
+                  <LabelList content={CustomLabel} />
+                </Bar>
               </BarChart>
             </ResponsiveContainer>
           </CardContent>
