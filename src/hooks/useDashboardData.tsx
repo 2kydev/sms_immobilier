@@ -174,20 +174,23 @@ export const useDashboardData = () => {
         .lte('date', endOfWeek.toISOString().split('T')[0])
         .eq('statut', 'planifiee');
 
-      // Récupérer les données des transactions pour le CA mensuel en FCFA
+      // Récupérer UNIQUEMENT les transactions finalisées (conclues) pour le CA mensuel
       const currentMonth = new Date().getMonth() + 1;
       const currentYear = new Date().getFullYear();
       const lastMonth = currentMonth === 1 ? 12 : currentMonth - 1;
       const lastMonthYear = currentMonth === 1 ? currentYear - 1 : currentYear;
 
-      // CA du mois en cours - transactions finalisées (conclues)
+      console.log('Fetching finalized transactions for current month:', `${currentYear}-${currentMonth.toString().padStart(2, '0')}`);
+
+      // CA du mois en cours - UNIQUEMENT transactions finalisées (conclues)
       const { data: currentMonthTransactions } = await supabase
         .from('transactions')
         .select('valeur')
         .eq('etape', 'conclue')
-        .gte('date_creation', `${currentYear}-${currentMonth.toString().padStart(2, '0')}-01`);
+        .gte('date_creation', `${currentYear}-${currentMonth.toString().padStart(2, '0')}-01`)
+        .lt('date_creation', `${currentYear}-${(currentMonth + 1).toString().padStart(2, '0')}-01`);
 
-      // CA du mois précédent pour comparaison
+      // CA du mois précédent pour comparaison - UNIQUEMENT transactions finalisées
       const { data: lastMonthTransactions } = await supabase
         .from('transactions')
         .select('valeur')
@@ -197,6 +200,9 @@ export const useDashboardData = () => {
 
       const monthlyRevenue = currentMonthTransactions?.reduce((sum, t) => sum + t.valeur, 0) || 0;
       const lastMonthRevenue = lastMonthTransactions?.reduce((sum, t) => sum + t.valeur, 0) || 0;
+
+      console.log('Monthly revenue from finalized transactions:', monthlyRevenue);
+      console.log('Last month revenue from finalized transactions:', lastMonthRevenue);
 
       // Récupérer les types de propriétés
       const { data: properties } = await supabase.from('properties').select('type');
@@ -223,13 +229,15 @@ export const useDashboardData = () => {
         count: count as number
       }));
 
-      // Récupérer les données mensuelles des 6 derniers mois pour les transactions conclues
+      // Récupérer les données mensuelles des 6 derniers mois - UNIQUEMENT transactions finalisées (conclues)
       const monthlyData = [];
       for (let i = 5; i >= 0; i--) {
         const date = new Date();
         date.setMonth(date.getMonth() - i);
         const year = date.getFullYear();
         const month = date.getMonth() + 1;
+        
+        console.log(`Fetching finalized transactions for ${year}-${month}`);
         
         const { data: monthTransactions } = await supabase
           .from('transactions')
@@ -240,6 +248,8 @@ export const useDashboardData = () => {
         
         const revenue = monthTransactions?.reduce((sum, t) => sum + t.valeur, 0) || 0;
         const transactions = monthTransactions?.length || 0;
+        
+        console.log(`Month ${date.toLocaleDateString('fr-FR', { month: 'short' })}: ${transactions} finalized transactions, ${revenue} FCFA revenue`);
         
         monthlyData.push({
           month: date.toLocaleDateString('fr-FR', { month: 'short' }),
