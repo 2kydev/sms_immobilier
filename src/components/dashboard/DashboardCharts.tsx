@@ -1,6 +1,8 @@
+
 import React from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { BarChart, Bar, XAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, LineChart, Line, YAxis, LabelList } from 'recharts';
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, LineChart, Line, LabelList } from 'recharts';
+
 interface DashboardChartsProps {
   propertyTypes: Array<{
     name: string;
@@ -17,6 +19,7 @@ interface DashboardChartsProps {
     count: number;
   }>;
 }
+
 const DashboardCharts = ({
   propertyTypes,
   monthlyData,
@@ -28,7 +31,9 @@ const DashboardCharts = ({
     ...item,
     percentage: totalClients > 0 ? (item.count / totalClients * 100).toFixed(1) : 0
   }));
+
   const COLORS = ['#1e40af', '#b59f3b', '#6b7280', '#dc2626', '#059669'];
+
   const CustomLabel = (props: any) => {
     const {
       x,
@@ -42,11 +47,24 @@ const DashboardCharts = ({
     if (!payload || !payload.percentage) {
       return null;
     }
-    return <text x={x + width / 2} y={y + height / 2} fill="#fff" textAnchor="middle" dominantBaseline="middle" fontSize="12" fontWeight="bold">
+
+    return (
+      <text 
+        x={x + width / 2} 
+        y={y + height / 2} 
+        fill="#fff" 
+        textAnchor="middle" 
+        dominantBaseline="middle" 
+        fontSize="12" 
+        fontWeight="bold"
+      >
         {payload.percentage}%
-      </text>;
+      </text>
+    );
   };
-  return <>
+
+  return (
+    <>
       {/* Graphiques et données */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Répartition des propriétés */}
@@ -58,11 +76,19 @@ const DashboardCharts = ({
           <CardContent>
             <ResponsiveContainer width="100%" height={300}>
               <PieChart>
-                <Pie data={propertyTypes} cx="50%" cy="50%" labelLine={false} label={({
-                name,
-                percent
-              }) => `${name} ${(percent * 100).toFixed(0)}%`} outerRadius={80} fill="#8884d8" dataKey="value">
-                  {propertyTypes.map((entry, index) => <Cell key={`cell-${index}`} fill={entry.color} />)}
+                <Pie 
+                  data={propertyTypes} 
+                  cx="50%" 
+                  cy="50%" 
+                  labelLine={false} 
+                  label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`} 
+                  outerRadius={80} 
+                  fill="#8884d8" 
+                  dataKey="value"
+                >
+                  {propertyTypes.map((entry, index) => (
+                    <Cell key={`cell-${index}`} fill={entry.color} />
+                  ))}
                 </Pie>
                 <Tooltip />
               </PieChart>
@@ -74,26 +100,47 @@ const DashboardCharts = ({
         <Card>
           <CardHeader>
             <CardTitle>Évolution du Chiffre d'Affaires</CardTitle>
-            <CardDescription>Transactions et revenus sur 6 mois</CardDescription>
+            <CardDescription>Ventes réalisées sur 6 mois (en FCFA)</CardDescription>
           </CardHeader>
           <CardContent>
             <ResponsiveContainer width="100%" height={300}>
               <LineChart data={monthlyData}>
                 <CartesianGrid strokeDasharray="3 3" />
                 <XAxis dataKey="month" />
-                <YAxis yAxisId="left" />
-                <YAxis yAxisId="right" orientation="right" />
-                <Tooltip formatter={(value, name) => [name === 'revenue' ? `${((value as number) / 1000000).toFixed(1)}M€` : value, name === 'revenue' ? 'Chiffre d\'affaires' : 'Transactions']} />
-                <Bar yAxisId="left" dataKey="transactions" fill="#1e40af" />
-                <Line yAxisId="right" type="monotone" dataKey="revenue" stroke="#b59f3b" strokeWidth={3} />
+                <YAxis 
+                  orientation="left"
+                  tickFormatter={(value) => {
+                    if (value >= 1000000) {
+                      return `${(value / 1000000).toFixed(1)}M`;
+                    }
+                    if (value >= 1000) {
+                      return `${(value / 1000).toFixed(0)}k`;
+                    }
+                    return value.toString();
+                  }}
+                />
+                <Tooltip 
+                  formatter={(value, name) => [
+                    name === 'revenue' 
+                      ? `${((value as number) / 1000000).toFixed(1)}M FCFA` 
+                      : value, 
+                    name === 'revenue' ? 'CA réalisé' : 'Ventes'
+                  ]} 
+                />
+                <Line 
+                  type="monotone" 
+                  dataKey="revenue" 
+                  stroke="#b59f3b" 
+                  strokeWidth={3}
+                  dot={{ fill: '#b59f3b', strokeWidth: 2, r: 4 }}
+                />
               </LineChart>
             </ResponsiveContainer>
           </CardContent>
         </Card>
       </div>
-
-      {/* Nouvelle ligne avec segmentation clients (2/3) */}
-      
-    </>;
+    </>
+  );
 };
+
 export default DashboardCharts;

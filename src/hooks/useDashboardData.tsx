@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 
@@ -222,7 +223,7 @@ export const useDashboardData = () => {
         count: count as number
       }));
 
-      // Récupérer les données mensuelles des 6 derniers mois
+      // Récupérer les données mensuelles des 6 derniers mois pour les transactions conclues
       const monthlyData = [];
       for (let i = 5; i >= 0; i--) {
         const date = new Date();
@@ -233,7 +234,7 @@ export const useDashboardData = () => {
         const { data: monthTransactions } = await supabase
           .from('transactions')
           .select('valeur')
-          .eq('etape', 'fermee')
+          .eq('etape', 'conclue')
           .gte('date_creation', `${year}-${month.toString().padStart(2, '0')}-01`)
           .lt('date_creation', `${year}-${(month + 1).toString().padStart(2, '0')}-01`);
         
