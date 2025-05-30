@@ -27,7 +27,8 @@ const PropertyImageGallery: React.FC<PropertyImageGalleryProps> = ({
     setSelectedImageIndex(null);
   };
 
-  const goToPrevious = () => {
+  const goToPrevious = (e?: React.MouseEvent) => {
+    e?.stopPropagation();
     if (selectedImageIndex !== null && selectedImageIndex > 0) {
       setSelectedImageIndex(selectedImageIndex - 1);
     } else if (selectedImageIndex === 0) {
@@ -35,7 +36,8 @@ const PropertyImageGallery: React.FC<PropertyImageGalleryProps> = ({
     }
   };
 
-  const goToNext = () => {
+  const goToNext = (e?: React.MouseEvent) => {
+    e?.stopPropagation();
     if (selectedImageIndex !== null && selectedImageIndex < images.length - 1) {
       setSelectedImageIndex(selectedImageIndex + 1);
     } else if (selectedImageIndex === images.length - 1) {
@@ -136,8 +138,14 @@ const PropertyImageGallery: React.FC<PropertyImageGalleryProps> = ({
             </CarouselItem>
           ))}
         </CarouselContent>
-        <CarouselPrevious className="left-2 bg-white/80 hover:bg-white" />
-        <CarouselNext className="right-2 bg-white/80 hover:bg-white" />
+        <CarouselPrevious 
+          className="left-2 bg-white/80 hover:bg-white" 
+          onClick={(e) => e.stopPropagation()}
+        />
+        <CarouselNext 
+          className="right-2 bg-white/80 hover:bg-white"
+          onClick={(e) => e.stopPropagation()}
+        />
       </Carousel>
       
       <div className="absolute top-2 right-2 bg-black bg-opacity-50 text-white text-xs px-2 py-1 rounded">

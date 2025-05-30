@@ -32,8 +32,15 @@ interface Property {
   agent: string;
 }
 
+interface Agent {
+  id: string;
+  nom: string;
+  statut: 'actif' | 'inactif';
+}
+
 const PropertyManager = () => {
   const [properties, setProperties] = useState<Property[]>([]);
+  const [agents, setAgents] = useState<Agent[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [filterType, setFilterType] = useState<string>('tous');
   const [filterStatut, setFilterStatut] = useState<string>('tous');
@@ -56,9 +63,29 @@ const PropertyManager = () => {
       description: '',
       caracteristiques: [],
       images: [],
-      agent: 'Marie Dupont'
+      agent: ''
     }
   });
+
+  const fetchAgents = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('agents')
+        .select('id, nom, statut')
+        .eq('statut', 'actif')
+        .order('nom', { ascending: true });
+
+      if (error) throw error;
+      setAgents(data || []);
+    } catch (error) {
+      console.error('Error fetching agents:', error);
+      toast({
+        title: "Erreur",
+        description: "Impossible de charger les agents",
+        variant: "destructive"
+      });
+    }
+  };
 
   const fetchProperties = async () => {
     try {
@@ -82,6 +109,7 @@ const PropertyManager = () => {
   };
 
   useEffect(() => {
+    fetchAgents();
     fetchProperties();
   }, []);
 
@@ -119,6 +147,8 @@ const PropertyManager = () => {
       form.reset(property);
     } else {
       setSelectedProperty(null);
+      // Set default agent to first available agent if exists
+      const defaultAgent = agents.length > 0 ? agents[0].nom : '';
       form.reset({
         titre: '',
         type: 'appartement',
@@ -132,7 +162,7 @@ const PropertyManager = () => {
         description: '',
         caracteristiques: [],
         images: [],
-        agent: 'Marie Dupont'
+        agent: defaultAgent
       });
     }
     setIsDialogOpen(true);
@@ -517,13 +547,15 @@ const PropertyManager = () => {
                     <Select onValueChange={field.onChange} defaultValue={field.value}>
                       <FormControl>
                         <SelectTrigger>
-                          <SelectValue placeholder="Agent" />
+                          <SelectValue placeholder="Sélectionner un agent" />
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        <SelectItem value="Marie Dupont">Marie Dupont</SelectItem>
-                        <SelectItem value="Pierre Leroy">Pierre Leroy</SelectItem>
-                        <SelectItem value="Sophie Martin">Sophie Martin</SelectItem>
+                        {agents.map((agent) => (
+                          <SelectItem key={agent.id} value={agent.nom}>
+                            {agent.nom}
+                          </SelectItem>
+                        ))}
                       </SelectContent>
                     </Select>
                     <FormMessage />
