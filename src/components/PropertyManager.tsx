@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -76,7 +77,14 @@ const PropertyManager = () => {
         .order('nom', { ascending: true });
 
       if (error) throw error;
-      setAgents(data || []);
+      
+      // Transformer les données pour s'assurer que le statut est du bon type
+      const transformedData = (data || []).map(agent => ({
+        ...agent,
+        statut: agent.statut as 'actif' | 'inactif'
+      }));
+      
+      setAgents(transformedData);
     } catch (error) {
       console.error('Error fetching agents:', error);
       toast({
