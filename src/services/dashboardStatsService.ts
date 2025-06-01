@@ -33,16 +33,13 @@ export const fetchBasicStats = async () => {
 export const fetchRevenueData = async () => {
   const { currentMonth, currentYear, lastMonth, lastMonthYear } = getCurrentAndLastMonth();
 
-  console.log('Fetching finalized transactions for current month:', `${currentYear}-${currentMonth.toString().padStart(2, '0')}`);
+  console.log('Fetching ALL finalized transactions for total revenue');
 
-  // CA du mois en cours - UNIQUEMENT transactions finalisées (conclues)
-  const { startDate: currentStartDate, endDate: currentEndDate } = getMonthDateRange(currentYear, currentMonth);
-  const { data: currentMonthTransactions } = await supabase
+  // CA TOTAL de toutes les transactions finalisées (conclues)
+  const { data: allFinalizedTransactions } = await supabase
     .from('transactions')
     .select('valeur')
-    .eq('etape', 'conclue')
-    .gte('date_creation', currentStartDate)
-    .lt('date_creation', currentEndDate);
+    .eq('etape', 'conclue');
 
   // CA du mois précédent pour comparaison - UNIQUEMENT transactions finalisées
   const { startDate: lastStartDate, endDate: lastEndDate } = getMonthDateRange(lastMonthYear, lastMonth);
@@ -53,10 +50,10 @@ export const fetchRevenueData = async () => {
     .gte('date_creation', lastStartDate)
     .lt('date_creation', lastEndDate);
 
-  const monthlyRevenue = currentMonthTransactions?.reduce((sum, t) => sum + t.valeur, 0) || 0;
+  const monthlyRevenue = allFinalizedTransactions?.reduce((sum, t) => sum + t.valeur, 0) || 0;
   const lastMonthRevenue = lastMonthTransactions?.reduce((sum, t) => sum + t.valeur, 0) || 0;
 
-  console.log('Monthly revenue from finalized transactions:', monthlyRevenue);
+  console.log('Total revenue from ALL finalized transactions:', monthlyRevenue);
   console.log('Last month revenue from finalized transactions:', lastMonthRevenue);
 
   return { monthlyRevenue, lastMonthRevenue };

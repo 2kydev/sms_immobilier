@@ -63,14 +63,14 @@ const DashboardKPIs = ({
         <CardContent className="pt-6">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-yellow-100 text-sm">CA Mensuel</p>
+              <p className="text-yellow-100 text-sm">CA Total</p>
               <p className="text-xl font-bold">
                 {formatCurrencyFCFA(monthlyRevenue)}
               </p>
               <div className="flex items-center gap-1 text-xs">
                 <TrendingUp className={`h-3 w-3 ${revenueChange.isPositive ? 'text-green-200' : 'text-red-200'}`} />
                 <span className={revenueChange.isPositive ? 'text-green-200' : 'text-red-200'}>
-                  {revenueChange.isPositive ? '+' : '-'}{revenueChange.percentage.toFixed(1)}%
+                  vs mois dernier
                 </span>
               </div>
             </div>
