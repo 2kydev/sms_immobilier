@@ -1,12 +1,12 @@
 
 export const formatCurrencyFCFA = (amount: number) => {
   if (amount >= 1000000) {
-    return `${(amount / 1000000).toFixed(1)}M FCFA`;
+    return `${(amount / 1000000).toFixed(1)}M `;
   }
   if (amount >= 1000) {
-    return `${(amount / 1000).toFixed(0)}k FCFA`;
+    return `${(amount / 1000).toFixed(0)}k `;
   }
-  return `${amount.toLocaleString('fr-FR')} FCFA`;
+  return `${amount.toLocaleString('fr-FR')} `;
 };
 
 export const getRevenueChange = (currentRevenue: number, lastMonthRevenue: number) => {
