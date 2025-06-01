@@ -43,7 +43,7 @@ export const fetchMonthlyData = async () => {
     const { data: monthTransactions } = await supabase
       .from('transactions')
       .select('valeur')
-      .eq('etape', 'conclue')
+      .eq('etape', 'finalise')
       .gte('date_creation', startDate)
       .lt('date_creation', endDate);
     

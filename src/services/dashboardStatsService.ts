@@ -35,11 +35,11 @@ export const fetchRevenueData = async () => {
 
   console.log('Fetching ALL finalized transactions for total revenue');
 
-  // CA TOTAL de toutes les transactions finalisées (conclues)
+  // CA TOTAL de toutes les transactions finalisées (finalise)
   const { data: allFinalizedTransactions, error: totalError } = await supabase
     .from('transactions')
     .select('valeur')
-    .eq('etape', 'conclue');
+    .eq('etape', 'finalise');
 
   if (totalError) {
     console.error('Error fetching total finalized transactions:', totalError);
@@ -50,7 +50,7 @@ export const fetchRevenueData = async () => {
   const { data: lastMonthTransactions, error: lastMonthError } = await supabase
     .from('transactions')
     .select('valeur')
-    .eq('etape', 'conclue')
+    .eq('etape', 'finalise')
     .gte('date_creation', lastStartDate)
     .lt('date_creation', lastEndDate);
 
