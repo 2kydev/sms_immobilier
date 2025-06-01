@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { Card, CardContent } from '@/components/ui/card';
-import { Home, Users, Eye, DollarSign, TrendingUp } from 'lucide-react';
+import { Home, Users, Eye, TrendingUp } from 'lucide-react';
 import { formatCurrencyFCFA, getRevenueChange } from '@/utils/dashboardUtils';
 
 interface DashboardKPIsProps {
@@ -74,7 +74,9 @@ const DashboardKPIs = ({
                 </span>
               </div>
             </div>
-            <DollarSign className="h-8 w-8 text-yellow-200" />
+            <div className="h-8 w-12 text-yellow-200 text-2xl font-bold flex items-center justify-center">
+              FCFA
+            </div>
           </div>
         </CardContent>
       </Card>
