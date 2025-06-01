@@ -4,7 +4,7 @@ export const formatCurrencyFCFA = (amount: number) => {
     return `${(amount / 1000000).toFixed(1)}M FCFA`;
   }
   if (amount >= 1000) {
-    return `${(amount / 1000).toFixed(1)}k FCFA`;
+    return `${(amount / 1000).toFixed(0)}k FCFA`;
   }
   return `${amount.toLocaleString('fr-FR')} FCFA`;
 };
