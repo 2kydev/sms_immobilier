@@ -45,9 +45,16 @@ const handler = async (req: Request): Promise<Response> => {
       
       console.log(`Visit ${visit.id}: notification should be sent at ${notificationTime.toISOString()}, current time: ${now.toISOString()}`);
       
-      // Vérifier si c'est le moment d'envoyer la notification (dans les 5 minutes)
+      // Améliorer la logique de vérification du timing
+      // Pour des notifications de moins de 2 heures : fenêtre de 5 minutes
+      // Pour des notifications de plus de 2 heures : fenêtre de 30 minutes
       const timeDiff = notificationTime.getTime() - now.getTime();
-      const shouldSend = timeDiff <= 5 * 60 * 1000 && timeDiff >= -5 * 60 * 1000;
+      const isShortDelay = visit.notification_delay_hours < 2;
+      const timeWindow = isShortDelay ? 5 * 60 * 1000 : 30 * 60 * 1000; // 5 min ou 30 min
+      
+      const shouldSend = timeDiff <= timeWindow && timeDiff >= -timeWindow;
+      
+      console.log(`Visit ${visit.id}: delay=${visit.notification_delay_hours}h, timeDiff=${Math.round(timeDiff/60000)}min, window=${timeWindow/60000}min, shouldSend=${shouldSend}`);
       
       if (shouldSend) {
         // Vérifier si la notification n'a pas déjà été envoyée
