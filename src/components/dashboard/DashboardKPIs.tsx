@@ -1,9 +1,7 @@
-
 import React from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Home, Users, Eye, TrendingUp } from 'lucide-react';
 import { formatCurrencyFCFA, getRevenueChange } from '@/utils/dashboardUtils';
-
 interface DashboardKPIsProps {
   totalProperties: number;
   totalClients: number;
@@ -11,18 +9,15 @@ interface DashboardKPIsProps {
   monthlyRevenue: number;
   lastMonthRevenue: number;
 }
-
-const DashboardKPIs = ({ 
-  totalProperties, 
-  totalClients, 
-  weeklyVisits, 
-  monthlyRevenue, 
-  lastMonthRevenue 
+const DashboardKPIs = ({
+  totalProperties,
+  totalClients,
+  weeklyVisits,
+  monthlyRevenue,
+  lastMonthRevenue
 }: DashboardKPIsProps) => {
   const revenueChange = getRevenueChange(monthlyRevenue, lastMonthRevenue);
-
-  return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+  return <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
       <Card className="bg-gradient-to-r from-blue-500 to-blue-600 text-white">
         <CardContent className="pt-6">
           <div className="flex items-center justify-between">
@@ -51,7 +46,7 @@ const DashboardKPIs = ({
         <CardContent className="pt-6">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-purple-100 text-sm">Visites Cette Semaine</p>
+              <p className="text-purple-90 text-sm">Visites Cette Semaine</p>
               <p className="text-3xl font-bold">{weeklyVisits}</p>
             </div>
             <Eye className="h-8 w-8 text-purple-200" />
@@ -80,8 +75,6 @@ const DashboardKPIs = ({
           </div>
         </CardContent>
       </Card>
-    </div>
-  );
+    </div>;
 };
-
 export default DashboardKPIs;
