@@ -46,7 +46,7 @@ const DashboardKPIs = ({
         <CardContent className="pt-6">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-purple-90 text-sm">Visites Cette Semaine</p>
+              <p className="text-purple-90 px-0 text-xs font-normal">Visites Cette Semaine</p>
               <p className="text-3xl font-bold">{weeklyVisits}</p>
             </div>
             <Eye className="h-8 w-8 text-purple-200" />
