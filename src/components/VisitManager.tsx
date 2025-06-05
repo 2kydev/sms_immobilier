@@ -1,4 +1,5 @@
 
+
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -282,22 +283,34 @@ const VisitManager = () => {
   };
 
   const handleClientSelect = (clientId: string) => {
+    console.log('🔍 Sélection client - ID:', clientId);
     const selectedClient = clients.find(c => c.id === clientId);
+    console.log('🔍 Client trouvé:', selectedClient);
+    
     if (selectedClient) {
+      console.log('📝 Mise à jour des champs client...');
       form.setValue('client_nom', selectedClient.nom);
       form.setValue('client_prenom', selectedClient.prenom);
       form.setValue('client_telephone', selectedClient.telephone);
       form.setValue('client_id', clientId);
+      
       // Assigner automatiquement l'email du client pour les notifications
       if (selectedClient.email && selectedClient.email.trim() !== '') {
+        console.log('📧 Attribution email client:', selectedClient.email);
         form.setValue('client_notification_email', selectedClient.email);
+      } else {
+        console.log('⚠️ Pas d\'email valide pour le client');
       }
     }
   };
 
   const handlePropertySelect = (propertyId: string) => {
+    console.log('🔍 Sélection propriété - ID:', propertyId);
     const selectedProperty = properties.find(p => p.id === propertyId);
+    console.log('🔍 Propriété trouvée:', selectedProperty);
+    
     if (selectedProperty) {
+      console.log('📝 Mise à jour des champs propriété...');
       form.setValue('propriete_titre', selectedProperty.titre);
       form.setValue('propriete_adresse', `${selectedProperty.city} - ${selectedProperty.quartier}`);
       form.setValue('property_id', propertyId);
@@ -305,24 +318,51 @@ const VisitManager = () => {
   };
 
   const handleAgentSelect = (agentName: string) => {
+    console.log('🔍 Sélection agent - Nom:', agentName);
     const selectedAgent = agents.find(a => a.nom === agentName);
+    console.log('🔍 Agent trouvé:', selectedAgent);
+    
     if (selectedAgent) {
+      console.log('📝 Mise à jour des champs agent...');
       form.setValue('agent', agentName);
       form.setValue('notification_email', selectedAgent.email);
+      
       // Assigner automatiquement l'email de l'agent pour les notifications
       if (selectedAgent.email && selectedAgent.email.trim() !== '') {
+        console.log('📧 Attribution email agent:', selectedAgent.email);
         form.setValue('agent_notification_email', selectedAgent.email);
+      } else {
+        console.log('⚠️ Pas d\'email valide pour l\'agent');
       }
     }
   };
 
   const onSubmit = async (data: Visit) => {
     try {
-      console.log('Données de visite à sauvegarder:', data);
+      console.log('🚀 DÉBUT SAUVEGARDE VISITE');
+      console.log('📋 Données reçues du formulaire:', JSON.stringify(data, null, 2));
+
+      // Test de connexion Supabase
+      console.log('🔗 Test de connexion Supabase...');
+      const { data: testConnection, error: connectionError } = await supabase
+        .from('visits')
+        .select('count')
+        .limit(1);
+      
+      if (connectionError) {
+        console.error('❌ Erreur de connexion Supabase:', connectionError);
+        throw new Error(`Erreur de connexion: ${connectionError.message}`);
+      }
+      console.log('✅ Connexion Supabase OK');
 
       // Validation des emails de notification si les notifications sont activées
       if (data.notification_enabled) {
+        console.log('📧 Validation des notifications activées...');
+        console.log('Email agent:', data.agent_notification_email);
+        console.log('Email client:', data.client_notification_email);
+        
         if (!data.agent_notification_email && !data.client_notification_email) {
+          console.log('❌ Aucun email de notification sélectionné');
           toast({
             title: "Erreur",
             description: "Veuillez sélectionner au moins un email pour les notifications",
@@ -330,33 +370,77 @@ const VisitManager = () => {
           });
           return;
         }
+        console.log('✅ Validation emails OK');
       }
 
-      // Nettoyer les données avant la sauvegarde
-      const visitData = {
-        ...data,
-        feedback_client: data.feedback_client || null,
-        client_id: data.client_id || null,
-        property_id: data.property_id || null,
-        agent_notification_email: data.agent_notification_email || null,
-        client_notification_email: data.client_notification_email || null,
-        notification_email: data.notification_email || null
+      // Validation des champs obligatoires
+      console.log('🔍 Validation des champs obligatoires...');
+      const requiredFields = {
+        client_nom: data.client_nom,
+        client_prenom: data.client_prenom,
+        client_telephone: data.client_telephone,
+        propriete_titre: data.propriete_titre,
+        propriete_adresse: data.propriete_adresse,
+        date: data.date,
+        heure: data.heure,
+        statut: data.statut,
+        agent: data.agent
       };
 
-      console.log('Données nettoyées pour sauvegarde:', visitData);
+      for (const [field, value] of Object.entries(requiredFields)) {
+        if (!value || value.toString().trim() === '') {
+          console.error(`❌ Champ obligatoire manquant: ${field}`);
+          throw new Error(`Le champ ${field} est obligatoire`);
+        }
+      }
+      console.log('✅ Validation champs obligatoires OK');
+
+      // Nettoyer les données avant la sauvegarde
+      console.log('🧹 Nettoyage des données...');
+      const visitData = {
+        client_nom: data.client_nom?.trim() || '',
+        client_prenom: data.client_prenom?.trim() || '',
+        client_telephone: data.client_telephone?.trim() || '',
+        propriete_titre: data.propriete_titre?.trim() || '',
+        propriete_adresse: data.propriete_adresse?.trim() || '',
+        date: data.date,
+        heure: data.heure,
+        statut: data.statut,
+        agent: data.agent?.trim() || '',
+        notes: data.notes?.trim() || null,
+        feedback_client: data.feedback_client?.trim() || null,
+        client_id: data.client_id || null,
+        property_id: data.property_id || null,
+        notification_enabled: Boolean(data.notification_enabled),
+        notification_delay_hours: data.notification_delay_hours || 24,
+        agent_notification_email: data.agent_notification_email?.trim() || null,
+        client_notification_email: data.client_notification_email?.trim() || null,
+        notification_email: data.notification_email?.trim() || null
+      };
+
+      console.log('📦 Données nettoyées pour sauvegarde:', JSON.stringify(visitData, null, 2));
 
       if (selectedVisit) {
-        const { error } = await supabase
+        console.log('🔄 MISE À JOUR visite existante - ID:', selectedVisit.id);
+        
+        const { data: updateResult, error } = await supabase
           .from('visits')
           .update(visitData)
-          .eq('id', selectedVisit.id);
+          .eq('id', selectedVisit.id)
+          .select();
 
         if (error) {
-          console.error('Erreur lors de la mise à jour:', error);
+          console.error('❌ Erreur lors de la mise à jour:', error);
+          console.error('❌ Code erreur:', error.code);
+          console.error('❌ Message:', error.message);
+          console.error('❌ Détails:', error.details);
           throw error;
         }
 
+        console.log('✅ Mise à jour réussie:', updateResult);
+
         if (visitData.statut === 'planifiee' && visitData.notification_enabled) {
+          console.log('📧 Programmation des notifications...');
           const updatedVisit = { ...selectedVisit, ...visitData };
           await scheduleVisitNotifications(updatedVisit);
         }
@@ -366,6 +450,8 @@ const VisitManager = () => {
           description: "Visite mise à jour avec succès"
         });
       } else {
+        console.log('🆕 CRÉATION nouvelle visite');
+        
         const { data: newVisit, error } = await supabase
           .from('visits')
           .insert([visitData])
@@ -373,9 +459,14 @@ const VisitManager = () => {
           .single();
 
         if (error) {
-          console.error('Erreur lors de la création:', error);
+          console.error('❌ Erreur lors de la création:', error);
+          console.error('❌ Code erreur:', error.code);
+          console.error('❌ Message:', error.message);
+          console.error('❌ Détails:', error.details);
           throw error;
         }
+
+        console.log('✅ Création réussie:', newVisit);
 
         const mappedVisit = {
           ...newVisit,
@@ -383,6 +474,7 @@ const VisitManager = () => {
         };
 
         if (mappedVisit.statut === 'planifiee' && mappedVisit.notification_enabled) {
+          console.log('📧 Programmation des notifications...');
           await scheduleVisitNotifications(mappedVisit);
         }
 
@@ -392,10 +484,14 @@ const VisitManager = () => {
         });
       }
 
+      console.log('🎉 SAUVEGARDE TERMINÉE AVEC SUCCÈS');
       setIsDialogOpen(false);
       fetchVisits();
     } catch (error) {
-      console.error('Error saving visit:', error);
+      console.error('💥 ERREUR CRITIQUE dans onSubmit:', error);
+      console.error('💥 Type d\'erreur:', typeof error);
+      console.error('💥 Stack trace:', error instanceof Error ? error.stack : 'Pas de stack trace');
+      
       toast({
         title: "Erreur",
         description: error instanceof Error ? error.message : "Impossible de sauvegarder la visite",
@@ -473,3 +569,4 @@ const VisitManager = () => {
 };
 
 export default VisitManager;
+
