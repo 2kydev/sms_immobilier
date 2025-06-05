@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -287,6 +288,10 @@ const VisitManager = () => {
       form.setValue('client_prenom', selectedClient.prenom);
       form.setValue('client_telephone', selectedClient.telephone);
       form.setValue('client_id', clientId);
+      // Assigner automatiquement l'email du client pour les notifications
+      if (selectedClient.email && selectedClient.email.trim() !== '') {
+        form.setValue('client_notification_email', selectedClient.email);
+      }
     }
   };
 
@@ -304,13 +309,29 @@ const VisitManager = () => {
     if (selectedAgent) {
       form.setValue('agent', agentName);
       form.setValue('notification_email', selectedAgent.email);
-      form.setValue('agent_notification_email', selectedAgent.email);
-      form.setValue('client_notification_email', selectedAgent.email);
+      // Assigner automatiquement l'email de l'agent pour les notifications
+      if (selectedAgent.email && selectedAgent.email.trim() !== '') {
+        form.setValue('agent_notification_email', selectedAgent.email);
+      }
     }
   };
 
   const onSubmit = async (data: Visit) => {
     try {
+      console.log('Données de visite à sauvegarder:', data);
+
+      // Validation des emails de notification si les notifications sont activées
+      if (data.notification_enabled) {
+        if (!data.agent_notification_email && !data.client_notification_email) {
+          toast({
+            title: "Erreur",
+            description: "Veuillez sélectionner au moins un email pour les notifications",
+            variant: "destructive"
+          });
+          return;
+        }
+      }
+
       // Nettoyer les données avant la sauvegarde
       const visitData = {
         ...data,
@@ -322,13 +343,18 @@ const VisitManager = () => {
         notification_email: data.notification_email || null
       };
 
+      console.log('Données nettoyées pour sauvegarde:', visitData);
+
       if (selectedVisit) {
         const { error } = await supabase
           .from('visits')
           .update(visitData)
           .eq('id', selectedVisit.id);
 
-        if (error) throw error;
+        if (error) {
+          console.error('Erreur lors de la mise à jour:', error);
+          throw error;
+        }
 
         if (visitData.statut === 'planifiee' && visitData.notification_enabled) {
           const updatedVisit = { ...selectedVisit, ...visitData };
@@ -346,7 +372,10 @@ const VisitManager = () => {
           .select()
           .single();
 
-        if (error) throw error;
+        if (error) {
+          console.error('Erreur lors de la création:', error);
+          throw error;
+        }
 
         const mappedVisit = {
           ...newVisit,
