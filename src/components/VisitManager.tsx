@@ -30,6 +30,8 @@ interface Visit {
   notification_enabled?: boolean;
   notification_delay_hours?: number;
   notification_email?: string;
+  agent_notification_email?: string;
+  client_notification_email?: string;
 }
 
 interface Client {
@@ -37,6 +39,7 @@ interface Client {
   nom: string;
   prenom: string;
   telephone: string;
+  email: string;
 }
 
 interface Property {
@@ -85,7 +88,9 @@ const VisitManager = () => {
       notes: '',
       notification_enabled: false,
       notification_delay_hours: 24,
-      notification_email: ''
+      notification_email: '',
+      agent_notification_email: '',
+      client_notification_email: ''
     }
   });
 
@@ -116,7 +121,7 @@ const VisitManager = () => {
     try {
       const { data, error } = await supabase
         .from('clients')
-        .select('id, nom, prenom, telephone')
+        .select('id, nom, prenom, telephone, email')
         .order('nom', { ascending: true });
 
       if (error) throw error;
@@ -171,62 +176,74 @@ const VisitManager = () => {
     return matchesSearch && matchesStatut;
   });
 
-  const scheduleVisitNotification = async (visit: Visit) => {
+  const scheduleVisitNotifications = async (visit: Visit) => {
     try {
-      const selectedAgent = agents.find(a => a.nom === visit.agent);
-      const agentEmail = selectedAgent?.email || visit.notification_email;
-
-      if (!agentEmail) {
-        throw new Error('Aucun email trouvé pour l\'agent sélectionné');
+      const emailsToSend = [];
+      
+      // Ajouter l'email de l'agent si sélectionné
+      if (visit.agent_notification_email) {
+        emailsToSend.push({
+          email: visit.agent_notification_email,
+          type: 'agent'
+        });
+      }
+      
+      // Ajouter l'email du client si sélectionné
+      if (visit.client_notification_email) {
+        emailsToSend.push({
+          email: visit.client_notification_email,
+          type: 'client'
+        });
       }
 
-      console.log('Scheduling notification for visit:', visit.id);
+      // Programmer les notifications pour chaque email
+      for (const emailConfig of emailsToSend) {
+        console.log(`Scheduling notification for ${emailConfig.type}:`, emailConfig.email);
 
-      const { data, error } = await supabase.functions.invoke('schedule-visit-notification', {
-        body: {
-          visitId: visit.id,
-          agentEmail: agentEmail,
-          visitDate: visit.date,
-          visitTime: visit.heure,
-          clientName: `${visit.client_prenom} ${visit.client_nom}`,
-          clientPhone: visit.client_telephone,
-          propertyTitle: visit.propriete_titre,
-          propertyAddress: visit.propriete_adresse,
-          notificationDelayHours: visit.notification_delay_hours || 24
-        }
-      });
+        const { data, error } = await supabase.functions.invoke('schedule-visit-notification', {
+          body: {
+            visitId: visit.id,
+            agentEmail: emailConfig.email,
+            visitDate: visit.date,
+            visitTime: visit.heure,
+            clientName: `${visit.client_prenom} ${visit.client_nom}`,
+            clientPhone: visit.client_telephone,
+            propertyTitle: visit.propriete_titre,
+            propertyAddress: visit.propriete_adresse,
+            notificationDelayHours: visit.notification_delay_hours || 24,
+            recipientType: emailConfig.type
+          }
+        });
 
-      if (error) throw error;
+        if (error) throw error;
 
-      await supabase.from('email_logs').insert([{
-        visit_id: visit.id,
-        recipient_email: agentEmail,
-        email_type: 'visit_reminder',
-        status: 'scheduled',
-        sent_at: null
-      }]);
+        // Enregistrer le log de programmation
+        await supabase.from('email_logs').insert([{
+          visit_id: visit.id,
+          recipient_email: emailConfig.email,
+          email_type: 'visit_reminder',
+          status: 'scheduled',
+          sent_at: null
+        }]);
+      }
 
-      const visitDateTime = new Date(`${visit.date}T${visit.heure}`);
-      const notificationTime = new Date(visitDateTime.getTime() - ((visit.notification_delay_hours || 24) * 60 * 60 * 1000));
-      
-      toast({
-        title: "Notification programmée",
-        description: `Un email de rappel sera envoyé à ${agentEmail} le ${notificationTime.toLocaleDateString('fr-FR')} à ${notificationTime.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}`
-      });
+      if (emailsToSend.length > 0) {
+        const visitDateTime = new Date(`${visit.date}T${visit.heure}`);
+        const notificationTime = new Date(visitDateTime.getTime() - ((visit.notification_delay_hours || 24) * 60 * 60 * 1000));
+        
+        const recipientsList = emailsToSend.map(e => e.email).join(', ');
+        
+        toast({
+          title: "Notifications programmées",
+          description: `Des emails de rappel seront envoyés à ${recipientsList} le ${notificationTime.toLocaleDateString('fr-FR')} à ${notificationTime.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}`
+        });
+      }
     } catch (error) {
-      console.error('Error scheduling notification:', error);
+      console.error('Error scheduling notifications:', error);
       
-      await supabase.from('email_logs').insert([{
-        visit_id: visit.id || '',
-        recipient_email: visit.notification_email || '',
-        email_type: 'visit_reminder',
-        status: 'failed',
-        error_message: error instanceof Error ? error.message : 'Unknown error'
-      }]);
-
       toast({
         title: "Erreur",
-        description: error instanceof Error ? error.message : "La notification n'a pas pu être programmée",
+        description: error instanceof Error ? error.message : "Les notifications n'ont pas pu être programmées",
         variant: "destructive"
       });
     }
@@ -251,7 +268,9 @@ const VisitManager = () => {
         notes: '',
         notification_enabled: false,
         notification_delay_hours: 24,
-        notification_email: ''
+        notification_email: '',
+        agent_notification_email: '',
+        client_notification_email: ''
       });
     }
     setIsDialogOpen(true);
@@ -281,6 +300,8 @@ const VisitManager = () => {
     if (selectedAgent) {
       form.setValue('agent', agentName);
       form.setValue('notification_email', selectedAgent.email);
+      form.setValue('agent_notification_email', selectedAgent.email);
+      form.setValue('client_notification_email', selectedAgent.email);
     }
   };
 
@@ -303,7 +324,7 @@ const VisitManager = () => {
 
         if (visitData.statut === 'planifiee' && visitData.notification_enabled) {
           const updatedVisit = { ...selectedVisit, ...visitData };
-          await scheduleVisitNotification(updatedVisit);
+          await scheduleVisitNotifications(updatedVisit);
         }
 
         toast({
@@ -325,7 +346,7 @@ const VisitManager = () => {
         };
 
         if (mappedVisit.statut === 'planifiee' && mappedVisit.notification_enabled) {
-          await scheduleVisitNotification(mappedVisit);
+          await scheduleVisitNotifications(mappedVisit);
         }
 
         toast({

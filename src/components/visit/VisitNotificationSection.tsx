@@ -5,6 +5,7 @@ import { Switch } from '@/components/ui/switch';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Mail } from 'lucide-react';
 import { Control } from 'react-hook-form';
+import VisitNotificationEmails from './VisitNotificationEmails';
 
 interface Agent {
   id: string;
@@ -12,6 +13,14 @@ interface Agent {
   email: string;
   telephone: string;
   statut: string;
+}
+
+interface Client {
+  id: string;
+  nom: string;
+  prenom: string;
+  telephone: string;
+  email: string;
 }
 
 interface Visit {
@@ -32,17 +41,21 @@ interface Visit {
   notification_enabled?: boolean;
   notification_delay_hours?: number;
   notification_email?: string;
+  agent_notification_email?: string;
+  client_notification_email?: string;
 }
 
 interface VisitNotificationSectionProps {
   control: Control<Visit>;
   agents: Agent[];
+  clients: Client[];
   notificationEnabled: boolean;
 }
 
 const VisitNotificationSection: React.FC<VisitNotificationSectionProps> = ({
   control,
   agents,
+  clients,
   notificationEnabled
 }) => {
   return (
@@ -52,7 +65,7 @@ const VisitNotificationSection: React.FC<VisitNotificationSectionProps> = ({
         Notifications Email
       </h3>
       
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <div className="space-y-4">
         <FormField
           control={control}
           name="notification_enabled"
@@ -100,29 +113,11 @@ const VisitNotificationSection: React.FC<VisitNotificationSectionProps> = ({
               )}
             />
 
-            <FormField
+            <VisitNotificationEmails
               control={control}
-              name="notification_email"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Email de notification</FormLabel>
-                  <Select onValueChange={field.onChange} defaultValue={field.value}>
-                    <FormControl>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Sélectionner un agent" />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      {agents.filter(agent => agent.statut === 'actif').map((agent) => (
-                        <SelectItem key={agent.id} value={agent.email}>
-                          {agent.nom} - {agent.email}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  <FormMessage />
-                </FormItem>
-              )}
+              agents={agents}
+              clients={clients}
+              notificationEnabled={notificationEnabled}
             />
           </>
         )}

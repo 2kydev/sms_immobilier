@@ -45,9 +45,16 @@ const Auth = () => {
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50 p-4">
       <Card className="w-full max-w-md">
-        <CardHeader className="space-y-1">
+        <CardHeader className="space-y-4 text-center">
+          <div className="flex justify-center mb-4">
+            <img 
+              src="/lovable-uploads/2f182060-60bf-4ab5-a6b2-e6092170b088.png" 
+              alt="SMS Immobilier Logo" 
+              className="w-24 h-24 object-contain"
+            />
+          </div>
           <CardTitle className="text-2xl text-center text-primary">
-            Nouvelle SMS Immobilier
+            SMS Immobilier
           </CardTitle>
           <CardDescription className="text-center">
             Connectez-vous à votre compte

@@ -50,12 +50,16 @@ export function AppSidebar({
       <SidebarContent className="bg-white">
         <div className="p-6">
           <div className="flex items-center gap-3 mb-6">
-            <div className="w-10 h-10 real-estate-gradient rounded-lg flex items-center justify-center">
-              <span className="text-white font-bold text-lg">🏢</span>
+            <div className="w-12 h-12 flex items-center justify-center">
+              <img 
+                src="/lovable-uploads/2f182060-60bf-4ab5-a6b2-e6092170b088.png" 
+                alt="SMS Immobilier Logo" 
+                className="w-full h-full object-contain"
+              />
             </div>
             <div>
-              <h2 className="font-bold text-primary">VOTRE ENTREPRISE</h2>
-              <p className="text-xs text-gray-500">Immobilier</p>
+              <h2 className="font-bold text-primary">SMS IMMOBILIER</h2>
+              <p className="text-xs text-gray-500">CRM Immobilier</p>
             </div>
           </div>
         </div>

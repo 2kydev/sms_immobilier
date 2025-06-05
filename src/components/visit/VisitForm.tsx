@@ -27,6 +27,8 @@ interface Visit {
   notification_enabled?: boolean;
   notification_delay_hours?: number;
   notification_email?: string;
+  agent_notification_email?: string;
+  client_notification_email?: string;
 }
 
 interface Client {
@@ -34,6 +36,7 @@ interface Client {
   nom: string;
   prenom: string;
   telephone: string;
+  email: string;
 }
 
 interface Property {
@@ -233,6 +236,7 @@ const VisitForm: React.FC<VisitFormProps> = ({
             <VisitNotificationSection
               control={form.control}
               agents={agents}
+              clients={clients}
               notificationEnabled={form.watch('notification_enabled')}
             />
 

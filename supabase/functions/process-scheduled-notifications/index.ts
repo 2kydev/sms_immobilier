@@ -29,8 +29,7 @@ const handler = async (req: Request): Promise<Response> => {
       .from('visits')
       .select('*')
       .eq('statut', 'planifiee')
-      .eq('notification_enabled', true)
-      .not('notification_email', 'is', null);
+      .eq('notification_enabled', true);
 
     if (visitsError) {
       throw visitsError;
@@ -57,135 +56,155 @@ const handler = async (req: Request): Promise<Response> => {
       console.log(`Visit ${visit.id}: delay=${visit.notification_delay_hours}h, timeDiff=${Math.round(timeDiff/60000)}min, window=${timeWindow/60000}min, shouldSend=${shouldSend}`);
       
       if (shouldSend) {
-        // Vérifier si la notification n'a pas déjà été envoyée
-        const { data: existingLog } = await supabase
-          .from('email_logs')
-          .select('id')
-          .eq('visit_id', visit.id)
-          .eq('status', 'sent')
-          .single();
+        // Collecter tous les emails à notifier
+        const emailsToNotify = [];
+        
+        if (visit.agent_notification_email) {
+          emailsToNotify.push(visit.agent_notification_email);
+        }
+        
+        if (visit.client_notification_email) {
+          emailsToNotify.push(visit.client_notification_email);
+        }
+        
+        // Support pour l'ancien champ notification_email (compatibilité)
+        if (visit.notification_email && !emailsToNotify.includes(visit.notification_email)) {
+          emailsToNotify.push(visit.notification_email);
+        }
 
-        if (!existingLog) {
-          console.log(`Sending notification for visit ${visit.id}`);
-          
-          const formattedDate = visitDateTime.toLocaleDateString('fr-FR', {
-            weekday: 'long',
-            year: 'numeric',
-            month: 'long',
-            day: 'numeric'
-          });
+        // Envoyer la notification à chaque email
+        for (const email of emailsToNotify) {
+          // Vérifier si la notification n'a pas déjà été envoyée à cet email
+          const { data: existingLog } = await supabase
+            .from('email_logs')
+            .select('id')
+            .eq('visit_id', visit.id)
+            .eq('recipient_email', email)
+            .eq('status', 'sent')
+            .single();
 
-          try {
-            const emailResponse = await resend.emails.send({
-              from: "SMS Immobilier <onboarding@resend.dev>",
-              to: [visit.notification_email],
-              subject: `Rappel de visite - ${visit.client_prenom} ${visit.client_nom} - ${visit.propriete_titre}`,
-              html: `
-                <!DOCTYPE html>
-                <html>
-                <head>
-                  <meta charset="utf-8">
-                  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-                  <title>Rappel de visite</title>
-                  <style>
-                    body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; margin: 0; padding: 20px; background-color: #f4f4f4; }
-                    .container { max-width: 600px; margin: 0 auto; background: white; border-radius: 8px; overflow: hidden; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
-                    .header { background: linear-gradient(135deg, #1e40af, #3b82f6); color: white; padding: 30px; text-align: center; }
-                    .content { padding: 30px; }
-                    .visit-info { background: #f8fafc; border-left: 4px solid #1e40af; padding: 20px; margin: 20px 0; border-radius: 4px; }
-                    .info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin: 20px 0; }
-                    .info-item { padding: 10px; background: #f1f5f9; border-radius: 4px; }
-                    .info-label { font-weight: bold; color: #1e40af; font-size: 12px; text-transform: uppercase; }
-                    .info-value { margin-top: 5px; }
-                    .footer { background: #f8fafc; padding: 20px; text-align: center; color: #64748b; font-size: 14px; }
-                  </style>
-                </head>
-                <body>
-                  <div class="container">
-                    <div class="header">
-                      <h1>🏠 Rappel de Visite</h1>
-                      <p>SMS Immobilier</p>
-                    </div>
-                    
-                    <div class="content">
-                      <p>Bonjour,</p>
-                      
-                      <p>Nous vous rappelons qu'une visite est programmée :</p>
-                      
-                      <div class="visit-info">
-                        <h3>📅 Détails de la visite</h3>
-                        <p><strong>Date :</strong> ${formattedDate}</p>
-                        <p><strong>Heure :</strong> ${visit.heure}</p>
-                      </div>
-
-                      <div class="info-grid">
-                        <div class="info-item">
-                          <div class="info-label">👤 Client</div>
-                          <div class="info-value">
-                            <strong>${visit.client_prenom} ${visit.client_nom}</strong><br>
-                            📞 ${visit.client_telephone}
-                          </div>
-                        </div>
-                        
-                        <div class="info-item">
-                          <div class="info-label">🏡 Propriété</div>
-                          <div class="info-value">
-                            <strong>${visit.propriete_titre}</strong><br>
-                            📍 ${visit.propriete_adresse}
-                          </div>
-                        </div>
-                      </div>
-
-                      <p><strong>Points à vérifier avant la visite :</strong></p>
-                      <ul>
-                        <li>✅ Confirmer la présence du client</li>
-                        <li>✅ Préparer les documents de la propriété</li>
-                        <li>✅ Vérifier l'accès à la propriété</li>
-                        <li>✅ Prévoir les clés et badges d'accès</li>
-                      </ul>
-
-                      <p>Bonne visite !</p>
-                    </div>
-                    
-                    <div class="footer">
-                      <p><strong>SMS Immobilier</strong></p>
-                      <p>CRM Immobilier - Système de notification automatique</p>
-                    </div>
-                  </div>
-                </body>
-                </html>
-              `,
+          if (!existingLog) {
+            console.log(`Sending notification for visit ${visit.id} to ${email}`);
+            
+            const formattedDate = visitDateTime.toLocaleDateString('fr-FR', {
+              weekday: 'long',
+              year: 'numeric',
+              month: 'long',
+              day: 'numeric'
             });
 
-            if (emailResponse.error) {
-              throw new Error(`Email sending failed: ${emailResponse.error.message}`);
+            try {
+              const emailResponse = await resend.emails.send({
+                from: "SMS Immobilier <onboarding@resend.dev>",
+                to: [email],
+                subject: `Rappel de visite - ${visit.client_prenom} ${visit.client_nom} - ${visit.propriete_titre}`,
+                html: `
+                  <!DOCTYPE html>
+                  <html>
+                  <head>
+                    <meta charset="utf-8">
+                    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+                    <title>Rappel de visite</title>
+                    <style>
+                      body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; margin: 0; padding: 20px; background-color: #f4f4f4; }
+                      .container { max-width: 600px; margin: 0 auto; background: white; border-radius: 8px; overflow: hidden; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+                      .header { background: linear-gradient(135deg, #1e40af, #3b82f6); color: white; padding: 30px; text-align: center; }
+                      .content { padding: 30px; }
+                      .visit-info { background: #f8fafc; border-left: 4px solid #1e40af; padding: 20px; margin: 20px 0; border-radius: 4px; }
+                      .info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin: 20px 0; }
+                      .info-item { padding: 10px; background: #f1f5f9; border-radius: 4px; }
+                      .info-label { font-weight: bold; color: #1e40af; font-size: 12px; text-transform: uppercase; }
+                      .info-value { margin-top: 5px; }
+                      .footer { background: #f8fafc; padding: 20px; text-align: center; color: #64748b; font-size: 14px; }
+                    </style>
+                  </head>
+                  <body>
+                    <div class="container">
+                      <div class="header">
+                        <h1>🏠 Rappel de Visite</h1>
+                        <p>SMS Immobilier</p>
+                      </div>
+                      
+                      <div class="content">
+                        <p>Bonjour,</p>
+                        
+                        <p>Nous vous rappelons qu'une visite est programmée :</p>
+                        
+                        <div class="visit-info">
+                          <h3>📅 Détails de la visite</h3>
+                          <p><strong>Date :</strong> ${formattedDate}</p>
+                          <p><strong>Heure :</strong> ${visit.heure}</p>
+                        </div>
+
+                        <div class="info-grid">
+                          <div class="info-item">
+                            <div class="info-label">👤 Client</div>
+                            <div class="info-value">
+                              <strong>${visit.client_prenom} ${visit.client_nom}</strong><br>
+                              📞 ${visit.client_telephone}
+                            </div>
+                          </div>
+                          
+                          <div class="info-item">
+                            <div class="info-label">🏡 Propriété</div>
+                            <div class="info-value">
+                              <strong>${visit.propriete_titre}</strong><br>
+                              📍 ${visit.propriete_adresse}
+                            </div>
+                          </div>
+                        </div>
+
+                        <p><strong>Points à vérifier avant la visite :</strong></p>
+                        <ul>
+                          <li>✅ Confirmer la présence du client</li>
+                          <li>✅ Préparer les documents de la propriété</li>
+                          <li>✅ Vérifier l'accès à la propriété</li>
+                          <li>✅ Prévoir les clés et badges d'accès</li>
+                        </ul>
+
+                        <p>Bonne visite !</p>
+                      </div>
+                      
+                      <div class="footer">
+                        <p><strong>SMS Immobilier</strong></p>
+                        <p>CRM Immobilier - Système de notification automatique</p>
+                      </div>
+                    </div>
+                  </body>
+                  </html>
+                `,
+              });
+
+              if (emailResponse.error) {
+                throw new Error(`Email sending failed: ${emailResponse.error.message}`);
+              }
+
+              // Enregistrer le log d'email réussi
+              await supabase.from('email_logs').insert([{
+                visit_id: visit.id,
+                recipient_email: email,
+                email_type: 'visit_reminder',
+                status: 'sent',
+                sent_at: new Date().toISOString()
+              }]);
+
+              console.log(`Notification sent successfully for visit ${visit.id} to ${email}`);
+
+            } catch (emailError) {
+              console.error(`Failed to send notification for visit ${visit.id} to ${email}:`, emailError);
+              
+              // Enregistrer le log d'échec
+              await supabase.from('email_logs').insert([{
+                visit_id: visit.id,
+                recipient_email: email,
+                email_type: 'visit_reminder',
+                status: 'failed',
+                error_message: emailError instanceof Error ? emailError.message : 'Unknown error'
+              }]);
             }
-
-            // Enregistrer le log d'email réussi
-            await supabase.from('email_logs').insert([{
-              visit_id: visit.id,
-              recipient_email: visit.notification_email,
-              email_type: 'visit_reminder',
-              status: 'sent',
-              sent_at: new Date().toISOString()
-            }]);
-
-            console.log(`Notification sent successfully for visit ${visit.id}`);
-
-          } catch (emailError) {
-            console.error(`Failed to send notification for visit ${visit.id}:`, emailError);
-            
-            // Enregistrer le log d'échec
-            await supabase.from('email_logs').insert([{
-              visit_id: visit.id,
-              recipient_email: visit.notification_email,
-              email_type: 'visit_reminder',
-              status: 'failed',
-              error_message: emailError instanceof Error ? emailError.message : 'Unknown error'
-            }]);
+          } else {
+            console.log(`Notification already sent for visit ${visit.id} to ${email}`);
           }
-        } else {
-          console.log(`Notification already sent for visit ${visit.id}`);
         }
       }
     }
