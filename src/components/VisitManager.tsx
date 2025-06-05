@@ -181,7 +181,7 @@ const VisitManager = () => {
       const emailsToSend = [];
       
       // Ajouter l'email de l'agent si sélectionné
-      if (visit.agent_notification_email) {
+      if (visit.agent_notification_email && visit.agent_notification_email.trim() !== '') {
         emailsToSend.push({
           email: visit.agent_notification_email,
           type: 'agent'
@@ -189,7 +189,7 @@ const VisitManager = () => {
       }
       
       // Ajouter l'email du client si sélectionné
-      if (visit.client_notification_email) {
+      if (visit.client_notification_email && visit.client_notification_email.trim() !== '') {
         emailsToSend.push({
           email: visit.client_notification_email,
           type: 'client'
@@ -252,7 +252,11 @@ const VisitManager = () => {
   const openVisitDialog = (visit?: Visit) => {
     if (visit) {
       setSelectedVisit(visit);
-      form.reset(visit);
+      form.reset({
+        ...visit,
+        agent_notification_email: visit.agent_notification_email || '',
+        client_notification_email: visit.client_notification_email || ''
+      });
     } else {
       setSelectedVisit(null);
       form.reset({
@@ -307,11 +311,15 @@ const VisitManager = () => {
 
   const onSubmit = async (data: Visit) => {
     try {
+      // Nettoyer les données avant la sauvegarde
       const visitData = {
         ...data,
         feedback_client: data.feedback_client || null,
         client_id: data.client_id || null,
-        property_id: data.property_id || null
+        property_id: data.property_id || null,
+        agent_notification_email: data.agent_notification_email || null,
+        client_notification_email: data.client_notification_email || null,
+        notification_email: data.notification_email || null
       };
 
       if (selectedVisit) {
@@ -361,7 +369,7 @@ const VisitManager = () => {
       console.error('Error saving visit:', error);
       toast({
         title: "Erreur",
-        description: "Impossible de sauvegarder la visite",
+        description: error instanceof Error ? error.message : "Impossible de sauvegarder la visite",
         variant: "destructive"
       });
     }

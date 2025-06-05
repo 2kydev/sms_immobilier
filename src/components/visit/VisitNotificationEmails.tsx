@@ -58,8 +58,18 @@ const VisitNotificationEmails: React.FC<VisitNotificationEmailsProps> = ({
   if (!notificationEnabled) return null;
 
   // Filter agents and clients to only include those with valid email addresses
-  const validAgents = agents.filter(agent => agent.statut === 'actif' && agent.email && agent.email.trim() !== '');
-  const validClients = clients.filter(client => client.email && client.email.trim() !== '');
+  const validAgents = agents.filter(agent => 
+    agent.statut === 'actif' && 
+    agent.email && 
+    agent.email.trim() !== '' && 
+    agent.email.includes('@')
+  );
+  
+  const validClients = clients.filter(client => 
+    client.email && 
+    client.email.trim() !== '' && 
+    client.email.includes('@')
+  );
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
@@ -69,7 +79,7 @@ const VisitNotificationEmails: React.FC<VisitNotificationEmailsProps> = ({
         render={({ field }) => (
           <FormItem>
             <FormLabel>Email Agent</FormLabel>
-            <Select onValueChange={field.onChange} defaultValue={field.value}>
+            <Select onValueChange={field.onChange} value={field.value || ''}>
               <FormControl>
                 <SelectTrigger>
                   <SelectValue placeholder="Sélectionner un agent" />
@@ -77,7 +87,7 @@ const VisitNotificationEmails: React.FC<VisitNotificationEmailsProps> = ({
               </FormControl>
               <SelectContent>
                 {validAgents.map((agent) => (
-                  <SelectItem key={agent.id} value={agent.email}>
+                  <SelectItem key={`agent-${agent.id}`} value={agent.email}>
                     {agent.nom} - {agent.email}
                   </SelectItem>
                 ))}
@@ -94,7 +104,7 @@ const VisitNotificationEmails: React.FC<VisitNotificationEmailsProps> = ({
         render={({ field }) => (
           <FormItem>
             <FormLabel>Email Client</FormLabel>
-            <Select onValueChange={field.onChange} defaultValue={field.value}>
+            <Select onValueChange={field.onChange} value={field.value || ''}>
               <FormControl>
                 <SelectTrigger>
                   <SelectValue placeholder="Sélectionner un client" />
@@ -102,7 +112,7 @@ const VisitNotificationEmails: React.FC<VisitNotificationEmailsProps> = ({
               </FormControl>
               <SelectContent>
                 {validClients.map((client) => (
-                  <SelectItem key={client.id} value={client.email}>
+                  <SelectItem key={`client-${client.id}`} value={client.email}>
                     {client.prenom} {client.nom} - {client.email}
                   </SelectItem>
                 ))}
