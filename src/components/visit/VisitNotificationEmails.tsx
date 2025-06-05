@@ -57,6 +57,10 @@ const VisitNotificationEmails: React.FC<VisitNotificationEmailsProps> = ({
 }) => {
   if (!notificationEnabled) return null;
 
+  // Filter agents and clients to only include those with valid email addresses
+  const validAgents = agents.filter(agent => agent.statut === 'actif' && agent.email && agent.email.trim() !== '');
+  const validClients = clients.filter(client => client.email && client.email.trim() !== '');
+
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
       <FormField
@@ -72,7 +76,7 @@ const VisitNotificationEmails: React.FC<VisitNotificationEmailsProps> = ({
                 </SelectTrigger>
               </FormControl>
               <SelectContent>
-                {agents.filter(agent => agent.statut === 'actif').map((agent) => (
+                {validAgents.map((agent) => (
                   <SelectItem key={agent.id} value={agent.email}>
                     {agent.nom} - {agent.email}
                   </SelectItem>
@@ -97,7 +101,7 @@ const VisitNotificationEmails: React.FC<VisitNotificationEmailsProps> = ({
                 </SelectTrigger>
               </FormControl>
               <SelectContent>
-                {clients.map((client) => (
+                {validClients.map((client) => (
                   <SelectItem key={client.id} value={client.email}>
                     {client.prenom} {client.nom} - {client.email}
                   </SelectItem>
