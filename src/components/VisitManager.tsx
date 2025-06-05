@@ -1,5 +1,3 @@
-
-
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -12,7 +10,7 @@ import VisitCalendar from './VisitCalendar';
 import VisitCard from './visit/VisitCard';
 import VisitFilters from './visit/VisitFilters';
 import VisitForm from './visit/VisitForm';
-import VisitStats from './visit/VisitStats';
+import VisitStats from './VisitStats';
 
 interface Visit {
   id: string;
@@ -283,34 +281,34 @@ const VisitManager = () => {
   };
 
   const handleClientSelect = (clientId: string) => {
-    console.log('🔍 Sélection client - ID:', clientId);
+    console.log('🔍 ETAPE 1: Sélection client - ID:', clientId);
     const selectedClient = clients.find(c => c.id === clientId);
-    console.log('🔍 Client trouvé:', selectedClient);
+    console.log('🔍 ETAPE 2: Client trouvé:', selectedClient);
     
     if (selectedClient) {
-      console.log('📝 Mise à jour des champs client...');
+      console.log('📝 ETAPE 3: Mise à jour des champs client...');
       form.setValue('client_nom', selectedClient.nom);
       form.setValue('client_prenom', selectedClient.prenom);
       form.setValue('client_telephone', selectedClient.telephone);
       form.setValue('client_id', clientId);
       
-      // Assigner automatiquement l'email du client pour les notifications
       if (selectedClient.email && selectedClient.email.trim() !== '') {
-        console.log('📧 Attribution email client:', selectedClient.email);
+        console.log('📧 ETAPE 4: Attribution email client:', selectedClient.email);
         form.setValue('client_notification_email', selectedClient.email);
       } else {
-        console.log('⚠️ Pas d\'email valide pour le client');
+        console.log('⚠️ ETAPE 4: Pas d\'email valide pour le client');
+        form.setValue('client_notification_email', '');
       }
     }
   };
 
   const handlePropertySelect = (propertyId: string) => {
-    console.log('🔍 Sélection propriété - ID:', propertyId);
+    console.log('🔍 ETAPE 1: Sélection propriété - ID:', propertyId);
     const selectedProperty = properties.find(p => p.id === propertyId);
-    console.log('🔍 Propriété trouvée:', selectedProperty);
+    console.log('🔍 ETAPE 2: Propriété trouvée:', selectedProperty);
     
     if (selectedProperty) {
-      console.log('📝 Mise à jour des champs propriété...');
+      console.log('📝 ETAPE 3: Mise à jour des champs propriété...');
       form.setValue('propriete_titre', selectedProperty.titre);
       form.setValue('propriete_adresse', `${selectedProperty.city} - ${selectedProperty.quartier}`);
       form.setValue('property_id', propertyId);
@@ -318,179 +316,147 @@ const VisitManager = () => {
   };
 
   const handleAgentSelect = (agentName: string) => {
-    console.log('🔍 Sélection agent - Nom:', agentName);
+    console.log('🔍 ETAPE 1: Sélection agent - Nom:', agentName);
     const selectedAgent = agents.find(a => a.nom === agentName);
-    console.log('🔍 Agent trouvé:', selectedAgent);
+    console.log('🔍 ETAPE 2: Agent trouvé:', selectedAgent);
     
     if (selectedAgent) {
-      console.log('📝 Mise à jour des champs agent...');
+      console.log('📝 ETAPE 3: Mise à jour des champs agent...');
       form.setValue('agent', agentName);
       form.setValue('notification_email', selectedAgent.email);
       
-      // Assigner automatiquement l'email de l'agent pour les notifications
       if (selectedAgent.email && selectedAgent.email.trim() !== '') {
-        console.log('📧 Attribution email agent:', selectedAgent.email);
+        console.log('📧 ETAPE 4: Attribution email agent:', selectedAgent.email);
         form.setValue('agent_notification_email', selectedAgent.email);
       } else {
-        console.log('⚠️ Pas d\'email valide pour l\'agent');
+        console.log('⚠️ ETAPE 4: Pas d\'email valide pour l\'agent');
+        form.setValue('agent_notification_email', '');
       }
     }
   };
 
   const onSubmit = async (data: Visit) => {
+    console.log('🚀 DEBUT SAUVEGARDE - Données reçues:', JSON.stringify(data, null, 2));
+    
     try {
-      console.log('🚀 DÉBUT SAUVEGARDE VISITE');
-      console.log('📋 Données reçues du formulaire:', JSON.stringify(data, null, 2));
-
-      // Test de connexion Supabase
-      console.log('🔗 Test de connexion Supabase...');
-      const { data: testConnection, error: connectionError } = await supabase
-        .from('visits')
-        .select('count')
-        .limit(1);
-      
-      if (connectionError) {
-        console.error('❌ Erreur de connexion Supabase:', connectionError);
-        throw new Error(`Erreur de connexion: ${connectionError.message}`);
+      // ETAPE 1: Validation de base
+      console.log('📋 ETAPE 1: Validation de base');
+      if (!data.client_nom?.trim()) {
+        throw new Error('Le nom du client est obligatoire');
       }
-      console.log('✅ Connexion Supabase OK');
+      if (!data.client_prenom?.trim()) {
+        throw new Error('Le prénom du client est obligatoire');
+      }
+      if (!data.propriete_titre?.trim()) {
+        throw new Error('Le titre de la propriété est obligatoire');
+      }
+      if (!data.date) {
+        throw new Error('La date est obligatoire');
+      }
+      if (!data.heure) {
+        throw new Error('L\'heure est obligatoire');
+      }
+      if (!data.agent?.trim()) {
+        throw new Error('L\'agent est obligatoire');
+      }
+      console.log('✅ ETAPE 1: Validation de base OK');
 
-      // Validation des emails de notification si les notifications sont activées
+      // ETAPE 2: Validation notifications
+      console.log('📧 ETAPE 2: Validation notifications');
       if (data.notification_enabled) {
-        console.log('📧 Validation des notifications activées...');
-        console.log('Email agent:', data.agent_notification_email);
-        console.log('Email client:', data.client_notification_email);
-        
-        if (!data.agent_notification_email && !data.client_notification_email) {
-          console.log('❌ Aucun email de notification sélectionné');
-          toast({
-            title: "Erreur",
-            description: "Veuillez sélectionner au moins un email pour les notifications",
-            variant: "destructive"
-          });
-          return;
+        console.log('Notifications activées, vérification emails...');
+        if (!data.agent_notification_email?.trim() && !data.client_notification_email?.trim()) {
+          throw new Error('Au moins un email de notification est requis si les notifications sont activées');
         }
-        console.log('✅ Validation emails OK');
+        console.log('✅ Au moins un email de notification présent');
       }
+      console.log('✅ ETAPE 2: Validation notifications OK');
 
-      // Validation des champs obligatoires
-      console.log('🔍 Validation des champs obligatoires...');
-      const requiredFields = {
-        client_nom: data.client_nom,
-        client_prenom: data.client_prenom,
-        client_telephone: data.client_telephone,
-        propriete_titre: data.propriete_titre,
-        propriete_adresse: data.propriete_adresse,
-        date: data.date,
-        heure: data.heure,
-        statut: data.statut,
-        agent: data.agent
-      };
-
-      for (const [field, value] of Object.entries(requiredFields)) {
-        if (!value || value.toString().trim() === '') {
-          console.error(`❌ Champ obligatoire manquant: ${field}`);
-          throw new Error(`Le champ ${field} est obligatoire`);
-        }
-      }
-      console.log('✅ Validation champs obligatoires OK');
-
-      // Nettoyer les données avant la sauvegarde
-      console.log('🧹 Nettoyage des données...');
+      // ETAPE 3: Préparation des données
+      console.log('🧹 ETAPE 3: Préparation des données');
       const visitData = {
-        client_nom: data.client_nom?.trim() || '',
-        client_prenom: data.client_prenom?.trim() || '',
+        client_nom: data.client_nom.trim(),
+        client_prenom: data.client_prenom.trim(),
         client_telephone: data.client_telephone?.trim() || '',
-        propriete_titre: data.propriete_titre?.trim() || '',
+        propriete_titre: data.propriete_titre.trim(),
         propriete_adresse: data.propriete_adresse?.trim() || '',
         date: data.date,
         heure: data.heure,
         statut: data.statut,
-        agent: data.agent?.trim() || '',
+        agent: data.agent.trim(),
         notes: data.notes?.trim() || null,
         feedback_client: data.feedback_client?.trim() || null,
         client_id: data.client_id || null,
         property_id: data.property_id || null,
         notification_enabled: Boolean(data.notification_enabled),
-        notification_delay_hours: data.notification_delay_hours || 24,
+        notification_delay_hours: Number(data.notification_delay_hours) || 24,
         agent_notification_email: data.agent_notification_email?.trim() || null,
         client_notification_email: data.client_notification_email?.trim() || null,
         notification_email: data.notification_email?.trim() || null
       };
+      console.log('📦 ETAPE 3: Données préparées:', JSON.stringify(visitData, null, 2));
 
-      console.log('📦 Données nettoyées pour sauvegarde:', JSON.stringify(visitData, null, 2));
+      // ETAPE 4: Test de connexion Supabase
+      console.log('🔗 ETAPE 4: Test connexion Supabase');
+      const { error: connectionError } = await supabase.from('visits').select('count').limit(1);
+      if (connectionError) {
+        console.error('❌ Erreur connexion:', connectionError);
+        throw new Error(`Problème de connexion: ${connectionError.message}`);
+      }
+      console.log('✅ ETAPE 4: Connexion Supabase OK');
 
-      if (selectedVisit) {
-        console.log('🔄 MISE À JOUR visite existante - ID:', selectedVisit.id);
-        
-        const { data: updateResult, error } = await supabase
+      // ETAPE 5: Sauvegarde
+      if (selectedVisit?.id) {
+        console.log('🔄 ETAPE 5: MISE À JOUR visite ID:', selectedVisit.id);
+        const { data: result, error } = await supabase
           .from('visits')
           .update(visitData)
           .eq('id', selectedVisit.id)
-          .select();
+          .select()
+          .single();
 
         if (error) {
-          console.error('❌ Erreur lors de la mise à jour:', error);
-          console.error('❌ Code erreur:', error.code);
+          console.error('❌ Erreur mise à jour:', error);
+          console.error('❌ Code:', error.code);
           console.error('❌ Message:', error.message);
           console.error('❌ Détails:', error.details);
-          throw error;
+          throw new Error(`Erreur mise à jour: ${error.message}`);
         }
 
-        console.log('✅ Mise à jour réussie:', updateResult);
-
-        if (visitData.statut === 'planifiee' && visitData.notification_enabled) {
-          console.log('📧 Programmation des notifications...');
-          const updatedVisit = { ...selectedVisit, ...visitData };
-          await scheduleVisitNotifications(updatedVisit);
-        }
-
-        toast({
-          title: "Succès",
-          description: "Visite mise à jour avec succès"
-        });
+        console.log('✅ ETAPE 5: Mise à jour réussie:', result);
       } else {
-        console.log('🆕 CRÉATION nouvelle visite');
-        
-        const { data: newVisit, error } = await supabase
+        console.log('🆕 ETAPE 5: CRÉATION nouvelle visite');
+        const { data: result, error } = await supabase
           .from('visits')
           .insert([visitData])
           .select()
           .single();
 
         if (error) {
-          console.error('❌ Erreur lors de la création:', error);
-          console.error('❌ Code erreur:', error.code);
+          console.error('❌ Erreur création:', error);
+          console.error('❌ Code:', error.code);
           console.error('❌ Message:', error.message);
           console.error('❌ Détails:', error.details);
-          throw error;
+          throw new Error(`Erreur création: ${error.message}`);
         }
 
-        console.log('✅ Création réussie:', newVisit);
-
-        const mappedVisit = {
-          ...newVisit,
-          statut: newVisit.statut as 'planifiee' | 'realisee' | 'annulee' | 'reportee'
-        };
-
-        if (mappedVisit.statut === 'planifiee' && mappedVisit.notification_enabled) {
-          console.log('📧 Programmation des notifications...');
-          await scheduleVisitNotifications(mappedVisit);
-        }
-
-        toast({
-          title: "Succès",
-          description: "Visite créée avec succès"
-        });
+        console.log('✅ ETAPE 5: Création réussie:', result);
       }
 
       console.log('🎉 SAUVEGARDE TERMINÉE AVEC SUCCÈS');
+      toast({
+        title: "Succès",
+        description: selectedVisit ? "Visite mise à jour avec succès" : "Visite créée avec succès"
+      });
+      
       setIsDialogOpen(false);
-      fetchVisits();
+      await fetchVisits();
+
     } catch (error) {
-      console.error('💥 ERREUR CRITIQUE dans onSubmit:', error);
-      console.error('💥 Type d\'erreur:', typeof error);
-      console.error('💥 Stack trace:', error instanceof Error ? error.stack : 'Pas de stack trace');
+      console.error('💥 ERREUR CRITIQUE:', error);
+      console.error('💥 Type:', typeof error);
+      console.error('💥 Message:', error instanceof Error ? error.message : 'Erreur inconnue');
+      console.error('💥 Stack:', error instanceof Error ? error.stack : 'Pas de stack');
       
       toast({
         title: "Erreur",
@@ -569,4 +535,3 @@ const VisitManager = () => {
 };
 
 export default VisitManager;
-

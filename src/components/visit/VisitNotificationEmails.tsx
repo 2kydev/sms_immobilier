@@ -71,6 +71,9 @@ const VisitNotificationEmails: React.FC<VisitNotificationEmailsProps> = ({
     client.email.includes('@')
   );
 
+  console.log('🔍 VisitNotificationEmails - Agents valides:', validAgents.length);
+  console.log('🔍 VisitNotificationEmails - Clients valides:', validClients.length);
+
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
       <FormField
@@ -86,8 +89,8 @@ const VisitNotificationEmails: React.FC<VisitNotificationEmailsProps> = ({
                 </SelectTrigger>
               </FormControl>
               <SelectContent>
-                {validAgents.map((agent) => (
-                  <SelectItem key={`agent-${agent.id}`} value={agent.email}>
+                {validAgents.map((agent, index) => (
+                  <SelectItem key={`agent-email-${agent.id}-${index}`} value={agent.email}>
                     {agent.nom} - {agent.email}
                   </SelectItem>
                 ))}
@@ -111,8 +114,8 @@ const VisitNotificationEmails: React.FC<VisitNotificationEmailsProps> = ({
                 </SelectTrigger>
               </FormControl>
               <SelectContent>
-                {validClients.map((client) => (
-                  <SelectItem key={`client-${client.id}`} value={client.email}>
+                {validClients.map((client, index) => (
+                  <SelectItem key={`client-email-${client.id}-${index}`} value={client.email}>
                     {client.prenom} {client.nom} - {client.email}
                   </SelectItem>
                 ))}
