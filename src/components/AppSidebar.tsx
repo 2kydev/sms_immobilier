@@ -103,7 +103,7 @@ export function AppSidebar() {
                 </SidebarMenuItem>
               ))}
             </SidebarMenu>
-          </SidebarContent>
+          </SidebarGroupContent>
         </SidebarGroup>
       </SidebarContent>
     </Sidebar>
