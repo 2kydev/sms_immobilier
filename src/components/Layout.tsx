@@ -11,15 +11,9 @@ import { useToast } from '@/components/ui/use-toast';
 
 interface LayoutProps {
   children: React.ReactNode;
-  activeSection?: string;
-  onSectionChange?: (section: string) => void;
 }
 
-const Layout = ({
-  children,
-  activeSection,
-  onSectionChange
-}: LayoutProps) => {
+const Layout = ({ children }: LayoutProps) => {
   const { signOut, user } = useAuth();
   const { role } = useRole();
   const { toast } = useToast();
@@ -58,7 +52,7 @@ const Layout = ({
   return (
     <SidebarProvider>
       <div className="min-h-screen flex w-full bg-gray-50">
-        <AppSidebar activeSection={activeSection} onSectionChange={onSectionChange} />
+        <AppSidebar />
         <main className="flex-1 flex flex-col">
           <header className="bg-white border-b border-gray-200 p-4 flex items-center justify-between">
             <div className="flex items-center gap-4">
