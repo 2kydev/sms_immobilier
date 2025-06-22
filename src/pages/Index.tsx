@@ -1,6 +1,5 @@
 
 import React, { useState } from 'react';
-import Layout from '../components/Layout';
 import Dashboard from '../components/Dashboard';
 import ClientManager from '../components/ClientManager';
 import PropertyManager from '../components/PropertyManager';
@@ -10,9 +9,11 @@ import UserManager from '../components/UserManager';
 import AgentManager from '../components/AgentManager';
 import RoleGuard from '../components/RoleGuard';
 import { useRole } from '../hooks/useRole';
+import { useSearchParams } from 'react-router-dom';
 
 const Index = () => {
-  const [activeSection, setActiveSection] = useState('dashboard');
+  const [searchParams] = useSearchParams();
+  const activeSection = searchParams.get('tab') || 'dashboard';
   const { canAccessDashboard, canAccessPipeline, canManageUsers } = useRole();
 
   const renderContent = () => {
@@ -69,11 +70,7 @@ const Index = () => {
     }
   };
 
-  return (
-    <Layout activeSection={activeSection} onSectionChange={setActiveSection}>
-      {renderContent()}
-    </Layout>
-  );
+  return renderContent();
 };
 
 export default Index;
