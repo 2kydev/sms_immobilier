@@ -1,92 +1,109 @@
 
 import React from 'react';
-import { Sidebar, SidebarContent, SidebarGroup, SidebarGroupContent, SidebarGroupLabel, SidebarMenu, SidebarMenuButton, SidebarMenuItem } from '@/components/ui/sidebar';
-import { ChartBar, Users, Image, Calendar, TrendingUp, UserCheck } from 'lucide-react';
+import { Calendar, Home, Users, Building2, TrendingUp, UserPlus, Settings, BarChart3, ShoppingCart } from "lucide-react";
+import {
+  Sidebar,
+  SidebarContent,
+  SidebarGroup,
+  SidebarGroupContent,
+  SidebarGroupLabel,
+  SidebarMenu,
+  SidebarMenuButton,
+  SidebarMenuItem,
+} from "@/components/ui/sidebar";
+import { Link, useLocation } from "react-router-dom";
 
-const menuItems = [
+const items = [
   {
-    title: 'Tableau de Bord',
-    icon: ChartBar,
-    id: 'dashboard'
+    title: "Tableau de bord",
+    url: "/",
+    icon: Home,
   },
   {
-    title: 'Clients',
+    title: "Propriétés",
+    url: "#",
+    icon: Building2,
+    subItems: [
+      { title: "Gestion", url: "/?tab=properties" },
+      { title: "Biens à vendre", url: "/properties-for-sale" },
+    ]
+  },
+  {
+    title: "Clients",
+    url: "/?tab=clients",
     icon: Users,
-    id: 'clients'
   },
   {
-    title: 'Propriétés',
-    icon: Image,
-    id: 'properties'
-  },
-  {
-    title: 'Visites',
+    title: "Visites",
+    url: "/?tab=visits",
     icon: Calendar,
-    id: 'visits'
   },
   {
-    title: 'Agents',
-    icon: UserCheck,
-    id: 'agents'
-  },
-  {
-    title: 'Suivi des Ventes',
+    title: "Pipeline",
+    url: "/?tab=pipeline",
     icon: TrendingUp,
-    id: 'pipeline'
-  }
+  },
+  {
+    title: "Agents",
+    url: "/?tab=agents",
+    icon: UserPlus,
+  },
+  {
+    title: "Utilisateurs",
+    url: "/?tab=users",
+    icon: Settings,
+  },
 ];
 
-interface AppSidebarProps {
-  activeSection?: string;
-  onSectionChange?: (section: string) => void;
-}
+export function AppSidebar() {
+  const location = useLocation();
 
-export function AppSidebar({
-  activeSection = 'dashboard',
-  onSectionChange
-}: AppSidebarProps) {
+  const isActive = (url: string) => {
+    if (url === "/") {
+      return location.pathname === "/" && (!location.search || location.search === "");
+    }
+    return location.pathname === url || location.pathname + location.search === url;
+  };
+
   return (
-    <Sidebar className="border-r border-gray-200">
-      <SidebarContent className="bg-white">
-        <div className="p-6">
-          <div className="flex items-center gap-3 mb-6">
-            <div className="w-12 h-12 flex items-center justify-center">
-              <img 
-                src="/lovable-uploads/2f182060-60bf-4ab5-a6b2-e6092170b088.png" 
-                alt="SMS Immobilier Logo" 
-                className="w-full h-full object-contain"
-              />
-            </div>
-            <div>
-              <h2 className="font-bold text-primary">SMS IMMOBILIER</h2>
-              <p className="text-xs text-gray-500">CRM Immobilier</p>
-            </div>
-          </div>
-        </div>
-        
+    <Sidebar>
+      <SidebarContent>
         <SidebarGroup>
-          <SidebarGroupLabel className="px-6 text-gray-500 uppercase text-xs font-semibold">
-            Navigation
+          <SidebarGroupLabel className="text-lg font-semibold text-primary mb-4">
+            SMS Immobilier
           </SidebarGroupLabel>
-          <SidebarGroupContent className="px-3">
+          <SidebarGroupContent>
             <SidebarMenu>
-              {menuItems.map(item => (
-                <SidebarMenuItem key={item.id}>
-                  <SidebarMenuButton 
-                    className={`w-full justify-start gap-3 rounded-lg px-3 py-2 text-left transition-colors ${
-                      activeSection === item.id 
-                        ? 'bg-primary text-white' 
-                        : 'text-gray-700 hover:bg-gray-100'
-                    }`} 
-                    onClick={() => onSectionChange?.(item.id)}
-                  >
-                    <item.icon className="h-5 w-5" />
-                    <span>{item.title}</span>
-                  </SidebarMenuButton>
+              {items.map((item) => (
+                <SidebarMenuItem key={item.title}>
+                  {item.subItems ? (
+                    <div className="space-y-1">
+                      <div className="flex items-center gap-2 px-3 py-2 text-sm font-medium text-gray-700">
+                        <item.icon className="h-4 w-4" />
+                        {item.title}
+                      </div>
+                      <div className="ml-6 space-y-1">
+                        {item.subItems.map((subItem) => (
+                          <SidebarMenuButton key={subItem.url} asChild isActive={isActive(subItem.url)}>
+                            <Link to={subItem.url} className="text-sm">
+                              {subItem.title}
+                            </Link>
+                          </SidebarMenuButton>
+                        ))}
+                      </div>
+                    </div>
+                  ) : (
+                    <SidebarMenuButton asChild isActive={isActive(item.url)}>
+                      <Link to={item.url}>
+                        <item.icon />
+                        <span>{item.title}</span>
+                      </Link>
+                    </SidebarMenuButton>
+                  )}
                 </SidebarMenuItem>
               ))}
             </SidebarMenu>
-          </SidebarGroupContent>
+          </SidebarContent>
         </SidebarGroup>
       </SidebarContent>
     </Sidebar>

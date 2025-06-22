@@ -180,14 +180,20 @@ export type Database = {
         Row: {
           adresse: string
           agent: string
+          autres_details: string | null
           caracteristiques: string[] | null
           charges: number | null
           city: string
           created_at: string
+          cuisine_independante: boolean | null
           description: string
+          extrait_topographique: string | null
           id: string
           images: string[] | null
+          jardin: boolean | null
+          nombre_salles_eau: number | null
           pieces: number
+          piscine: boolean | null
           prix: number
           quartier: string
           statut: string
@@ -199,14 +205,20 @@ export type Database = {
         Insert: {
           adresse: string
           agent: string
+          autres_details?: string | null
           caracteristiques?: string[] | null
           charges?: number | null
           city: string
           created_at?: string
+          cuisine_independante?: boolean | null
           description: string
+          extrait_topographique?: string | null
           id?: string
           images?: string[] | null
+          jardin?: boolean | null
+          nombre_salles_eau?: number | null
           pieces: number
+          piscine?: boolean | null
           prix: number
           quartier: string
           statut: string
@@ -218,14 +230,20 @@ export type Database = {
         Update: {
           adresse?: string
           agent?: string
+          autres_details?: string | null
           caracteristiques?: string[] | null
           charges?: number | null
           city?: string
           created_at?: string
+          cuisine_independante?: boolean | null
           description?: string
+          extrait_topographique?: string | null
           id?: string
           images?: string[] | null
+          jardin?: boolean | null
+          nombre_salles_eau?: number | null
           pieces?: number
+          piscine?: boolean | null
           prix?: number
           quartier?: string
           statut?: string
@@ -299,8 +317,10 @@ export type Database = {
       visits: {
         Row: {
           agent: string
+          agent_notification_email: string | null
           client_id: string | null
           client_nom: string
+          client_notification_email: string | null
           client_prenom: string
           client_telephone: string
           created_at: string
@@ -321,8 +341,10 @@ export type Database = {
         }
         Insert: {
           agent: string
+          agent_notification_email?: string | null
           client_id?: string | null
           client_nom: string
+          client_notification_email?: string | null
           client_prenom: string
           client_telephone: string
           created_at?: string
@@ -343,8 +365,10 @@ export type Database = {
         }
         Update: {
           agent?: string
+          agent_notification_email?: string | null
           client_id?: string | null
           client_nom?: string
+          client_notification_email?: string | null
           client_prenom?: string
           client_telephone?: string
           created_at?: string
