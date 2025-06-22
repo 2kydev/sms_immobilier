@@ -184,6 +184,7 @@ export type Database = {
           caracteristiques: string[] | null
           charges: number | null
           city: string
+          contacts_proprietaire: string | null
           created_at: string
           cuisine_independante: boolean | null
           description: string
@@ -191,6 +192,7 @@ export type Database = {
           id: string
           images: string[] | null
           jardin: boolean | null
+          nom_proprietaire: string | null
           nombre_salles_eau: number | null
           pieces: number
           piscine: boolean | null
@@ -209,6 +211,7 @@ export type Database = {
           caracteristiques?: string[] | null
           charges?: number | null
           city: string
+          contacts_proprietaire?: string | null
           created_at?: string
           cuisine_independante?: boolean | null
           description: string
@@ -216,6 +219,7 @@ export type Database = {
           id?: string
           images?: string[] | null
           jardin?: boolean | null
+          nom_proprietaire?: string | null
           nombre_salles_eau?: number | null
           pieces: number
           piscine?: boolean | null
@@ -234,6 +238,7 @@ export type Database = {
           caracteristiques?: string[] | null
           charges?: number | null
           city?: string
+          contacts_proprietaire?: string | null
           created_at?: string
           cuisine_independante?: boolean | null
           description?: string
@@ -241,6 +246,7 @@ export type Database = {
           id?: string
           images?: string[] | null
           jardin?: boolean | null
+          nom_proprietaire?: string | null
           nombre_salles_eau?: number | null
           pieces?: number
           piscine?: boolean | null
