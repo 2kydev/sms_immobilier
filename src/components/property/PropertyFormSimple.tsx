@@ -44,33 +44,94 @@ const PropertyFormSimple: React.FC<PropertyFormProps> = ({ onBack }) => {
     agent: ''
   });
 
+  // Test de connexion Supabase au chargement
+  useEffect(() => {
+    const testSupabaseConnection = async () => {
+      try {
+        console.log('🔍 Testing Supabase connection...');
+        
+        // Test 1: Connexion basique
+        const { data: testData, error: testError } = await supabase
+          .from('properties')
+          .select('count')
+          .limit(1);
+        
+        if (testError) {
+          console.error('❌ Supabase connection test failed:', testError);
+          toast({
+            title: "Erreur de connexion",
+            description: "Impossible de se connecter à la base de données",
+            variant: "destructive"
+          });
+          return;
+        }
+        
+        console.log('✅ Supabase connection successful');
+        
+        // Test 2: Vérifier la structure de la table properties
+        const { data: tableInfo, error: tableError } = await supabase
+          .from('properties')
+          .select('*')
+          .limit(1);
+        
+        if (tableError) {
+          console.error('❌ Table structure test failed:', tableError);
+        } else {
+          console.log('✅ Table properties accessible');
+          console.log('📋 Sample data structure:', tableInfo);
+        }
+        
+      } catch (error) {
+        console.error('❌ Supabase connection error:', error);
+        toast({
+          title: "Erreur",
+          description: "Erreur de connexion à la base de données",
+          variant: "destructive"
+        });
+      }
+    };
+
+    testSupabaseConnection();
+    fetchAgents();
+  }, []);
+
   const fetchAgents = async () => {
     try {
+      console.log('🔍 Fetching agents...');
       const { data, error } = await supabase
         .from('agents')
         .select('id, nom, statut')
         .eq('statut', 'actif')
         .order('nom', { ascending: true });
 
-      if (error) throw error;
+      if (error) {
+        console.error('❌ Error fetching agents:', error);
+        throw error;
+      }
+      
+      console.log('✅ Agents fetched successfully:', data);
       setAgents(data || []);
     } catch (error) {
-      console.error('Error fetching agents:', error);
+      console.error('❌ Error in fetchAgents:', error);
+      toast({
+        title: "Erreur",
+        description: "Impossible de charger les agents",
+        variant: "destructive"
+      });
     }
   };
-
-  useEffect(() => {
-    fetchAgents();
-  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
 
     try {
-      console.log('Submitting form data:', formData);
+      console.log('🚀 Starting form submission...');
+      console.log('📝 Form data:', formData);
 
-      // Validation
+      // Étape 1: Validation des champs obligatoires
+      console.log('🔍 Step 1: Validating required fields...');
+      
       if (!formData.titre.trim()) {
         throw new Error('Le titre est obligatoire');
       }
@@ -86,8 +147,12 @@ const PropertyFormSimple: React.FC<PropertyFormProps> = ({ onBack }) => {
       if (!formData.agent.trim()) {
         throw new Error('L\'agent est obligatoire');
       }
+      
+      console.log('✅ Step 1: Validation passed');
 
-      // Préparer les données pour l'insertion
+      // Étape 2: Préparation des données
+      console.log('🔍 Step 2: Preparing data for insertion...');
+      
       const propertyData = {
         titre: formData.titre.trim(),
         type: formData.type,
@@ -112,19 +177,42 @@ const PropertyFormSimple: React.FC<PropertyFormProps> = ({ onBack }) => {
         statut: 'disponible'
       };
 
-      console.log('Data to insert:', propertyData);
+      console.log('✅ Step 2: Data prepared:', propertyData);
 
-      const { data, error } = await supabase
+      // Étape 3: Test de connexion avant insertion
+      console.log('🔍 Step 3: Testing connection before insert...');
+      
+      const { data: testData, error: testError } = await supabase
+        .from('properties')
+        .select('id')
+        .limit(1);
+
+      if (testError) {
+        console.error('❌ Step 3: Connection test failed:', testError);
+        throw new Error('Problème de connexion à la base de données');
+      }
+
+      console.log('✅ Step 3: Connection test successful');
+
+      // Étape 4: Insertion des données
+      console.log('🔍 Step 4: Inserting data...');
+      
+      const { data: insertData, error: insertError } = await supabase
         .from('properties')
         .insert([propertyData])
         .select();
 
-      if (error) {
-        console.error('Insert error:', error);
-        throw error;
+      if (insertError) {
+        console.error('❌ Step 4: Insert error details:', {
+          message: insertError.message,
+          details: insertError.details,
+          hint: insertError.hint,
+          code: insertError.code
+        });
+        throw insertError;
       }
 
-      console.log('Insert successful:', data);
+      console.log('✅ Step 4: Insert successful:', insertData);
 
       toast({
         title: "Succès",
@@ -158,10 +246,23 @@ const PropertyFormSimple: React.FC<PropertyFormProps> = ({ onBack }) => {
       onBack();
 
     } catch (error) {
-      console.error('Error saving property:', error);
+      console.error('❌ Form submission error:', error);
+      
+      // Affichage d'erreur détaillé
+      let errorMessage = "Erreur lors de l'enregistrement";
+      
+      if (error instanceof Error) {
+        errorMessage = error.message;
+        console.error('Error details:', {
+          name: error.name,
+          message: error.message,
+          stack: error.stack
+        });
+      }
+      
       toast({
         title: "Erreur",
-        description: error instanceof Error ? error.message : "Erreur lors de l'enregistrement",
+        description: errorMessage,
         variant: "destructive"
       });
     } finally {
@@ -170,6 +271,7 @@ const PropertyFormSimple: React.FC<PropertyFormProps> = ({ onBack }) => {
   };
 
   const handleInputChange = (field: string, value: any) => {
+    console.log(`📝 Field changed: ${field} = ${value}`);
     setFormData(prev => ({
       ...prev,
       [field]: value
