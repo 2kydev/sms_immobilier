@@ -1,6 +1,6 @@
 
 import React, { useState } from 'react';
-import PropertyForm from '@/components/property/PropertyForm';
+import PropertyFormSimple from '@/components/property/PropertyFormSimple';
 import PropertyListView from '@/components/property/PropertyListView';
 
 const PropertiesForSale = () => {
@@ -15,7 +15,7 @@ const PropertiesForSale = () => {
   };
 
   if (showForm) {
-    return <PropertyForm onBack={handleBackToList} />;
+    return <PropertyFormSimple onBack={handleBackToList} />;
   }
 
   return <PropertyListView onAddProperty={handleAddProperty} />;

@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -117,6 +116,8 @@ const PropertyForm: React.FC<PropertyFormProps> = ({ onBack }) => {
     setLoading(true);
     
     try {
+      console.log('Form data being submitted:', data);
+      
       // Validation des champs obligatoires
       if (!data.titre.trim()) {
         throw new Error('Le titre est obligatoire');
@@ -164,11 +165,31 @@ const PropertyForm: React.FC<PropertyFormProps> = ({ onBack }) => {
         images: images
       };
 
+      console.log('Property data to be inserted:', propertyData);
+
+      // Test de la connexion à Supabase d'abord
+      const { data: testData, error: testError } = await supabase
+        .from('properties')
+        .select('id')
+        .limit(1);
+
+      if (testError) {
+        console.error('Supabase connection test failed:', testError);
+        throw new Error('Problème de connexion à la base de données');
+      }
+
+      console.log('Supabase connection test successful');
+
       const { error } = await supabase
         .from('properties')
         .insert([propertyData]);
 
-      if (error) throw error;
+      if (error) {
+        console.error('Supabase insert error:', error);
+        throw error;
+      }
+
+      console.log('Property inserted successfully');
 
       toast({
         title: "Succès",
