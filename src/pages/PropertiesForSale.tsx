@@ -19,6 +19,7 @@ import FileUpload from '@/components/FileUpload';
 interface PropertyForSale {
   titre: string;
   type: 'appartement' | 'maison' | 'studio' | 'terrain' | 'local' | 'immeuble' | 'triplexe' | 'duplexe';
+  transaction_type: 'vente' | 'location';
   extrait_topographique?: string;
   prix: number;
   surface: number;
@@ -58,6 +59,7 @@ const PropertiesForSale = () => {
     defaultValues: {
       titre: '',
       type: 'appartement',
+      transaction_type: 'vente',
       extrait_topographique: '',
       prix: 0,
       surface: 0,
@@ -136,6 +138,7 @@ const PropertiesForSale = () => {
       const propertyData = {
         titre: data.titre.trim(),
         type: data.type,
+        transaction_type: data.transaction_type,
         extrait_topographique: extractFiles.length > 0 ? extractFiles[0] : null,
         prix: data.prix,
         surface: data.surface,
@@ -208,7 +211,7 @@ const PropertiesForSale = () => {
           <CardHeader>
             <CardTitle>Enregistrement d'un nouveau bien immobilier</CardTitle>
             <CardDescription>
-              Renseignez les informations du bien immobilier à mettre en vente
+              Renseignez les informations du bien immobilier à mettre en vente ou en location
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -225,6 +228,29 @@ const PropertiesForSale = () => {
                       <FormControl>
                         <Input {...field} placeholder="Ex: Bel appartement au centre-ville" />
                       </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="transaction_type"
+                  rules={{ required: "Le type de transaction est obligatoire" }}
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Type de transaction *</FormLabel>
+                      <Select onValueChange={field.onChange} defaultValue={field.value}>
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Sélectionner le type" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          <SelectItem value="vente">À vendre</SelectItem>
+                          <SelectItem value="location">À louer</SelectItem>
+                        </SelectContent>
+                      </Select>
                       <FormMessage />
                     </FormItem>
                   )}
@@ -633,7 +659,7 @@ const PropertiesForSale = () => {
   return (
     <div className="space-y-6 p-6">
       <div className="flex items-center justify-between">
-        <h1 className="text-3xl font-bold text-primary">Biens à vendre</h1>
+        <h1 className="text-3xl font-bold text-primary">Biens immobiliers</h1>
         <Button 
           onClick={() => setShowForm(true)}
           className="flex items-center gap-2 bg-primary hover:bg-primary/90"
@@ -649,7 +675,7 @@ const PropertiesForSale = () => {
         <CardHeader>
           <CardTitle>Gestion des biens immobiliers</CardTitle>
           <CardDescription>
-            Consultez les statistiques de vos biens et ajoutez de nouveaux biens à vendre
+            Consultez les statistiques de vos biens et ajoutez de nouveaux biens à vendre ou à louer
           </CardDescription>
         </CardHeader>
         <CardContent className="text-center py-12">
