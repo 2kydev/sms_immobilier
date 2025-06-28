@@ -11,12 +11,14 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '
 import { useForm } from 'react-hook-form';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
-import { Upload, Plus, ArrowLeft } from 'lucide-react';
+import { Plus, ArrowLeft } from 'lucide-react';
 import PropertyStats from '@/components/PropertyStats';
+import ImageUpload from '@/components/ImageUpload';
+import FileUpload from '@/components/FileUpload';
 
 interface PropertyForSale {
   titre: string;
-  type: 'appartement' | 'maison' | 'studio' | 'terrain' | 'local' | 'immeuble';
+  type: 'appartement' | 'maison' | 'studio' | 'terrain' | 'local' | 'immeuble' | 'triplexe' | 'duplexe';
   extrait_topographique?: string;
   prix: number;
   surface: number;
@@ -25,6 +27,8 @@ interface PropertyForSale {
   jardin: boolean;
   piscine: boolean;
   cuisine_independante: boolean;
+  acd: boolean;
+  adu: boolean;
   nom_proprietaire?: string;
   contacts_proprietaire?: string;
   autres_details?: string;
@@ -45,6 +49,9 @@ const PropertiesForSale = () => {
   const [agents, setAgents] = useState<Agent[]>([]);
   const [loading, setLoading] = useState(false);
   const [showForm, setShowForm] = useState(false);
+  const [images, setImages] = useState<string[]>([]);
+  const [extractFiles, setExtractFiles] = useState<string[]>([]);
+  const [additionalFiles, setAdditionalFiles] = useState<string[]>([]);
   const { toast } = useToast();
 
   const form = useForm<PropertyForSale>({
@@ -59,6 +66,8 @@ const PropertiesForSale = () => {
       jardin: false,
       piscine: false,
       cuisine_independante: false,
+      acd: false,
+      adu: false,
       nom_proprietaire: '',
       contacts_proprietaire: '',
       autres_details: '',
@@ -121,10 +130,13 @@ const PropertiesForSale = () => {
         throw new Error('L\'agent est obligatoire');
       }
 
+      // Combiner tous les fichiers
+      const allFiles = [...extractFiles, ...additionalFiles];
+
       const propertyData = {
         titre: data.titre.trim(),
         type: data.type,
-        extrait_topographique: data.extrait_topographique?.trim() || null,
+        extrait_topographique: extractFiles.length > 0 ? extractFiles[0] : null,
         prix: data.prix,
         surface: data.surface,
         pieces: data.pieces,
@@ -132,6 +144,8 @@ const PropertiesForSale = () => {
         jardin: data.jardin,
         piscine: data.piscine,
         cuisine_independante: data.cuisine_independante,
+        acd: data.acd,
+        adu: data.adu,
         nom_proprietaire: data.nom_proprietaire?.trim() || null,
         contacts_proprietaire: data.contacts_proprietaire?.trim() || null,
         autres_details: data.autres_details?.trim() || null,
@@ -141,8 +155,8 @@ const PropertiesForSale = () => {
         description: data.description.trim(),
         agent: data.agent.trim(),
         statut: 'disponible',
-        caracteristiques: [],
-        images: []
+        caracteristiques: allFiles,
+        images: images
       };
 
       const { error } = await supabase
@@ -158,6 +172,9 @@ const PropertiesForSale = () => {
 
       // Reset du formulaire et retour à la vue principale
       form.reset();
+      setImages([]);
+      setExtractFiles([]);
+      setAdditionalFiles([]);
       setShowForm(false);
       
     } catch (error) {
@@ -169,19 +186,6 @@ const PropertiesForSale = () => {
       });
     } finally {
       setLoading(false);
-    }
-  };
-
-  const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (file) {
-      // Pour l'instant, on stocke juste le nom du fichier
-      // Dans une implémentation complète, il faudrait uploader le fichier vers un service de stockage
-      form.setValue('extrait_topographique', file.name);
-      toast({
-        title: "Fichier sélectionné",
-        description: `Fichier "${file.name}" sélectionné`
-      });
     }
   };
 
@@ -246,41 +250,10 @@ const PropertiesForSale = () => {
                           <SelectItem value="terrain">Terrain</SelectItem>
                           <SelectItem value="local">Local commercial</SelectItem>
                           <SelectItem value="immeuble">Immeuble</SelectItem>
+                          <SelectItem value="duplexe">Duplexe</SelectItem>
+                          <SelectItem value="triplexe">Triplexe</SelectItem>
                         </SelectContent>
                       </Select>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <FormField
-                  control={form.control}
-                  name="extrait_topographique"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Extrait topographique</FormLabel>
-                      <FormControl>
-                        <div className="flex items-center gap-2">
-                          <Input
-                            {...field}
-                            placeholder="Nom du fichier"
-                            readOnly
-                            className="flex-1"
-                          />
-                          <label className="cursor-pointer">
-                            <input
-                              type="file"
-                              accept=".pdf,.jpg,.jpeg,.png"
-                              onChange={handleFileUpload}
-                              className="hidden"
-                            />
-                            <Button type="button" variant="outline" size="sm" className="flex items-center gap-1">
-                              <Upload className="h-4 w-4" />
-                              Parcourir
-                            </Button>
-                          </label>
-                        </div>
-                      </FormControl>
                       <FormMessage />
                     </FormItem>
                   )}
@@ -455,6 +428,42 @@ const PropertiesForSale = () => {
                         </FormItem>
                       )}
                     />
+
+                    <FormField
+                      control={form.control}
+                      name="acd"
+                      render={({ field }) => (
+                        <FormItem className="flex flex-row items-start space-x-3 space-y-0">
+                          <FormControl>
+                            <Checkbox
+                              checked={field.value}
+                              onCheckedChange={field.onChange}
+                            />
+                          </FormControl>
+                          <div className="space-y-1 leading-none">
+                            <FormLabel>ACD</FormLabel>
+                          </div>
+                        </FormItem>
+                      )}
+                    />
+
+                    <FormField
+                      control={form.control}
+                      name="adu"
+                      render={({ field }) => (
+                        <FormItem className="flex flex-row items-start space-x-3 space-y-0">
+                          <FormControl>
+                            <Checkbox
+                              checked={field.value}
+                              onCheckedChange={field.onChange}
+                            />
+                          </FormControl>
+                          <div className="space-y-1 leading-none">
+                            <FormLabel>ADU</FormLabel>
+                          </div>
+                        </FormItem>
+                      )}
+                    />
                   </div>
                 </div>
 
@@ -562,6 +571,39 @@ const PropertiesForSale = () => {
                     </FormItem>
                   )}
                 />
+
+                {/* Upload des images */}
+                <div className="md:col-span-2">
+                  <ImageUpload
+                    images={images}
+                    onImagesChange={setImages}
+                    maxImages={10}
+                  />
+                </div>
+
+                {/* Upload de l'extrait topographique */}
+                <div className="md:col-span-2">
+                  <FileUpload
+                    files={extractFiles}
+                    onFilesChange={setExtractFiles}
+                    maxFiles={1}
+                    acceptedTypes={['.pdf', '.jpg', '.jpeg', '.png']}
+                    label="Extrait topographique"
+                    description="Téléchargez l'extrait topographique du bien"
+                  />
+                </div>
+
+                {/* Upload des documents complémentaires */}
+                <div className="md:col-span-2">
+                  <FileUpload
+                    files={additionalFiles}
+                    onFilesChange={setAdditionalFiles}
+                    maxFiles={5}
+                    acceptedTypes={['.pdf', '.doc', '.docx', '.jpg', '.jpeg', '.png']}
+                    label="Documents complémentaires"
+                    description="Plans, documents juridiques, etc."
+                  />
+                </div>
 
                 <div className="md:col-span-2 flex gap-4 pt-6">
                   <Button 

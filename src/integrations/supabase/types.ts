@@ -178,7 +178,9 @@ export type Database = {
       }
       properties: {
         Row: {
+          acd: boolean | null
           adresse: string
+          adu: boolean | null
           agent: string
           autres_details: string | null
           caracteristiques: string[] | null
@@ -205,7 +207,9 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          acd?: boolean | null
           adresse: string
+          adu?: boolean | null
           agent: string
           autres_details?: string | null
           caracteristiques?: string[] | null
@@ -232,7 +236,9 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          acd?: boolean | null
           adresse?: string
+          adu?: boolean | null
           agent?: string
           autres_details?: string | null
           caracteristiques?: string[] | null
