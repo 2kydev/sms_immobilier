@@ -349,14 +349,14 @@ const PropertyManager = () => {
                 <p className="text-sm text-gray-600 line-clamp-2">{property.description}</p>
 
                 <div className="flex flex-wrap gap-1">
-                  {property.caracteristiques.slice(0, 3).map((carac, index) => (
+                  {(property.caracteristiques || []).slice(0, 3).map((carac, index) => (
                     <Badge key={index} variant="outline" className="text-xs">
                       {carac}
                     </Badge>
                   ))}
-                  {property.caracteristiques.length > 3 && (
+                  {(property.caracteristiques || []).length > 3 && (
                     <Badge variant="outline" className="text-xs">
-                      +{property.caracteristiques.length - 3}
+                      +{(property.caracteristiques || []).length - 3}
                     </Badge>
                   )}
                 </div>
