@@ -23,7 +23,8 @@ const PropertyStats = () => {
       const { data, error } = await supabase
         .from('properties')
         .select('prix')
-        .eq('statut', 'disponible');
+        .eq('statut', 'disponible')
+        .eq('transaction_type', 'vente');
 
       if (error) throw error;
 

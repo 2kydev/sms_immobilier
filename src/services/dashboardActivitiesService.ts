@@ -26,10 +26,11 @@ export const fetchRecentActivities = async () => {
       });
     }
 
-    // Dernières propriétés ajoutées (limite 2)
+    // Dernières propriétés ajoutées (limite 2) - uniquement les biens à vendre
     const { data: recentProperties } = await supabase
       .from('properties')
       .select('*')
+      .eq('transaction_type', 'vente')
       .order('created_at', { ascending: false })
       .limit(2);
 
