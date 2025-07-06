@@ -203,6 +203,7 @@ export type Database = {
           statut: string
           surface: number
           titre: string
+          transaction_type: string
           type: string
           updated_at: string
         }
@@ -232,6 +233,7 @@ export type Database = {
           statut: string
           surface: number
           titre: string
+          transaction_type?: string
           type: string
           updated_at?: string
         }
@@ -261,6 +263,7 @@ export type Database = {
           statut?: string
           surface?: number
           titre?: string
+          transaction_type?: string
           type?: string
           updated_at?: string
         }
