@@ -1,15 +1,41 @@
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Plus } from 'lucide-react';
 import PropertyStats from '@/components/PropertyStats';
+import { fetchRecentActivities } from '@/services/dashboardActivitiesService';
 
 interface PropertyListViewProps {
   onAddProperty: () => void;
 }
 
 const PropertyListView: React.FC<PropertyListViewProps> = ({ onAddProperty }) => {
+  const [recentActivities, setRecentActivities] = useState<Array<{
+    id: string;
+    action: string;
+    description: string;
+    time: string;
+    type: string;
+  }>>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const loadActivities = async () => {
+      try {
+        const activities = await fetchRecentActivities();
+        setRecentActivities(activities);
+      } catch (error) {
+        console.error('Erreur lors du chargement des activités récentes:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadActivities();
+  }, []);
+
   return (
     <div className="space-y-6 p-6">
       <div className="flex items-center justify-between">
@@ -27,32 +53,50 @@ const PropertyListView: React.FC<PropertyListViewProps> = ({ onAddProperty }) =>
 
       <Card>
         <CardHeader>
-          <CardTitle>Gestion des biens immobiliers</CardTitle>
+          <CardTitle>Actions récentes</CardTitle>
           <CardDescription>
-            Consultez les statistiques de vos biens et ajoutez de nouveaux biens à vendre ou à louer
+            Dernières activités liées aux biens immobiliers
           </CardDescription>
         </CardHeader>
-        <CardContent className="text-center py-12">
-          <div className="flex flex-col items-center gap-4">
-            <div className="w-16 h-16 bg-blue-50 rounded-full flex items-center justify-center">
-              <Plus className="h-8 w-8 text-blue-600" />
+        <CardContent className="p-6">
+          {loading ? (
+            <div className="text-center py-8">Chargement des activités récentes...</div>
+          ) : recentActivities.length > 0 ? (
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Action</TableHead>
+                  <TableHead>Description</TableHead>
+                  <TableHead>Type</TableHead>
+                  <TableHead>Date</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {recentActivities.map((activity) => (
+                  <TableRow key={activity.id}>
+                    <TableCell className="font-medium">{activity.action}</TableCell>
+                    <TableCell>{activity.description}</TableCell>
+                    <TableCell>
+                      <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
+                        activity.type === 'transaction' ? 'bg-blue-100 text-blue-800' : 
+                        activity.type === 'deal' ? 'bg-green-100 text-green-800' : 
+                        activity.type === 'property' ? 'bg-yellow-100 text-yellow-800' : 'bg-purple-100 text-purple-800'
+                      }`}>
+                        {activity.type === 'transaction' ? 'Transaction' :
+                         activity.type === 'deal' ? 'Vente' :
+                         activity.type === 'property' ? 'Propriété' : 'Autre'}
+                      </span>
+                    </TableCell>
+                    <TableCell className="text-muted-foreground">Il y a {activity.time}</TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          ) : (
+            <div className="text-center py-8 text-muted-foreground">
+              Aucune activité récente à afficher
             </div>
-            <div>
-              <h3 className="text-lg font-semibold text-gray-900 mb-2">
-                Commencez par ajouter un bien
-              </h3>
-              <p className="text-gray-500 mb-4">
-                Enregistrez vos premiers biens immobiliers pour commencer à les gérer efficacement.
-              </p>
-            </div>
-            <Button 
-              onClick={onAddProperty}
-              className="flex items-center gap-2"
-            >
-              <Plus className="h-4 w-4" />
-              Ajouter un bien immobilier
-            </Button>
-          </div>
+          )}
         </CardContent>
       </Card>
     </div>
