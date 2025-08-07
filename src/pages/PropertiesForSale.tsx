@@ -5,20 +5,15 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import PropertyListView from "@/components/property/PropertyListView";
 import TerrainTable from "@/components/property/terrain/TerrainTable";
 import TerrainForm from "@/components/property/terrain/TerrainForm";
-
 const PropertiesForSale = () => {
   const [selectedType, setSelectedType] = useState<"terrain" | "maison" | "entrepot" | "immeuble">("terrain");
   const [showForm, setShowForm] = useState(false);
-
   useEffect(() => {
     // Basic SEO for this page
     document.title = "Biens à vendre | Gestion des propriétés";
     const metaDesc = document.querySelector('meta[name="description"]');
     if (metaDesc) {
-      metaDesc.setAttribute(
-        "content",
-        "Page des biens à vendre: filtres par type (Terrain, Maison, Entrepôt, Immeuble), tableau récapitulatif et création de nouveaux terrains."
-      );
+      metaDesc.setAttribute("content", "Page des biens à vendre: filtres par type (Terrain, Maison, Entrepôt, Immeuble), tableau récapitulatif et création de nouveaux terrains.");
     } else {
       const m = document.createElement("meta");
       m.name = "description";
@@ -26,7 +21,6 @@ const PropertiesForSale = () => {
       document.head.appendChild(m);
     }
   }, []);
-
   const headerTitle = useMemo(() => {
     switch (selectedType) {
       case "terrain":
@@ -41,33 +35,22 @@ const PropertiesForSale = () => {
         return "Biens à vendre";
     }
   }, [selectedType]);
-
-  return (
-    <div className="space-y-6 p-6">
+  return <div className="space-y-6 p-6">
       <header className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
         <h1 className="text-3xl font-bold text-primary">{headerTitle}</h1>
         <div className="flex items-center gap-3">
-          <ToggleGroup type="single" value={selectedType} onValueChange={(v) => v && setSelectedType(v as any)}>
+          <ToggleGroup type="single" value={selectedType} onValueChange={v => v && setSelectedType(v as any)}>
             <ToggleGroupItem value="terrain">Terrain</ToggleGroupItem>
             <ToggleGroupItem value="maison">Maison</ToggleGroupItem>
             <ToggleGroupItem value="entrepot">Entrepôt</ToggleGroupItem>
             <ToggleGroupItem value="immeuble">Immeuble</ToggleGroupItem>
           </ToggleGroup>
-          {selectedType === "terrain" && !showForm && (
-            <Button onClick={() => setShowForm(true)}>Enregistrer un nouveau terrain</Button>
-          )}
+          {selectedType === "terrain" && !showForm}
         </div>
       </header>
 
       <main>
-        {selectedType === "terrain" ? (
-          showForm ? (
-            <TerrainForm onBack={() => setShowForm(false)} />
-          ) : (
-            <TerrainTable onCreate={() => setShowForm(true)} />
-          )
-        ) : (
-          <Card>
+        {selectedType === "terrain" ? showForm ? <TerrainForm onBack={() => setShowForm(false)} /> : <TerrainTable onCreate={() => setShowForm(true)} /> : <Card>
             <CardHeader>
               <CardTitle>Vue générale</CardTitle>
               <CardDescription>
@@ -77,11 +60,8 @@ const PropertiesForSale = () => {
             <CardContent>
               <PropertyListView onAddProperty={() => setShowForm(true)} />
             </CardContent>
-          </Card>
-        )}
+          </Card>}
       </main>
-    </div>
-  );
+    </div>;
 };
-
 export default PropertiesForSale;
