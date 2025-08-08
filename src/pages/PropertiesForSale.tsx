@@ -6,9 +6,14 @@ import PropertyListView from "@/components/property/PropertyListView";
 import TerrainTable from "@/components/property/terrain/TerrainTable";
 import TerrainForm from "@/components/property/terrain/TerrainForm";
 import MaisonForm from "@/components/property/house/MaisonForm";
+import MaisonTable from "@/components/property/house/MaisonTable";
+import EntrepotForm from "@/components/property/entrepot/EntrepotForm";
+import EntrepotTable from "@/components/property/entrepot/EntrepotTable";
 const PropertiesForSale = () => {
   const [selectedType, setSelectedType] = useState<"terrain" | "maison" | "entrepot" | "immeuble">("terrain");
-  const [showForm, setShowForm] = useState(false);
+  const [showForm, setShowForm] = useState(false); // terrain
+  const [showMaisonForm, setShowMaisonForm] = useState(false);
+  const [showEntrepotForm, setShowEntrepotForm] = useState(false);
   useEffect(() => {
     // Basic SEO for this page
     document.title = "Biens à vendre | Gestion des propriétés";
@@ -46,7 +51,12 @@ const PropertiesForSale = () => {
             <ToggleGroupItem value="entrepot">Entrepôt</ToggleGroupItem>
             <ToggleGroupItem value="immeuble">Immeuble</ToggleGroupItem>
           </ToggleGroup>
-          {selectedType === "terrain" && !showForm}
+          {selectedType === "maison" && !showMaisonForm && (
+            <Button onClick={() => setShowMaisonForm(true)}>Nouvelle maison</Button>
+          )}
+          {selectedType === "entrepot" && !showEntrepotForm && (
+            <Button onClick={() => setShowEntrepotForm(true)}>Nouvel entrepôt</Button>
+          )}
         </div>
       </header>
 
@@ -58,7 +68,17 @@ const PropertiesForSale = () => {
             <TerrainTable onCreate={() => setShowForm(true)} />
           )
         ) : selectedType === "maison" ? (
-          <MaisonForm onBack={() => setSelectedType("terrain")} />
+          showMaisonForm ? (
+            <MaisonForm onBack={() => setShowMaisonForm(false)} />
+          ) : (
+            <MaisonTable onCreate={() => setShowMaisonForm(true)} />
+          )
+        ) : selectedType === "entrepot" ? (
+          showEntrepotForm ? (
+            <EntrepotForm onBack={() => setShowEntrepotForm(false)} />
+          ) : (
+            <EntrepotTable onCreate={() => setShowEntrepotForm(true)} />
+          )
         ) : (
           <Card>
             <CardHeader>
