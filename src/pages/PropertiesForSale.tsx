@@ -5,6 +5,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import PropertyListView from "@/components/property/PropertyListView";
 import TerrainTable from "@/components/property/terrain/TerrainTable";
 import TerrainForm from "@/components/property/terrain/TerrainForm";
+import MaisonForm from "@/components/property/house/MaisonForm";
 const PropertiesForSale = () => {
   const [selectedType, setSelectedType] = useState<"terrain" | "maison" | "entrepot" | "immeuble">("terrain");
   const [showForm, setShowForm] = useState(false);
@@ -50,7 +51,16 @@ const PropertiesForSale = () => {
       </header>
 
       <main>
-        {selectedType === "terrain" ? showForm ? <TerrainForm onBack={() => setShowForm(false)} /> : <TerrainTable onCreate={() => setShowForm(true)} /> : <Card>
+        {selectedType === "terrain" ? (
+          showForm ? (
+            <TerrainForm onBack={() => setShowForm(false)} />
+          ) : (
+            <TerrainTable onCreate={() => setShowForm(true)} />
+          )
+        ) : selectedType === "maison" ? (
+          <MaisonForm onBack={() => setSelectedType("terrain")} />
+        ) : (
+          <Card>
             <CardHeader>
               <CardTitle>Vue générale</CardTitle>
               <CardDescription>
@@ -60,7 +70,8 @@ const PropertiesForSale = () => {
             <CardContent>
               <PropertyListView onAddProperty={() => setShowForm(true)} />
             </CardContent>
-          </Card>}
+          </Card>
+        )}
       </main>
     </div>;
 };
