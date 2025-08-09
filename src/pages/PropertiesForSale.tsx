@@ -54,45 +54,14 @@ const PropertiesForSale = () => {
             <ToggleGroupItem value="entrepot">Entrepôt</ToggleGroupItem>
             <ToggleGroupItem value="immeuble">Immeuble</ToggleGroupItem>
           </ToggleGroup>
-          {selectedType === "maison" && !showMaisonForm && (
-            <Button onClick={() => setShowMaisonForm(true)}>Nouvelle maison</Button>
-          )}
-          {selectedType === "entrepot" && !showEntrepotForm && (
-            <Button onClick={() => setShowEntrepotForm(true)}>Nouvel entrepôt</Button>
-          )}
-          {selectedType === "immeuble" && !showImmeubleForm && (
-            <Button onClick={() => setShowImmeubleForm(true)}>Nouvel immeuble</Button>
-          )}
+          {selectedType === "maison" && !showMaisonForm && <Button onClick={() => setShowMaisonForm(true)}>Nouvelle maison</Button>}
+          {selectedType === "entrepot" && !showEntrepotForm && <Button onClick={() => setShowEntrepotForm(true)}>Nouvel entrepôt</Button>}
+          {selectedType === "immeuble" && !showImmeubleForm}
         </div>
       </header>
 
       <main>
-        {selectedType === "terrain" ? (
-          showForm ? (
-            <TerrainForm onBack={() => setShowForm(false)} />
-          ) : (
-            <TerrainTable onCreate={() => setShowForm(true)} />
-          )
-        ) : selectedType === "maison" ? (
-          showMaisonForm ? (
-            <MaisonForm onBack={() => setShowMaisonForm(false)} />
-          ) : (
-            <MaisonTable onCreate={() => setShowMaisonForm(true)} />
-          )
-        ) : selectedType === "entrepot" ? (
-          showEntrepotForm ? (
-            <EntrepotForm onBack={() => setShowEntrepotForm(false)} />
-          ) : (
-            <EntrepotTable onCreate={() => setShowEntrepotForm(true)} />
-          )
-        ) : selectedType === "immeuble" ? (
-          showImmeubleForm ? (
-            <ImmeubleForm onBack={() => setShowImmeubleForm(false)} />
-          ) : (
-            <ImmeubleTable onCreate={() => setShowImmeubleForm(true)} />
-          )
-        ) : (
-          <Card>
+        {selectedType === "terrain" ? showForm ? <TerrainForm onBack={() => setShowForm(false)} /> : <TerrainTable onCreate={() => setShowForm(true)} /> : selectedType === "maison" ? showMaisonForm ? <MaisonForm onBack={() => setShowMaisonForm(false)} /> : <MaisonTable onCreate={() => setShowMaisonForm(true)} /> : selectedType === "entrepot" ? showEntrepotForm ? <EntrepotForm onBack={() => setShowEntrepotForm(false)} /> : <EntrepotTable onCreate={() => setShowEntrepotForm(true)} /> : selectedType === "immeuble" ? showImmeubleForm ? <ImmeubleForm onBack={() => setShowImmeubleForm(false)} /> : <ImmeubleTable onCreate={() => setShowImmeubleForm(true)} /> : <Card>
             <CardHeader>
               <CardTitle>Vue générale</CardTitle>
               <CardDescription>
@@ -102,8 +71,7 @@ const PropertiesForSale = () => {
             <CardContent>
               <PropertyListView onAddProperty={() => setShowForm(true)} />
             </CardContent>
-          </Card>
-        )}
+          </Card>}
       </main>
     </div>;
 };
