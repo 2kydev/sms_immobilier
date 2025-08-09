@@ -144,7 +144,9 @@ const ImmeubleTable: React.FC<ImmeubleTableProps> = ({ onCreate }) => {
                     <TableCell>{r.prix?.toLocaleString()}</TableCell>
                     <TableCell>{new Date(r.created_at).toLocaleDateString()}</TableCell>
                     <TableCell>
-                      <Badge variant={r.statut === "vendu" ? "secondary" : "default"}>{r.statut}</Badge>
+                      <Badge variant={r.statut === "vendu" ? "success" : "secondary"}>
+                        {r.statut === "vendu" ? "Vendu" : "Disponible"}
+                      </Badge>
                     </TableCell>
                     <TableCell className="text-right">
                       <div className="flex items-center justify-end gap-2">
