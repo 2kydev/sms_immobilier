@@ -7,9 +7,6 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import PropertyDetailsDialog from "@/components/property/PropertyDetailsDialog";
-import { Badge } from "@/components/ui/badge";
-import { Switch } from "@/components/ui/switch";
-import { Badge } from "@/components/ui/badge";
 
 interface ImmeubleTableProps {
   onCreate: () => void;
@@ -22,7 +19,6 @@ type ImmeubleRow = {
   city: string;
   quartier: string;
   prix: number;
-  statut: string;
   created_at: string;
 };
 
@@ -31,7 +27,6 @@ const ImmeubleTable: React.FC<ImmeubleTableProps> = ({ onCreate }) => {
   const [loading, setLoading] = useState(true);
   const [detailsOpen, setDetailsOpen] = useState(false);
   const [selectedId, setSelectedId] = useState<string | null>(null);
-  const [showSold, setShowSold] = useState(true);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -39,9 +34,10 @@ const ImmeubleTable: React.FC<ImmeubleTableProps> = ({ onCreate }) => {
       try {
         const { data, error } = await supabase
           .from("properties")
-          .select("id, titre, surface, city, quartier, prix, statut, created_at")
+          .select("id, titre, surface, city, quartier, prix, created_at")
           .eq("type", "immeuble")
           .eq("transaction_type", "vente")
+          .eq("statut", "disponible")
           .order("created_at", { ascending: false });
 
         if (error) throw error;
@@ -58,9 +54,8 @@ const ImmeubleTable: React.FC<ImmeubleTableProps> = ({ onCreate }) => {
   }, [toast]);
 
   const recap = useMemo(() => {
-    const disponibles = rows.filter((r) => r.statut !== "vendu");
-    const total = disponibles.length;
-    const totalValue = disponibles.reduce((acc, r) => acc + (r.prix || 0), 0);
+    const total = rows.length;
+    const totalValue = rows.reduce((acc, r) => acc + (r.prix || 0), 0);
     return { total, totalValue };
   }, [rows]);
 
@@ -71,7 +66,7 @@ const ImmeubleTable: React.FC<ImmeubleTableProps> = ({ onCreate }) => {
         .update({ statut: "vendu", updated_at: new Date().toISOString() })
         .eq("id", id);
       if (error) throw error;
-      setRows((prev) => prev.map((row) => row.id === id ? { ...row, statut: "vendu" } : row));
+      setRows((prev) => prev.filter((row) => row.id !== id));
       toast({ title: "Marqué comme vendu", description: "Le bien a été mis à jour." });
     } catch (err) {
       console.error(err);
@@ -86,15 +81,9 @@ const ImmeubleTable: React.FC<ImmeubleTableProps> = ({ onCreate }) => {
           <h2 className="text-2xl font-semibold">Récapitulatif des immeubles</h2>
           <p className="text-muted-foreground">Liste des immeubles actuellement en vente</p>
         </div>
-        <div className="flex items-center gap-4">
-          <div className="flex items-center gap-2">
-            <span className="text-sm text-muted-foreground">Afficher vendus</span>
-            <Switch checked={showSold} onCheckedChange={setShowSold} aria-label="Afficher les biens vendus" />
-          </div>
-          <Button onClick={onCreate} className="flex items-center gap-2">
-            <Plus className="h-4 w-4" /> Nouvel immeuble
-          </Button>
-        </div>
+        <Button onClick={onCreate} className="flex items-center gap-2">
+          <Plus className="h-4 w-4" /> Nouvel immeuble
+        </Button>
       </div>
 
       <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
@@ -119,11 +108,11 @@ const ImmeubleTable: React.FC<ImmeubleTableProps> = ({ onCreate }) => {
       </div>
 
       <Card>
-          <CardHeader>
-            <CardTitle>Immeubles</CardTitle>
-            <CardDescription>Tableau récapitulatif des immeubles à vendre</CardDescription>
-          </CardHeader>
-          <CardContent>
+        <CardHeader>
+          <CardTitle>Immeubles</CardTitle>
+          <CardDescription>Tableau récapitulatif des immeubles à vendre</CardDescription>
+        </CardHeader>
+        <CardContent>
           {loading ? (
             <div className="py-8 text-center text-muted-foreground">Chargement…</div>
           ) : rows.length === 0 ? (
@@ -137,7 +126,6 @@ const ImmeubleTable: React.FC<ImmeubleTableProps> = ({ onCreate }) => {
                   <TableHead>Localisation</TableHead>
                   <TableHead>Prix (FCFA)</TableHead>
                   <TableHead>Date</TableHead>
-                  <TableHead>Statut</TableHead>
                   <TableHead className="text-right">Actions</TableHead>
                 </TableRow>
               </TableHeader>
@@ -168,8 +156,8 @@ const ImmeubleTable: React.FC<ImmeubleTableProps> = ({ onCreate }) => {
             if (!o) setSelectedId(null);
           }}
           onUpdated={(upd) => {
-            if (selectedId && upd?.statut === "vendu") {
-              setRows((prev) => prev.map((row) => row.id === selectedId ? { ...row, statut: "vendu" } : row));
+            if (upd?.statut === "vendu" && selectedId) {
+              setRows((prev) => prev.filter((row) => row.id !== selectedId));
             } else if (selectedId && (upd?.titre || upd?.prix || upd?.surface || upd?.city || upd?.quartier)) {
               setRows((prev) => prev.map((row) => row.id === selectedId ? {
                 ...row,
