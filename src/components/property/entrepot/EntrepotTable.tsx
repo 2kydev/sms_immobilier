@@ -143,6 +143,62 @@ const EntrepotTable: React.FC<EntrepotTableProps> = ({ onCreate }) => {
                     </TableCell>
                     <TableCell>{r.prix?.toLocaleString()}</TableCell>
                     <TableCell>{new Date(r.created_at).toLocaleDateString()}</TableCell>
+                    <TableCell>
+                      <Badge variant={r.statut === "vendu" ? "secondary" : "default"}>{r.statut}</Badge>
+                    </TableCell>
+                    <TableCell className="text-right">
+                      <div className="flex items-center justify-end gap-2">
+                        <TooltipProvider>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                onClick={() => {
+                                  setSelectedId(r.id);
+                                  setDetailsOpen(true);
+                                }}
+                                aria-label="Voir les détails"
+                              >
+                                <Eye className="h-4 w-4" />
+                              </Button>
+                            </TooltipTrigger>
+                            <TooltipContent>Voir</TooltipContent>
+                          </Tooltip>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                onClick={() => {
+                                  setSelectedId(r.id);
+                                  setDetailsOpen(true);
+                                }}
+                                aria-label="Modifier"
+                              >
+                                <Pencil className="h-4 w-4" />
+                              </Button>
+                            </TooltipTrigger>
+                            <TooltipContent>Modifier</TooltipContent>
+                          </Tooltip>
+                          {r.statut !== "vendu" && (
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  onClick={() => markAsSold(r.id)}
+                                  aria-label="Marquer comme vendu"
+                                >
+                                  <CheckCircle className="h-4 w-4" />
+                                </Button>
+                              </TooltipTrigger>
+                              <TooltipContent>Marquer comme vendu</TooltipContent>
+                            </Tooltip>
+                          )}
+                        </TooltipProvider>
+                      </div>
+                    </TableCell>
                   </TableRow>
                 ))}
               </TableBody>
