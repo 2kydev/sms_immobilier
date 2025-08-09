@@ -104,7 +104,7 @@ const PropertyDetailsDialog: React.FC<PropertyDetailsDialogProps> = ({ propertyI
           <DialogTitle className="flex items-center gap-3">
             {property?.titre || "Détails du bien"}
             {property?.statut && (
-              <Badge variant={property.statut === "vendu" ? "destructive" : "secondary"}>
+              <Badge variant={property.statut === "vendu" ? "success" : "secondary"}>
                 {property.statut === "vendu" ? "Vendu" : property.statut}
               </Badge>
             )}

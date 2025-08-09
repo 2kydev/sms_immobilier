@@ -7,6 +7,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import PropertyDetailsDialog from "@/components/property/PropertyDetailsDialog";
+import { Badge } from "@/components/ui/badge";
 
 interface EntrepotTableProps {
   onCreate: () => void;
@@ -19,6 +20,7 @@ type EntrepotRow = {
   city: string;
   quartier: string;
   prix: number;
+  statut: string;
   created_at: string;
 };
 
@@ -34,10 +36,9 @@ const EntrepotTable: React.FC<EntrepotTableProps> = ({ onCreate }) => {
       try {
         const { data, error } = await supabase
           .from("properties")
-          .select("id, titre, surface, city, quartier, prix, created_at")
+          .select("id, titre, surface, city, quartier, prix, statut, created_at")
           .eq("type", "entrepot")
           .eq("transaction_type", "vente")
-          .eq("statut", "disponible")
           .order("created_at", { ascending: false });
 
         if (error) throw error;
@@ -54,8 +55,9 @@ const EntrepotTable: React.FC<EntrepotTableProps> = ({ onCreate }) => {
   }, [toast]);
 
   const recap = useMemo(() => {
-    const total = rows.length;
-    const totalValue = rows.reduce((acc, r) => acc + (r.prix || 0), 0);
+    const disponibles = rows.filter((r) => r.statut !== "vendu");
+    const total = disponibles.length;
+    const totalValue = disponibles.reduce((acc, r) => acc + (r.prix || 0), 0);
     return { total, totalValue };
   }, [rows]);
 
@@ -66,7 +68,7 @@ const EntrepotTable: React.FC<EntrepotTableProps> = ({ onCreate }) => {
         .update({ statut: "vendu", updated_at: new Date().toISOString() })
         .eq("id", id);
       if (error) throw error;
-      setRows((prev) => prev.filter((row) => row.id !== id));
+      setRows((prev) => prev.map((row) => row.id === id ? { ...row, statut: "vendu" } : row));
       toast({ title: "Marqué comme vendu", description: "Le bien a été mis à jour." });
     } catch (err) {
       console.error(err);
@@ -108,11 +110,11 @@ const EntrepotTable: React.FC<EntrepotTableProps> = ({ onCreate }) => {
       </div>
 
       <Card>
-        <CardHeader>
-          <CardTitle>Entrepôts</CardTitle>
-          <CardDescription>Tableau récapitulatif des entrepôts à vendre</CardDescription>
-        </CardHeader>
-        <CardContent>
+          <CardHeader>
+            <CardTitle>Entrepôts</CardTitle>
+            <CardDescription>Tableau récapitulatif des entrepôts à vendre</CardDescription>
+          </CardHeader>
+          <CardContent>
           {loading ? (
             <div className="py-8 text-center text-muted-foreground">Chargement…</div>
           ) : rows.length === 0 ? (
@@ -126,6 +128,7 @@ const EntrepotTable: React.FC<EntrepotTableProps> = ({ onCreate }) => {
                   <TableHead>Localisation</TableHead>
                   <TableHead>Prix (FCFA)</TableHead>
                   <TableHead>Date</TableHead>
+                  <TableHead>Statut</TableHead>
                   <TableHead className="text-right">Actions</TableHead>
                 </TableRow>
               </TableHeader>
@@ -156,8 +159,8 @@ const EntrepotTable: React.FC<EntrepotTableProps> = ({ onCreate }) => {
             if (!o) setSelectedId(null);
           }}
           onUpdated={(upd) => {
-            if (upd?.statut === "vendu" && selectedId) {
-              setRows((prev) => prev.filter((row) => row.id !== selectedId));
+            if (selectedId && upd?.statut === "vendu") {
+              setRows((prev) => prev.map((row) => row.id === selectedId ? { ...row, statut: "vendu" } : row));
             } else if (selectedId && (upd?.titre || upd?.prix || upd?.surface || upd?.city || upd?.quartier)) {
               setRows((prev) => prev.map((row) => row.id === selectedId ? {
                 ...row,

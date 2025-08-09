@@ -20,6 +20,7 @@ type MaisonRow = {
   quartier: string;
   prix: number;
   pieces: number;
+  statut: string;
   created_at: string;
 };
 
@@ -35,10 +36,9 @@ const MaisonTable: React.FC<MaisonTableProps> = ({ onCreate }) => {
       try {
         const { data, error } = await supabase
           .from("properties")
-          .select("id, titre, surface, city, quartier, prix, pieces, created_at")
+          .select("id, titre, surface, city, quartier, prix, pieces, statut, created_at")
           .eq("type", "maison")
           .eq("transaction_type", "vente")
-          .eq("statut", "disponible")
           .order("created_at", { ascending: false });
 
         if (error) throw error;
@@ -55,8 +55,9 @@ const MaisonTable: React.FC<MaisonTableProps> = ({ onCreate }) => {
   }, [toast]);
 
   const recap = useMemo(() => {
-    const total = rows.length;
-    const totalValue = rows.reduce((acc, r) => acc + (r.prix || 0), 0);
+    const disponibles = rows.filter((r) => r.statut !== "vendu");
+    const total = disponibles.length;
+    const totalValue = disponibles.reduce((acc, r) => acc + (r.prix || 0), 0);
     return { total, totalValue };
   }, [rows]);
 
@@ -67,7 +68,7 @@ const MaisonTable: React.FC<MaisonTableProps> = ({ onCreate }) => {
         .update({ statut: "vendu", updated_at: new Date().toISOString() })
         .eq("id", id);
       if (error) throw error;
-      setRows((prev) => prev.filter((row) => row.id !== id));
+      setRows((prev) => prev.map((row) => row.id === id ? { ...row, statut: "vendu" } : row));
       toast({ title: "Marqué comme vendu", description: "Le bien a été mis à jour." });
     } catch (err) {
       console.error(err);
@@ -128,6 +129,7 @@ const MaisonTable: React.FC<MaisonTableProps> = ({ onCreate }) => {
                   <TableHead>Localisation</TableHead>
                   <TableHead>Prix (FCFA)</TableHead>
                   <TableHead>Date</TableHead>
+                  <TableHead>Statut</TableHead>
                   <TableHead className="text-right">Actions</TableHead>
                 </TableRow>
               </TableHeader>
@@ -159,8 +161,8 @@ const MaisonTable: React.FC<MaisonTableProps> = ({ onCreate }) => {
           if (!o) setSelectedId(null);
         }}
         onUpdated={(upd) => {
-          if (upd?.statut === "vendu" && selectedId) {
-            setRows((prev) => prev.filter((row) => row.id !== selectedId));
+          if (selectedId && upd?.statut === "vendu") {
+            setRows((prev) => prev.map((row) => row.id === selectedId ? { ...row, statut: "vendu" } : row));
           } else if (selectedId && (upd?.titre || upd?.prix || upd?.surface || upd?.city || upd?.quartier)) {
             setRows((prev) => prev.map((row) => row.id === selectedId ? {
               ...row,

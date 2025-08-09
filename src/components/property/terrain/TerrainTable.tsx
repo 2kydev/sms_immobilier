@@ -7,6 +7,7 @@ import { useToast } from "@/hooks/use-toast";
 import { Plus, Eye, Pencil, CheckCircle } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import PropertyDetailsDialog from "@/components/property/PropertyDetailsDialog";
+import { Badge } from "@/components/ui/badge";
 
 interface TerrainTableProps {
   onCreate: () => void;
@@ -19,6 +20,7 @@ type TerrainRow = {
   city: string;
   quartier: string;
   prix: number;
+  statut: string;
   created_at: string;
 };
 
@@ -34,10 +36,9 @@ const TerrainTable: React.FC<TerrainTableProps> = ({ onCreate }) => {
       try {
         const { data, error } = await supabase
           .from("properties")
-          .select("id, titre, surface, city, quartier, prix, created_at")
+          .select("id, titre, surface, city, quartier, prix, statut, created_at")
           .eq("type", "terrain")
           .eq("transaction_type", "vente")
-          .eq("statut", "disponible")
           .order("created_at", { ascending: false });
 
         if (error) throw error;
@@ -54,8 +55,9 @@ const TerrainTable: React.FC<TerrainTableProps> = ({ onCreate }) => {
   }, [toast]);
 
   const recap = useMemo(() => {
-    const total = rows.length;
-    const totalValue = rows.reduce((acc, r) => acc + (r.prix || 0), 0);
+    const disponibles = rows.filter((r) => r.statut !== "vendu");
+    const total = disponibles.length;
+    const totalValue = disponibles.reduce((acc, r) => acc + (r.prix || 0), 0);
     return { total, totalValue };
   }, [rows]);
 
@@ -66,7 +68,7 @@ const TerrainTable: React.FC<TerrainTableProps> = ({ onCreate }) => {
         .update({ statut: "vendu", updated_at: new Date().toISOString() })
         .eq("id", id);
       if (error) throw error;
-      setRows((prev) => prev.filter((row) => row.id !== id));
+      setRows((prev) => prev.map((row) => row.id === id ? { ...row, statut: "vendu" } : row));
       toast({ title: "Marqué comme vendu", description: "Le bien a été mis à jour." });
     } catch (err) {
       console.error(err);
@@ -126,6 +128,7 @@ const TerrainTable: React.FC<TerrainTableProps> = ({ onCreate }) => {
                   <TableHead>Localisation</TableHead>
                   <TableHead>Prix (FCFA)</TableHead>
                   <TableHead>Date</TableHead>
+                  <TableHead>Statut</TableHead>
                   <TableHead className="text-right">Actions</TableHead>
                 </TableRow>
               </TableHeader>
@@ -139,6 +142,11 @@ const TerrainTable: React.FC<TerrainTableProps> = ({ onCreate }) => {
                     </TableCell>
                     <TableCell>{r.prix?.toLocaleString()}</TableCell>
                     <TableCell>{new Date(r.created_at).toLocaleDateString()}</TableCell>
+                    <TableCell>
+                      <Badge variant={r.statut === "vendu" ? "success" : "secondary"}>
+                        {r.statut === "vendu" ? "Vendu" : "Disponible"}
+                      </Badge>
+                    </TableCell>
                     <TableCell className="text-right">
                       <TooltipProvider>
                         <div className="flex items-center justify-end gap-1">
@@ -189,8 +197,8 @@ const TerrainTable: React.FC<TerrainTableProps> = ({ onCreate }) => {
           if (!o) setSelectedId(null);
         }}
         onUpdated={(upd) => {
-          if (upd?.statut === "vendu" && selectedId) {
-            setRows((prev) => prev.filter((row) => row.id !== selectedId));
+          if (selectedId && upd?.statut === "vendu") {
+            setRows((prev) => prev.map((row) => row.id === selectedId ? { ...row, statut: "vendu" } : row));
           } else if (selectedId && (upd?.titre || upd?.prix || upd?.surface || upd?.city || upd?.quartier)) {
             setRows((prev) => prev.map((row) => row.id === selectedId ? {
               ...row,
