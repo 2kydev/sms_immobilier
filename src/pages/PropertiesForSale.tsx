@@ -64,6 +64,7 @@ const PropertiesForSale = () => {
           {selectedType === "maison" && !showMaisonForm}
           {selectedType === "entrepot" && !showEntrepotForm}
           {selectedType === "immeuble" && !showImmeubleForm}
+          <span className="sr-only">Contrôles d’actions disponibles dans chaque tableau</span>
         </div>
       </header>
 

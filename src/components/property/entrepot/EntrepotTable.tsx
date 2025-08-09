@@ -2,9 +2,11 @@ import React, { useEffect, useMemo, useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
-import { Plus } from "lucide-react";
+import { Plus, Eye, Pencil, CheckCircle } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import PropertyDetailsDialog from "@/components/property/PropertyDetailsDialog";
 
 interface EntrepotTableProps {
   onCreate: () => void;
@@ -23,6 +25,8 @@ type EntrepotRow = {
 const EntrepotTable: React.FC<EntrepotTableProps> = ({ onCreate }) => {
   const [rows, setRows] = useState<EntrepotRow[]>([]);
   const [loading, setLoading] = useState(true);
+  const [detailsOpen, setDetailsOpen] = useState(false);
+  const [selectedId, setSelectedId] = useState<string | null>(null);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -54,6 +58,21 @@ const EntrepotTable: React.FC<EntrepotTableProps> = ({ onCreate }) => {
     const totalValue = rows.reduce((acc, r) => acc + (r.prix || 0), 0);
     return { total, totalValue };
   }, [rows]);
+
+  const markAsSold = async (id: string) => {
+    try {
+      const { error } = await supabase
+        .from("properties")
+        .update({ statut: "vendu", updated_at: new Date().toISOString() })
+        .eq("id", id);
+      if (error) throw error;
+      setRows((prev) => prev.filter((row) => row.id !== id));
+      toast({ title: "Marqué comme vendu", description: "Le bien a été mis à jour." });
+    } catch (err) {
+      console.error(err);
+      toast({ title: "Erreur", description: "Impossible de marquer comme vendu", variant: "destructive" });
+    }
+  };
 
   return (
     <div className="space-y-4">
@@ -107,6 +126,7 @@ const EntrepotTable: React.FC<EntrepotTableProps> = ({ onCreate }) => {
                   <TableHead>Localisation</TableHead>
                   <TableHead>Prix (FCFA)</TableHead>
                   <TableHead>Date</TableHead>
+                  <TableHead className="text-right">Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -123,12 +143,35 @@ const EntrepotTable: React.FC<EntrepotTableProps> = ({ onCreate }) => {
                   </TableRow>
                 ))}
               </TableBody>
-            </Table>
-          )}
-        </CardContent>
-      </Card>
-    </div>
-  );
-};
+              </Table>
+            )}
+          </CardContent>
+        </Card>
 
-export default EntrepotTable;
+        <PropertyDetailsDialog
+          propertyId={selectedId}
+          open={detailsOpen}
+          onOpenChange={(o) => {
+            setDetailsOpen(o);
+            if (!o) setSelectedId(null);
+          }}
+          onUpdated={(upd) => {
+            if (upd?.statut === "vendu" && selectedId) {
+              setRows((prev) => prev.filter((row) => row.id !== selectedId));
+            } else if (selectedId && (upd?.titre || upd?.prix || upd?.surface || upd?.city || upd?.quartier)) {
+              setRows((prev) => prev.map((row) => row.id === selectedId ? {
+                ...row,
+                titre: upd.titre ?? row.titre,
+                prix: upd.prix ?? row.prix,
+                surface: upd.surface ?? row.surface,
+                city: upd.city ?? row.city,
+                quartier: upd.quartier ?? row.quartier,
+              } : row));
+            }
+          }}
+        />
+      </div>
+    );
+  };
+
+  export default EntrepotTable;

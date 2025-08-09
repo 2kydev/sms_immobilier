@@ -4,7 +4,9 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { Plus } from "lucide-react";
+import { Plus, Eye, Pencil, CheckCircle } from "lucide-react";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import PropertyDetailsDialog from "@/components/property/PropertyDetailsDialog";
 
 interface TerrainTableProps {
   onCreate: () => void;
@@ -23,6 +25,8 @@ type TerrainRow = {
 const TerrainTable: React.FC<TerrainTableProps> = ({ onCreate }) => {
   const [rows, setRows] = useState<TerrainRow[]>([]);
   const [loading, setLoading] = useState(true);
+  const [detailsOpen, setDetailsOpen] = useState(false);
+  const [selectedId, setSelectedId] = useState<string | null>(null);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -54,6 +58,21 @@ const TerrainTable: React.FC<TerrainTableProps> = ({ onCreate }) => {
     const totalValue = rows.reduce((acc, r) => acc + (r.prix || 0), 0);
     return { total, totalValue };
   }, [rows]);
+
+  const markAsSold = async (id: string) => {
+    try {
+      const { error } = await supabase
+        .from("properties")
+        .update({ statut: "vendu", updated_at: new Date().toISOString() })
+        .eq("id", id);
+      if (error) throw error;
+      setRows((prev) => prev.filter((row) => row.id !== id));
+      toast({ title: "Marqué comme vendu", description: "Le bien a été mis à jour." });
+    } catch (err) {
+      console.error(err);
+      toast({ title: "Erreur", description: "Impossible de marquer comme vendu", variant: "destructive" });
+    }
+  };
 
   return (
     <div className="space-y-4">
@@ -107,6 +126,7 @@ const TerrainTable: React.FC<TerrainTableProps> = ({ onCreate }) => {
                   <TableHead>Localisation</TableHead>
                   <TableHead>Prix (FCFA)</TableHead>
                   <TableHead>Date</TableHead>
+                  <TableHead className="text-right">Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -119,6 +139,40 @@ const TerrainTable: React.FC<TerrainTableProps> = ({ onCreate }) => {
                     </TableCell>
                     <TableCell>{r.prix?.toLocaleString()}</TableCell>
                     <TableCell>{new Date(r.created_at).toLocaleDateString()}</TableCell>
+                    <TableCell className="text-right">
+                      <TooltipProvider>
+                        <div className="flex items-center justify-end gap-1">
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <Button variant="ghost" size="icon" onClick={() => { setSelectedId(r.id); setDetailsOpen(true); }}>
+                                <Eye className="h-4 w-4" />
+                              </Button>
+                            </TooltipTrigger>
+                            <TooltipContent>Voir</TooltipContent>
+                          </Tooltip>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <Button variant="ghost" size="icon" onClick={() => { setSelectedId(r.id); setDetailsOpen(true); }}>
+                                <Pencil className="h-4 w-4" />
+                              </Button>
+                            </TooltipTrigger>
+                            <TooltipContent>Modifier</TooltipContent>
+                          </Tooltip>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <Button variant="ghost" size="icon" onClick={() => {
+                                if (confirm('Confirmer: marquer ce bien comme vendu ?')) {
+                                  markAsSold(r.id);
+                                }
+                              }}>
+                                <CheckCircle className="h-4 w-4" />
+                              </Button>
+                            </TooltipTrigger>
+                            <TooltipContent>Marquer comme vendu</TooltipContent>
+                          </Tooltip>
+                        </div>
+                      </TooltipProvider>
+                    </TableCell>
                   </TableRow>
                 ))}
               </TableBody>
@@ -126,6 +180,29 @@ const TerrainTable: React.FC<TerrainTableProps> = ({ onCreate }) => {
           )}
         </CardContent>
       </Card>
+
+      <PropertyDetailsDialog
+        propertyId={selectedId}
+        open={detailsOpen}
+        onOpenChange={(o) => {
+          setDetailsOpen(o);
+          if (!o) setSelectedId(null);
+        }}
+        onUpdated={(upd) => {
+          if (upd?.statut === "vendu" && selectedId) {
+            setRows((prev) => prev.filter((row) => row.id !== selectedId));
+          } else if (selectedId && (upd?.titre || upd?.prix || upd?.surface || upd?.city || upd?.quartier)) {
+            setRows((prev) => prev.map((row) => row.id === selectedId ? {
+              ...row,
+              titre: upd.titre ?? row.titre,
+              prix: upd.prix ?? row.prix,
+              surface: upd.surface ?? row.surface,
+              city: upd.city ?? row.city,
+              quartier: upd.quartier ?? row.quartier,
+            } : row));
+          }
+        }}
+      />
     </div>
   );
 };
