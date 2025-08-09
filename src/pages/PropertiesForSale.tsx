@@ -48,7 +48,14 @@ const PropertiesForSale = () => {
       <header className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
         <h1 className="text-3xl font-bold text-primary">{headerTitle}</h1>
         <div className="flex items-center gap-3">
-          <ToggleGroup type="single" value={selectedType} onValueChange={v => v && setSelectedType(v as any)}>
+          <ToggleGroup
+            type="single"
+            value={selectedType}
+            onValueChange={(v) => v && setSelectedType(v as any)}
+            variant="segmented"
+            size="sm"
+            aria-label="Filtrer par type de bien"
+          >
             <ToggleGroupItem value="terrain">Terrain</ToggleGroupItem>
             <ToggleGroupItem value="maison">Maison</ToggleGroupItem>
             <ToggleGroupItem value="entrepot">Entrepôt</ToggleGroupItem>
