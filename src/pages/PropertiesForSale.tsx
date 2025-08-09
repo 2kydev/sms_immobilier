@@ -55,7 +55,7 @@ const PropertiesForSale = () => {
             <ToggleGroupItem value="immeuble">Immeuble</ToggleGroupItem>
           </ToggleGroup>
           {selectedType === "maison" && !showMaisonForm && <Button onClick={() => setShowMaisonForm(true)}>Nouvelle maison</Button>}
-          {selectedType === "entrepot" && !showEntrepotForm && <Button onClick={() => setShowEntrepotForm(true)}>Nouvel entrepôt</Button>}
+          {selectedType === "entrepot" && !showEntrepotForm}
           {selectedType === "immeuble" && !showImmeubleForm}
         </div>
       </header>
