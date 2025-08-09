@@ -7,6 +7,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import PropertyDetailsDialog from "@/components/property/PropertyDetailsDialog";
+import { Badge } from "@/components/ui/badge";
+import { Switch } from "@/components/ui/switch";
 
 interface MaisonTableProps {
   onCreate: () => void;
@@ -29,6 +31,7 @@ const MaisonTable: React.FC<MaisonTableProps> = ({ onCreate }) => {
   const [loading, setLoading] = useState(true);
   const [detailsOpen, setDetailsOpen] = useState(false);
   const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [showSold, setShowSold] = useState(true);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -83,9 +86,15 @@ const MaisonTable: React.FC<MaisonTableProps> = ({ onCreate }) => {
           <h2 className="text-2xl font-semibold">Récapitulatif des maisons</h2>
           <p className="text-muted-foreground">Liste des maisons actuellement en vente</p>
         </div>
-        <Button onClick={onCreate} className="flex items-center gap-2">
-          <Plus className="h-4 w-4" /> Nouvelle maison
-        </Button>
+        <div className="flex items-center gap-4">
+          <div className="flex items-center gap-2">
+            <span className="text-sm text-muted-foreground">Afficher vendus</span>
+            <Switch checked={showSold} onCheckedChange={setShowSold} aria-label="Afficher les biens vendus" />
+          </div>
+          <Button onClick={onCreate} className="flex items-center gap-2">
+            <Plus className="h-4 w-4" /> Nouvelle maison
+          </Button>
+        </div>
       </div>
 
       <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
