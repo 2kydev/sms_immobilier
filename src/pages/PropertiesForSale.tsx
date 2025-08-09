@@ -9,11 +9,14 @@ import MaisonForm from "@/components/property/house/MaisonForm";
 import MaisonTable from "@/components/property/house/MaisonTable";
 import EntrepotForm from "@/components/property/entrepot/EntrepotForm";
 import EntrepotTable from "@/components/property/entrepot/EntrepotTable";
+import ImmeubleForm from "@/components/property/immeuble/ImmeubleForm";
+import ImmeubleTable from "@/components/property/immeuble/ImmeubleTable";
 const PropertiesForSale = () => {
   const [selectedType, setSelectedType] = useState<"terrain" | "maison" | "entrepot" | "immeuble">("terrain");
   const [showForm, setShowForm] = useState(false); // terrain
   const [showMaisonForm, setShowMaisonForm] = useState(false);
   const [showEntrepotForm, setShowEntrepotForm] = useState(false);
+  const [showImmeubleForm, setShowImmeubleForm] = useState(false);
   useEffect(() => {
     // Basic SEO for this page
     document.title = "Biens à vendre | Gestion des propriétés";
@@ -56,6 +59,9 @@ const PropertiesForSale = () => {
           )}
           {selectedType === "entrepot" && !showEntrepotForm && (
             <Button onClick={() => setShowEntrepotForm(true)}>Nouvel entrepôt</Button>
+          )}
+          {selectedType === "immeuble" && !showImmeubleForm && (
+            <Button onClick={() => setShowImmeubleForm(true)}>Nouvel immeuble</Button>
           )}
         </div>
       </header>
