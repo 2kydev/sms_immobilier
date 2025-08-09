@@ -85,6 +85,12 @@ const PropertiesForSale = () => {
           ) : (
             <EntrepotTable onCreate={() => setShowEntrepotForm(true)} />
           )
+        ) : selectedType === "immeuble" ? (
+          showImmeubleForm ? (
+            <ImmeubleForm onBack={() => setShowImmeubleForm(false)} />
+          ) : (
+            <ImmeubleTable onCreate={() => setShowImmeubleForm(true)} />
+          )
         ) : (
           <Card>
             <CardHeader>
