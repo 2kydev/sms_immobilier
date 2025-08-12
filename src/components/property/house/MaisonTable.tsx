@@ -8,6 +8,7 @@ import { useToast } from "@/hooks/use-toast";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import PropertyDetailsDialog from "@/components/property/PropertyDetailsDialog";
 import { Badge } from "@/components/ui/badge";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 
 interface MaisonTableProps {
   onCreate: () => void;
@@ -31,6 +32,8 @@ const MaisonTable: React.FC<MaisonTableProps> = ({ onCreate }) => {
   const [detailsOpen, setDetailsOpen] = useState(false);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const { toast } = useToast();
+  const [confirmOpen, setConfirmOpen] = useState(false);
+  const [confirmSoldId, setConfirmSoldId] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchMaisons = async () => {
@@ -192,7 +195,7 @@ const MaisonTable: React.FC<MaisonTableProps> = ({ onCreate }) => {
                                 <Button
                                   variant="ghost"
                                   size="icon"
-                                  onClick={() => markAsSold(r.id)}
+                                  onClick={() => { setConfirmSoldId(r.id); setConfirmOpen(true); }}
                                   aria-label="Marquer comme vendu"
                                 >
                                   <CheckCircle className="h-4 w-4" />
@@ -212,7 +215,32 @@ const MaisonTable: React.FC<MaisonTableProps> = ({ onCreate }) => {
         </CardContent>
       </Card>
 
-      <PropertyDetailsDialog
+      <AlertDialog open={confirmOpen} onOpenChange={setConfirmOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Confirmez-vous que ce bien est vendu ?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Cette action mettra à jour le statut du bien en "Vendu".
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Annuler</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={async () => {
+                if (confirmSoldId) {
+                  await markAsSold(confirmSoldId);
+                  setConfirmOpen(false);
+                  setConfirmSoldId(null);
+                }
+              }}
+            >
+              Confirmer
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+       <PropertyDetailsDialog
         propertyId={selectedId}
         open={detailsOpen}
         onOpenChange={(o) => {
