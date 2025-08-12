@@ -8,6 +8,7 @@ import { Plus, Eye, Pencil, CheckCircle } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import PropertyDetailsDialog from "@/components/property/PropertyDetailsDialog";
 import { Badge } from "@/components/ui/badge";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 
 interface TerrainTableProps {
   onCreate: () => void;
@@ -30,6 +31,8 @@ const TerrainTable: React.FC<TerrainTableProps> = ({ onCreate }) => {
   const [detailsOpen, setDetailsOpen] = useState(false);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const { toast } = useToast();
+  const [confirmOpen, setConfirmOpen] = useState(false);
+  const [confirmSoldId, setConfirmSoldId] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchTerrains = async () => {
@@ -166,18 +169,21 @@ const TerrainTable: React.FC<TerrainTableProps> = ({ onCreate }) => {
                             </TooltipTrigger>
                             <TooltipContent>Modifier</TooltipContent>
                           </Tooltip>
-                          <Tooltip>
-                            <TooltipTrigger asChild>
-                              <Button variant="ghost" size="icon" onClick={() => {
-                                if (confirm('Confirmer: marquer ce bien comme vendu ?')) {
-                                  markAsSold(r.id);
-                                }
-                              }}>
-                                <CheckCircle className="h-4 w-4" />
-                              </Button>
-                            </TooltipTrigger>
-                            <TooltipContent>Marquer comme vendu</TooltipContent>
-                          </Tooltip>
+                          {r.statut !== "vendu" && (
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  onClick={() => { setConfirmSoldId(r.id); setConfirmOpen(true); }}
+                                >
+                                  <CheckCircle className="h-4 w-4" />
+                                </Button>
+                              </TooltipTrigger>
+                              <TooltipContent>Marquer comme vendu</TooltipContent>
+                            </Tooltip>
+                          )}
+
                         </div>
                       </TooltipProvider>
                     </TableCell>
@@ -188,6 +194,31 @@ const TerrainTable: React.FC<TerrainTableProps> = ({ onCreate }) => {
           )}
         </CardContent>
       </Card>
+
+      <AlertDialog open={confirmOpen} onOpenChange={setConfirmOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Confirmez-vous que ce bien est vendu ?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Cette action mettra à jour le statut du bien en "Vendu".
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Annuler</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={async () => {
+                if (confirmSoldId) {
+                  await markAsSold(confirmSoldId);
+                  setConfirmOpen(false);
+                  setConfirmSoldId(null);
+                }
+              }}
+            >
+              Confirmer
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       <PropertyDetailsDialog
         propertyId={selectedId}
