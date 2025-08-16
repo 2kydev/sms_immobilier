@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { Calendar, Home, Users, Building2, TrendingUp, UserPlus, Settings, BarChart3, ShoppingCart } from "lucide-react";
+import { Calendar, Home, Users, Building2, UserPlus, Settings, BarChart3, ShoppingCart } from "lucide-react";
 import {
   Sidebar,
   SidebarContent,

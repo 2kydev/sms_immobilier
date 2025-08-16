@@ -4,7 +4,7 @@ import Dashboard from '../components/Dashboard';
 import ClientManager from '../components/ClientManager';
 import PropertyManager from '../components/PropertyManager';
 import VisitManager from '../components/VisitManager';
-import Pipeline from '../components/Pipeline';
+
 import UserManager from '../components/UserManager';
 import AgentManager from '../components/AgentManager';
 import RoleGuard from '../components/RoleGuard';
@@ -14,7 +14,7 @@ import { useSearchParams } from 'react-router-dom';
 const Index = () => {
   const [searchParams] = useSearchParams();
   const activeSection = searchParams.get('tab') || 'dashboard';
-  const { canAccessDashboard, canAccessPipeline, canManageUsers } = useRole();
+  const { canAccessDashboard, canManageUsers } = useRole();
 
   const renderContent = () => {
     switch (activeSection) {
