@@ -1,6 +1,7 @@
 
 import React from 'react';
 import { Calendar, Home, Users, Building2, UserPlus, Settings, BarChart3, ShoppingCart } from "lucide-react";
+import { useRole } from "@/hooks/useRole";
 import {
   Sidebar,
   SidebarContent,
@@ -52,6 +53,7 @@ const items = [
 
 export function AppSidebar() {
   const location = useLocation();
+  const { isAdmin } = useRole();
 
   const isActive = (url: string) => {
     if (url === "/") {
@@ -69,34 +71,45 @@ export function AppSidebar() {
           </SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
-              {items.map((item) => (
-                <SidebarMenuItem key={item.title}>
-                  {item.subItems ? (
-                    <div className="space-y-1">
-                      <div className="flex items-center gap-2 px-3 py-2 text-sm font-medium text-gray-700">
-                        <item.icon className="h-4 w-4" />
-                        {item.title}
+              {items.map((item) => {
+                // Vérifier si l'élément nécessite des droits d'admin
+                const adminOnlyTabs = ['dashboard', 'agents', 'users'];
+                const tabName = item.url.includes('tab=') ? item.url.split('tab=')[1] : (item.url === '/' ? 'dashboard' : '');
+                const requiresAdmin = adminOnlyTabs.includes(tabName);
+                
+                if (requiresAdmin && !isAdmin()) {
+                  return null;
+                }
+
+                return (
+                  <SidebarMenuItem key={item.title}>
+                    {item.subItems ? (
+                      <div className="space-y-1">
+                        <div className="flex items-center gap-2 px-3 py-2 text-sm font-medium text-gray-700">
+                          <item.icon className="h-4 w-4" />
+                          {item.title}
+                        </div>
+                        <div className="ml-6 space-y-1">
+                          {item.subItems.map((subItem) => (
+                            <SidebarMenuButton key={subItem.url} asChild isActive={isActive(subItem.url)}>
+                              <Link to={subItem.url} className="text-sm">
+                                {subItem.title}
+                              </Link>
+                            </SidebarMenuButton>
+                          ))}
+                        </div>
                       </div>
-                      <div className="ml-6 space-y-1">
-                        {item.subItems.map((subItem) => (
-                          <SidebarMenuButton key={subItem.url} asChild isActive={isActive(subItem.url)}>
-                            <Link to={subItem.url} className="text-sm">
-                              {subItem.title}
-                            </Link>
-                          </SidebarMenuButton>
-                        ))}
-                      </div>
-                    </div>
-                  ) : (
-                    <SidebarMenuButton asChild isActive={isActive(item.url)}>
-                      <Link to={item.url}>
-                        <item.icon />
-                        <span>{item.title}</span>
-                      </Link>
-                    </SidebarMenuButton>
-                  )}
-                </SidebarMenuItem>
-              ))}
+                    ) : (
+                      <SidebarMenuButton asChild isActive={isActive(item.url)}>
+                        <Link to={item.url}>
+                          <item.icon />
+                          <span>{item.title}</span>
+                        </Link>
+                      </SidebarMenuButton>
+                    )}
+                  </SidebarMenuItem>
+                );
+              })}
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>

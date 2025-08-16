@@ -21,7 +21,7 @@ const Index = () => {
       case 'dashboard':
         return (
           <RoleGuard 
-            allowedRoles={['admin', 'dg']}
+            requiredRole="admin"
             fallback={
               <div className="p-6 text-center">
                 <p className="text-gray-500">Vous n'avez pas accès au tableau de bord.</p>
@@ -40,7 +40,7 @@ const Index = () => {
       case 'agents':
         return (
           <RoleGuard 
-            allowedRoles={['admin', 'dg']}
+            requiredRole="admin"
             fallback={
               <div className="p-6 text-center">
                 <p className="text-gray-500">Vous n'avez pas accès à la gestion des agents.</p>
@@ -51,7 +51,18 @@ const Index = () => {
           </RoleGuard>
         );
       case 'users':
-        return <UserManager />;
+        return (
+          <RoleGuard 
+            requiredRole="admin"
+            fallback={
+              <div className="p-6 text-center">
+                <p className="text-gray-500">Vous n'avez pas accès à la gestion des utilisateurs.</p>
+              </div>
+            }
+          >
+            <UserManager />
+          </RoleGuard>
+        );
       default:
         return canAccessDashboard() ? <Dashboard /> : <ClientManager />;
     }
