@@ -7,6 +7,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
+import FloatingChatButton from '@/components/FloatingChatButton';
 
 const Auth = () => {
   const [email, setEmail] = useState('');
@@ -99,6 +100,9 @@ const Auth = () => {
           </div>
         </CardContent>
       </Card>
+      
+      {/* Floating Chat Button */}
+      <FloatingChatButton />
     </div>
   );
 };
