@@ -39,11 +39,6 @@ const items = [
     icon: Calendar,
   },
   {
-    title: "Pipeline",
-    url: "/?tab=pipeline",
-    icon: TrendingUp,
-  },
-  {
     title: "Agents",
     url: "/?tab=agents",
     icon: UserPlus,

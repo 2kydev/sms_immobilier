@@ -50,19 +50,6 @@ const Index = () => {
             <AgentManager />
           </RoleGuard>
         );
-      case 'pipeline':
-        return (
-          <RoleGuard 
-            allowedRoles={['admin', 'dg', 'commercial']}
-            fallback={
-              <div className="p-6 text-center">
-                <p className="text-gray-500">Vous n'avez pas accès au suivi des ventes.</p>
-              </div>
-            }
-          >
-            <Pipeline />
-          </RoleGuard>
-        );
       case 'users':
         return <UserManager />;
       default:
