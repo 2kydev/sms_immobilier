@@ -26,35 +26,12 @@ const CreateUserForm = ({ onUserCreated }: CreateUserFormProps) => {
     setLoading(true);
 
     try {
-      // Créer l'utilisateur via l'API Admin de Supabase
-      const { data, error } = await supabase.auth.admin.createUser({
-        email,
-        password,
-        user_metadata: {
-          nom,
-          prenom,
-          role,
-        },
-        email_confirm: true, // Confirmer automatiquement l'email
+      // Appeler l'Edge Function sécurisée
+      const { data, error } = await supabase.functions.invoke('create-user', {
+        body: { email, password, nom, prenom, role },
       });
 
       if (error) throw error;
-
-      // Mettre à jour le profil avec le bon rôle
-      if (data.user) {
-        const { error: profileError } = await supabase
-          .from('profiles')
-          .update({ 
-            nom, 
-            prenom, 
-            role 
-          })
-          .eq('id', data.user.id);
-
-        if (profileError) {
-          console.error('Erreur lors de la mise à jour du profil:', profileError);
-        }
-      }
 
       toast({
         title: "Utilisateur créé avec succès",
