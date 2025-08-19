@@ -11,6 +11,7 @@ import Auth from "./pages/Auth";
 import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
 import PropertiesForSale from "./pages/PropertiesForSale";
+import PropertyManagement from "./pages/PropertyManagement";
 
 const queryClient = new QueryClient();
 
@@ -33,6 +34,7 @@ const App = () => (
           }>
             <Route index element={<Index />} />
             <Route path="properties-for-sale" element={<PropertiesForSale />} />
+            <Route path="property-management" element={<PropertyManagement />} />
           </Route>
           <Route path="*" element={<NotFound />} />
         </Routes>
