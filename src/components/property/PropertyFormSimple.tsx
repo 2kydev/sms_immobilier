@@ -35,6 +35,9 @@ const PropertyFormSimple: React.FC<PropertyFormProps> = ({ onBack }) => {
     acd: false,
     adu: false,
     nom_proprietaire: '',
+    telephone_proprietaire: '',
+    email_proprietaire: '',
+    adresse_proprietaire: '',
     contacts_proprietaire: '',
     autres_details: '',
     adresse: '',
@@ -234,6 +237,9 @@ const PropertyFormSimple: React.FC<PropertyFormProps> = ({ onBack }) => {
         acd: false,
         adu: false,
         nom_proprietaire: '',
+        telephone_proprietaire: '',
+        email_proprietaire: '',
+        adresse_proprietaire: '',
         contacts_proprietaire: '',
         autres_details: '',
         adresse: '',
@@ -500,6 +506,66 @@ const PropertyFormSimple: React.FC<PropertyFormProps> = ({ onBack }) => {
               />
             </div>
 
+            {/* Section Informations du Propriétaire */}
+            <div className="md:col-span-2">
+              <div className="border-t pt-6 mt-6">
+                <h3 className="text-lg font-semibold text-primary mb-4">Informations du Propriétaire</h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <Label htmlFor="nom_proprietaire">Nom complet du propriétaire</Label>
+                    <Input
+                      id="nom_proprietaire"
+                      value={formData.nom_proprietaire}
+                      onChange={(e) => handleInputChange('nom_proprietaire', e.target.value)}
+                      placeholder="Ex: Dupont Jean"
+                    />
+                  </div>
+
+                  <div>
+                    <Label htmlFor="telephone_proprietaire">Téléphone du propriétaire</Label>
+                    <Input
+                      id="telephone_proprietaire"
+                      value={formData.telephone_proprietaire || ''}
+                      onChange={(e) => handleInputChange('telephone_proprietaire', e.target.value)}
+                      placeholder="Ex: +33 6 12 34 56 78"
+                    />
+                  </div>
+
+                  <div>
+                    <Label htmlFor="email_proprietaire">Email du propriétaire</Label>
+                    <Input
+                      id="email_proprietaire"
+                      type="email"
+                      value={formData.email_proprietaire || ''}
+                      onChange={(e) => handleInputChange('email_proprietaire', e.target.value)}
+                      placeholder="Ex: jean.dupont@email.com"
+                    />
+                  </div>
+
+                  <div>
+                    <Label htmlFor="adresse_proprietaire">Adresse du propriétaire</Label>
+                    <Input
+                      id="adresse_proprietaire"
+                      value={formData.adresse_proprietaire || ''}
+                      onChange={(e) => handleInputChange('adresse_proprietaire', e.target.value)}
+                      placeholder="Adresse complète du propriétaire"
+                    />
+                  </div>
+
+                  <div className="md:col-span-2">
+                    <Label htmlFor="contacts_proprietaire">Informations de contact additionnelles</Label>
+                    <Textarea
+                      id="contacts_proprietaire"
+                      value={formData.contacts_proprietaire}
+                      onChange={(e) => handleInputChange('contacts_proprietaire', e.target.value)}
+                      placeholder="Autres moyens de contact, notes importantes..."
+                      rows={2}
+                    />
+                  </div>
+                </div>
+              </div>
+            </div>
+
             <div className="md:col-span-2 flex gap-4 pt-6">
               <Button 
                 type="submit" 
@@ -525,6 +591,9 @@ const PropertyFormSimple: React.FC<PropertyFormProps> = ({ onBack }) => {
                   acd: false,
                   adu: false,
                   nom_proprietaire: '',
+                  telephone_proprietaire: '',
+                  email_proprietaire: '',
+                  adresse_proprietaire: '',
                   contacts_proprietaire: '',
                   autres_details: '',
                   adresse: '',
