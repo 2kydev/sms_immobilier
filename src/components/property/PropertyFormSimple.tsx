@@ -47,7 +47,6 @@ const PropertyFormSimple: React.FC<PropertyFormProps> = ({ onBack }) => {
     adresse: '',
     quartier: '',
     city: '',
-    description: '',
     agent: ''
   });
 
@@ -186,7 +185,7 @@ const PropertyFormSimple: React.FC<PropertyFormProps> = ({ onBack }) => {
         adresse: formData.adresse.trim(),
         quartier: formData.quartier.trim(),
         city: formData.city.trim(),
-        description: formData.description.trim(),
+        description: '', // Champ supprimé du formulaire mais requis en base
         agent: formData.agent.trim(),
         statut: 'disponible'
       };
@@ -258,7 +257,6 @@ const PropertyFormSimple: React.FC<PropertyFormProps> = ({ onBack }) => {
         adresse: '',
         quartier: '',
         city: '',
-        description: '',
         agent: ''
       });
       
@@ -534,17 +532,6 @@ const PropertyFormSimple: React.FC<PropertyFormProps> = ({ onBack }) => {
               </div>
             </div>
 
-            <div className="md:col-span-2">
-              <Label htmlFor="description">Description</Label>
-              <Textarea
-                id="description"
-                value={formData.description}
-                onChange={(e) => handleInputChange('description', e.target.value)}
-                placeholder="Description détaillée du bien immobilier..."
-                rows={4}
-              />
-            </div>
-
             {/* Section Upload d'images */}
             <div className="md:col-span-2">
               <div className="border-t pt-6 mt-6">
@@ -668,7 +655,6 @@ const PropertyFormSimple: React.FC<PropertyFormProps> = ({ onBack }) => {
                     adresse: '',
                     quartier: '',
                     city: '',
-                    description: '',
                     agent: ''
                   });
                   setImages([]);

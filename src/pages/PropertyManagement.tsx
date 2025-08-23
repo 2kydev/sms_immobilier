@@ -174,6 +174,12 @@ const PropertyManagement = () => {
     setPropertyToDelete(null);
   };
 
+  const handleFormClose = () => {
+    setShowAddForm(false);
+    // Rafraîchir la liste des propriétés après ajout
+    fetchProperties();
+  };
+
   const openPropertyDetails = (propertyId: string) => {
     setSelectedPropertyId(propertyId);
     setShowDetailsDialog(true);
@@ -451,7 +457,7 @@ const PropertyManagement = () => {
               Renseignez les informations du bien immobilier
             </DialogDescription>
           </DialogHeader>
-          <PropertyFormSimple onBack={() => setShowAddForm(false)} />
+          <PropertyFormSimple onBack={handleFormClose} />
         </DialogContent>
       </Dialog>
 
