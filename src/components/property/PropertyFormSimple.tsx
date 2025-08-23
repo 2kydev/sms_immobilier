@@ -446,8 +446,8 @@ const PropertyFormSimple: React.FC<PropertyFormProps> = ({ onBack }) => {
             </div>
 
             <div className="md:col-span-2">
-              <Label className="text-base font-medium">Détails additionnels</Label>
-              <div className="grid grid-cols-2 md:grid-cols-5 gap-4 mt-3">
+              <Label className="text-base font-medium">Équipements et caractéristiques</Label>
+              <div className="grid grid-cols-2 md:grid-cols-3 gap-4 mt-3">
                 <div className="flex items-center space-x-2">
                   <Checkbox
                     id="jardin"
@@ -474,7 +474,12 @@ const PropertyFormSimple: React.FC<PropertyFormProps> = ({ onBack }) => {
                   />
                   <Label htmlFor="cuisine_independante">Cuisine indépendante</Label>
                 </div>
+              </div>
+            </div>
 
+            <div className="md:col-span-2">
+              <Label className="text-base font-medium">Documents légaux</Label>
+              <div className="grid grid-cols-2 md:grid-cols-2 gap-4 mt-3">
                 <div className="flex items-center space-x-2">
                   <Checkbox
                     id="acd"

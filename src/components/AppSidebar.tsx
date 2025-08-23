@@ -25,9 +25,8 @@ const items = [
     url: "#",
     icon: Building2,
     subItems: [
-      { title: "Gestion complète", url: "/property-management" },
+      { title: "Gestion de bien", url: "/property-management" },
       { title: "Biens à vendre", url: "/properties-for-sale" },
-      { title: "Vue simple", url: "/?tab=properties" },
     ]
   },
   {
