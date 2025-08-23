@@ -187,7 +187,9 @@ export type Database = {
           adresse: string
           adu: boolean | null
           agent: string
+          attestation_villagoise: boolean | null
           autres_details: string | null
+          autres_documents: boolean | null
           caracteristiques: string[] | null
           charges: number | null
           city: string
@@ -217,7 +219,9 @@ export type Database = {
           adresse: string
           adu?: boolean | null
           agent: string
+          attestation_villagoise?: boolean | null
           autres_details?: string | null
+          autres_documents?: boolean | null
           caracteristiques?: string[] | null
           charges?: number | null
           city: string
@@ -247,7 +251,9 @@ export type Database = {
           adresse?: string
           adu?: boolean | null
           agent?: string
+          attestation_villagoise?: boolean | null
           autres_details?: string | null
+          autres_documents?: boolean | null
           caracteristiques?: string[] | null
           charges?: number | null
           city?: string
