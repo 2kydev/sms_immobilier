@@ -10,6 +10,8 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { ArrowLeft } from 'lucide-react';
+import ImageUpload from '@/components/ImageUpload';
+import FileUpload from '@/components/FileUpload';
 
 interface PropertyFormProps {
   onBack: () => void;
@@ -34,6 +36,8 @@ const PropertyFormSimple: React.FC<PropertyFormProps> = ({ onBack }) => {
     cuisine_independante: false,
     acd: false,
     adu: false,
+    attestation_villagoise: false,
+    autres_documents: false,
     nom_proprietaire: '',
     telephone_proprietaire: '',
     email_proprietaire: '',
@@ -46,6 +50,10 @@ const PropertyFormSimple: React.FC<PropertyFormProps> = ({ onBack }) => {
     description: '',
     agent: ''
   });
+
+  // États pour les uploads
+  const [images, setImages] = useState<string[]>([]);
+  const [documents, setDocuments] = useState<string[]>([]);
 
   // Test de connexion Supabase au chargement
   useEffect(() => {
@@ -169,6 +177,9 @@ const PropertyFormSimple: React.FC<PropertyFormProps> = ({ onBack }) => {
         cuisine_independante: formData.cuisine_independante,
         acd: formData.acd,
         adu: formData.adu,
+        attestation_villagoise: formData.attestation_villagoise,
+        autres_documents: formData.autres_documents,
+        images: images,
         nom_proprietaire: formData.nom_proprietaire.trim() || null,
         contacts_proprietaire: formData.contacts_proprietaire.trim() || null,
         autres_details: formData.autres_details.trim() || null,
@@ -236,6 +247,8 @@ const PropertyFormSimple: React.FC<PropertyFormProps> = ({ onBack }) => {
         cuisine_independante: false,
         acd: false,
         adu: false,
+        attestation_villagoise: false,
+        autres_documents: false,
         nom_proprietaire: '',
         telephone_proprietaire: '',
         email_proprietaire: '',
@@ -248,6 +261,9 @@ const PropertyFormSimple: React.FC<PropertyFormProps> = ({ onBack }) => {
         description: '',
         agent: ''
       });
+      
+      setImages([]);
+      setDocuments([]);
       
       onBack();
 
@@ -479,7 +495,7 @@ const PropertyFormSimple: React.FC<PropertyFormProps> = ({ onBack }) => {
 
             <div className="md:col-span-2">
               <Label className="text-base font-medium">Documents légaux</Label>
-              <div className="grid grid-cols-2 md:grid-cols-2 gap-4 mt-3">
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-3">
                 <div className="flex items-center space-x-2">
                   <Checkbox
                     id="acd"
@@ -497,6 +513,24 @@ const PropertyFormSimple: React.FC<PropertyFormProps> = ({ onBack }) => {
                   />
                   <Label htmlFor="adu">ADU</Label>
                 </div>
+
+                <div className="flex items-center space-x-2">
+                  <Checkbox
+                    id="attestation_villagoise"
+                    checked={formData.attestation_villagoise}
+                    onCheckedChange={(checked) => handleInputChange('attestation_villagoise', checked)}
+                  />
+                  <Label htmlFor="attestation_villagoise">Attestation villagoise</Label>
+                </div>
+
+                <div className="flex items-center space-x-2">
+                  <Checkbox
+                    id="autres_documents"
+                    checked={formData.autres_documents}
+                    onCheckedChange={(checked) => handleInputChange('autres_documents', checked)}
+                  />
+                  <Label htmlFor="autres_documents">Autres</Label>
+                </div>
               </div>
             </div>
 
@@ -509,6 +543,33 @@ const PropertyFormSimple: React.FC<PropertyFormProps> = ({ onBack }) => {
                 placeholder="Description détaillée du bien immobilier..."
                 rows={4}
               />
+            </div>
+
+            {/* Section Upload d'images */}
+            <div className="md:col-span-2">
+              <div className="border-t pt-6 mt-6">
+                <h3 className="text-lg font-semibold text-primary mb-4">Images du bien</h3>
+                <ImageUpload 
+                  images={images}
+                  onImagesChange={setImages}
+                  maxImages={10}
+                />
+              </div>
+            </div>
+
+            {/* Section Upload de documents */}
+            <div className="md:col-span-2">
+              <div className="border-t pt-6 mt-6">
+                <h3 className="text-lg font-semibold text-primary mb-4">Documents du bien</h3>
+                <FileUpload 
+                  files={documents}
+                  onFilesChange={setDocuments}
+                  maxFiles={10}
+                  acceptedTypes={['.pdf', '.doc', '.docx', '.jpg', '.jpeg', '.png']}
+                  label="Documents légaux et techniques"
+                  description="Téléchargez les documents relatifs au bien (titre foncier, plans, etc.)"
+                />
+              </div>
             </div>
 
             {/* Section Informations du Propriétaire */}
@@ -582,31 +643,37 @@ const PropertyFormSimple: React.FC<PropertyFormProps> = ({ onBack }) => {
               <Button 
                 type="button" 
                 variant="outline" 
-                onClick={() => setFormData({
-                  titre: '',
-                  type: 'appartement',
-                  transaction_type: 'vente',
-                  prix: '',
-                  surface: '',
-                  pieces: '',
-                  nombre_salles_eau: '',
-                  jardin: false,
-                  piscine: false,
-                  cuisine_independante: false,
-                  acd: false,
-                  adu: false,
-                  nom_proprietaire: '',
-                  telephone_proprietaire: '',
-                  email_proprietaire: '',
-                  adresse_proprietaire: '',
-                  contacts_proprietaire: '',
-                  autres_details: '',
-                  adresse: '',
-                  quartier: '',
-                  city: '',
-                  description: '',
-                  agent: ''
-                })}
+                onClick={() => {
+                  setFormData({
+                    titre: '',
+                    type: 'appartement',
+                    transaction_type: 'vente',
+                    prix: '',
+                    surface: '',
+                    pieces: '',
+                    nombre_salles_eau: '',
+                    jardin: false,
+                    piscine: false,
+                    cuisine_independante: false,
+                    acd: false,
+                    adu: false,
+                    attestation_villagoise: false,
+                    autres_documents: false,
+                    nom_proprietaire: '',
+                    telephone_proprietaire: '',
+                    email_proprietaire: '',
+                    adresse_proprietaire: '',
+                    contacts_proprietaire: '',
+                    autres_details: '',
+                    adresse: '',
+                    quartier: '',
+                    city: '',
+                    description: '',
+                    agent: ''
+                  });
+                  setImages([]);
+                  setDocuments([]);
+                }}
                 disabled={loading}
               >
                 Réinitialiser
