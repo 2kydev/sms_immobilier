@@ -142,6 +142,7 @@ const PropertyManagement = () => {
       case 'maison': return '🏠';
       case 'terrain': return '🏞️';
       case 'immeuble': return '🏬';
+      case 'entrepot': return '🏭';
       case 'bureau': return '🏢';
       case 'commerce': return '🏪';
       default: return '🏠';
@@ -285,6 +286,7 @@ const PropertyManagement = () => {
                 <SelectItem value="maison">Maison</SelectItem>
                 <SelectItem value="terrain">Terrain</SelectItem>
                 <SelectItem value="immeuble">Immeuble</SelectItem>
+                <SelectItem value="entrepot">Entrepôt</SelectItem>
                 <SelectItem value="bureau">Bureau</SelectItem>
                 <SelectItem value="commerce">Commerce</SelectItem>
               </SelectContent>

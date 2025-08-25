@@ -5,10 +5,12 @@ import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Textarea } from "@/components/ui/textarea";
 import PropertyImageGallery from "@/components/PropertyImageGallery";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { Pencil, Save, Loader2, CheckCircle } from "lucide-react";
+import { Pencil, Save, Loader2, CheckCircle, X } from "lucide-react";
 
 interface PropertyDetailsDialogProps {
   propertyId: string | null;
@@ -54,11 +56,20 @@ const PropertyDetailsDialog: React.FC<PropertyDetailsDialogProps> = ({ propertyI
     try {
       const payload = {
         titre: property.titre,
+        type: property.type,
         prix: property.prix,
         surface: property.surface,
+        pieces: property.pieces,
         city: property.city,
         quartier: property.quartier,
+        adresse: property.adresse,
         description: property.description,
+        statut: property.statut,
+        transaction_type: property.transaction_type,
+        agent: property.agent,
+        nom_proprietaire: property.nom_proprietaire,
+        contacts_proprietaire: property.contacts_proprietaire,
+        charges: property.charges,
         updated_at: new Date().toISOString(),
       } as any;
       const { error } = await supabase
@@ -77,23 +88,23 @@ const PropertyDetailsDialog: React.FC<PropertyDetailsDialogProps> = ({ propertyI
     }
   };
 
-  const handleMarkSold = async () => {
-    if (!property) return;
-    setSaving(true);
-    try {
-      const { error } = await supabase
-        .from("properties")
-        .update({ statut: "vendu", updated_at: new Date().toISOString() })
-        .eq("id", property.id);
-      if (error) throw error;
-      toast({ title: "Marqué comme vendu", description: "Le statut a été mis à jour." });
-      setProperty({ ...property, statut: "vendu" });
-      onUpdated?.({ statut: "vendu" });
-    } catch (err) {
-      console.error(err);
-      toast({ title: "Erreur", description: "Impossible de marquer comme vendu", variant: "destructive" });
-    } finally {
-      setSaving(false);
+  const getStatusBadgeVariant = (status: string) => {
+    switch (status) {
+      case 'disponible': return 'default';
+      case 'sous-offre': return 'secondary';
+      case 'vendu': return 'destructive';
+      case 'loue': return 'outline';
+      default: return 'secondary';
+    }
+  };
+
+  const getStatusLabel = (status: string) => {
+    switch (status) {
+      case 'disponible': return 'Disponible';
+      case 'sous-offre': return 'Sous offre';
+      case 'vendu': return 'Vendu';
+      case 'loue': return 'Loué';
+      default: return status;
     }
   };
 
@@ -102,10 +113,18 @@ const PropertyDetailsDialog: React.FC<PropertyDetailsDialogProps> = ({ propertyI
       <DialogContent className="max-w-5xl">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-3">
-            {property?.titre || "Détails du bien"}
+            {editing ? (
+              <Input
+                value={property?.titre ?? ""}
+                onChange={(e) => setProperty((p: any) => ({ ...p, titre: e.target.value }))}
+                className="text-lg font-semibold"
+              />
+            ) : (
+              property?.titre || "Détails du bien"
+            )}
             {property?.statut && (
-              <Badge variant={property.statut === "vendu" ? "success" : "secondary"}>
-                {property.statut === "vendu" ? "Vendu" : property.statut}
+              <Badge variant={getStatusBadgeVariant(property.statut)}>
+                {getStatusLabel(property.statut)}
               </Badge>
             )}
           </DialogTitle>
@@ -128,16 +147,77 @@ const PropertyDetailsDialog: React.FC<PropertyDetailsDialogProps> = ({ propertyI
                 <div className="grid grid-cols-2 gap-4">
                   <div>
                     <Label>Type</Label>
-                    <div className="text-sm text-foreground/90">{property?.type}</div>
+                    {editing ? (
+                      <Select value={property?.type ?? ""} onValueChange={(value) => setProperty((p: any) => ({ ...p, type: value }))}>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Sélectionner un type" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="appartement">Appartement</SelectItem>
+                          <SelectItem value="maison">Maison</SelectItem>
+                          <SelectItem value="terrain">Terrain</SelectItem>
+                          <SelectItem value="immeuble">Immeuble</SelectItem>
+                          <SelectItem value="entrepot">Entrepôt</SelectItem>
+                          <SelectItem value="bureau">Bureau</SelectItem>
+                          <SelectItem value="commerce">Commerce</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    ) : (
+                      <div className="text-sm text-foreground/90 capitalize">{property?.type}</div>
+                    )}
                   </div>
                   <div>
                     <Label>Transaction</Label>
-                    <div className="text-sm text-foreground/90">{property?.transaction_type}</div>
+                    {editing ? (
+                      <Select value={property?.transaction_type ?? ""} onValueChange={(value) => setProperty((p: any) => ({ ...p, transaction_type: value }))}>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Type de transaction" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="vente">Vente</SelectItem>
+                          <SelectItem value="location">Location</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    ) : (
+                      <div className="text-sm text-foreground/90 capitalize">{property?.transaction_type}</div>
+                    )}
+                  </div>
+                  <div>
+                    <Label>Statut</Label>
+                    {editing ? (
+                      <Select value={property?.statut ?? ""} onValueChange={(value) => setProperty((p: any) => ({ ...p, statut: value }))}>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Statut" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="disponible">Disponible</SelectItem>
+                          <SelectItem value="sous-offre">Sous offre</SelectItem>
+                          <SelectItem value="vendu">Vendu</SelectItem>
+                          <SelectItem value="loue">Loué</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    ) : (
+                      <div className="text-sm text-foreground/90">{getStatusLabel(property?.statut)}</div>
+                    )}
+                  </div>
+                  <div>
+                    <Label>Pièces</Label>
+                    {editing ? (
+                      <Input
+                        type="number"
+                        value={property?.pieces ?? ""}
+                        onChange={(e) => setProperty((p: any) => ({ ...p, pieces: Number(e.target.value) || 0 }))}
+                      />
+                    ) : (
+                      <div className="text-sm text-foreground/90">{property?.pieces || "—"}</div>
+                    )}
                   </div>
                   <div>
                     <Label>Surface (m²)</Label>
                     {editing ? (
                       <Input
+                        type="number"
+                        step="0.01"
                         value={property?.surface ?? ""}
                         onChange={(e) => setProperty((p: any) => ({ ...p, surface: Number(e.target.value) || 0 }))}
                       />
@@ -149,11 +229,35 @@ const PropertyDetailsDialog: React.FC<PropertyDetailsDialogProps> = ({ propertyI
                     <Label>Prix (FCFA)</Label>
                     {editing ? (
                       <Input
+                        type="number"
                         value={property?.prix ?? ""}
                         onChange={(e) => setProperty((p: any) => ({ ...p, prix: Number(e.target.value) || 0 }))}
                       />
                     ) : (
                       <div className="text-sm text-foreground/90">{property?.prix?.toLocaleString?.() || "—"}</div>
+                    )}
+                  </div>
+                  <div>
+                    <Label>Charges (FCFA)</Label>
+                    {editing ? (
+                      <Input
+                        type="number"
+                        value={property?.charges ?? ""}
+                        onChange={(e) => setProperty((p: any) => ({ ...p, charges: Number(e.target.value) || 0 }))}
+                      />
+                    ) : (
+                      <div className="text-sm text-foreground/90">{property?.charges?.toLocaleString?.() || "—"}</div>
+                    )}
+                  </div>
+                  <div>
+                    <Label>Agent</Label>
+                    {editing ? (
+                      <Input
+                        value={property?.agent ?? ""}
+                        onChange={(e) => setProperty((p: any) => ({ ...p, agent: e.target.value }))}
+                      />
+                    ) : (
+                      <div className="text-sm text-foreground/90">{property?.agent}</div>
                     )}
                   </div>
                   <div>
@@ -182,6 +286,33 @@ const PropertyDetailsDialog: React.FC<PropertyDetailsDialogProps> = ({ propertyI
 
                 <Separator />
 
+                <div className="grid grid-cols-1 gap-4">
+                  <div>
+                    <Label>Nom du propriétaire</Label>
+                    {editing ? (
+                      <Input
+                        value={property?.nom_proprietaire ?? ""}
+                        onChange={(e) => setProperty((p: any) => ({ ...p, nom_proprietaire: e.target.value }))}
+                      />
+                    ) : (
+                      <div className="text-sm text-foreground/90">{property?.nom_proprietaire || "Non renseigné"}</div>
+                    )}
+                  </div>
+                  <div>
+                    <Label>Contacts du propriétaire</Label>
+                    {editing ? (
+                      <Input
+                        value={property?.contacts_proprietaire ?? ""}
+                        onChange={(e) => setProperty((p: any) => ({ ...p, contacts_proprietaire: e.target.value }))}
+                      />
+                    ) : (
+                      <div className="text-sm text-foreground/90">{property?.contacts_proprietaire || "Non renseigné"}</div>
+                    )}
+                  </div>
+                </div>
+
+                <Separator />
+
                 <div className="space-y-2">
                   <Label>Adresse</Label>
                   {editing ? (
@@ -197,9 +328,10 @@ const PropertyDetailsDialog: React.FC<PropertyDetailsDialogProps> = ({ propertyI
                 <div className="space-y-2">
                   <Label>Description</Label>
                   {editing ? (
-                    <Input
+                    <Textarea
                       value={property?.description ?? ""}
                       onChange={(e) => setProperty((p: any) => ({ ...p, description: e.target.value }))}
+                      rows={4}
                     />
                   ) : (
                     <div className="text-sm text-foreground/90 whitespace-pre-wrap">
@@ -210,11 +342,7 @@ const PropertyDetailsDialog: React.FC<PropertyDetailsDialogProps> = ({ propertyI
               </div>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <div>
-                <Label>Agent</Label>
-                <div className="text-sm text-foreground/90">{property?.agent}</div>
-              </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <Label>Créé le</Label>
                 <div className="text-sm text-foreground/90">{property?.created_at ? new Date(property.created_at).toLocaleString() : "—"}</div>
@@ -239,13 +367,15 @@ const PropertyDetailsDialog: React.FC<PropertyDetailsDialogProps> = ({ propertyI
                     <Pencil className="h-4 w-4 mr-2" /> Modifier
                   </Button>
                 ) : (
-                  <Button onClick={handleSave} disabled={saving}>
-                    {saving ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Save className="h-4 w-4 mr-2" />} Enregistrer
-                  </Button>
+                  <>
+                    <Button onClick={handleSave} disabled={saving}>
+                      {saving ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Save className="h-4 w-4 mr-2" />} Enregistrer
+                    </Button>
+                    <Button variant="outline" onClick={() => setEditing(false)}>
+                      <X className="h-4 w-4 mr-2" /> Annuler
+                    </Button>
+                  </>
                 )}
-                <Button variant="outline" onClick={handleMarkSold} disabled={saving || property?.statut === "vendu"}>
-                  <CheckCircle className="h-4 w-4 mr-2" /> Marquer comme vendu
-                </Button>
               </div>
             </div>
           </div>
