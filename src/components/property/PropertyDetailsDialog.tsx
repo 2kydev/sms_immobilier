@@ -110,17 +110,17 @@ const PropertyDetailsDialog: React.FC<PropertyDetailsDialogProps> = ({ propertyI
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-5xl">
+      <DialogContent className="max-w-6xl max-h-[95vh] overflow-y-auto w-[95vw] sm:w-full">
         <DialogHeader>
-          <DialogTitle className="flex items-center gap-3">
+          <DialogTitle className="flex flex-col sm:flex-row items-start sm:items-center gap-3">
             {editing ? (
               <Input
                 value={property?.titre ?? ""}
                 onChange={(e) => setProperty((p: any) => ({ ...p, titre: e.target.value }))}
-                className="text-lg font-semibold"
+                className="text-lg font-semibold flex-1"
               />
             ) : (
-              property?.titre || "Détails du bien"
+              <span className="flex-1">{property?.titre || "Détails du bien"}</span>
             )}
             {property?.statut && (
               <Badge variant={getStatusBadgeVariant(property.statut)}>
@@ -139,12 +139,12 @@ const PropertyDetailsDialog: React.FC<PropertyDetailsDialogProps> = ({ propertyI
           </div>
         ) : (
           <div className="space-y-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div>
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              <div className="order-2 lg:order-1">
                 <PropertyImageGallery images={images} propertyTitle={property?.titre || "Bien"} />
               </div>
-              <div className="space-y-4">
-                <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-4 order-1 lg:order-2">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
                     <Label>Type</Label>
                     {editing ? (
@@ -342,7 +342,7 @@ const PropertyDetailsDialog: React.FC<PropertyDetailsDialogProps> = ({ propertyI
               </div>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
                 <Label>Créé le</Label>
                 <div className="text-sm text-foreground/90">{property?.created_at ? new Date(property.created_at).toLocaleString() : "—"}</div>
@@ -353,25 +353,25 @@ const PropertyDetailsDialog: React.FC<PropertyDetailsDialogProps> = ({ propertyI
               </div>
             </div>
 
-            <div className="flex flex-wrap items-center justify-between gap-3">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 pt-4 border-t">
               <div className="text-sm text-muted-foreground">
                 {property?.extrait_topographique && (
                   <a href={property.extrait_topographique} target="_blank" rel="noreferrer" className="underline">
-                    Voir l’extrait topographique
+                    Voir l'extrait topographique
                   </a>
                 )}
               </div>
-              <div className="flex items-center gap-2">
+              <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 w-full sm:w-auto">
                 {!editing ? (
-                  <Button variant="secondary" onClick={() => setEditing(true)}>
+                  <Button variant="secondary" onClick={() => setEditing(true)} className="w-full sm:w-auto">
                     <Pencil className="h-4 w-4 mr-2" /> Modifier
                   </Button>
                 ) : (
                   <>
-                    <Button onClick={handleSave} disabled={saving}>
+                    <Button onClick={handleSave} disabled={saving} className="w-full sm:w-auto">
                       {saving ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Save className="h-4 w-4 mr-2" />} Enregistrer
                     </Button>
-                    <Button variant="outline" onClick={() => setEditing(false)}>
+                    <Button variant="outline" onClick={() => setEditing(false)} className="w-full sm:w-auto">
                       <X className="h-4 w-4 mr-2" /> Annuler
                     </Button>
                   </>
