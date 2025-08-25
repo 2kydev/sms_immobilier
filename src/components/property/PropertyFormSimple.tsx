@@ -47,7 +47,12 @@ const PropertyFormSimple: React.FC<PropertyFormProps> = ({ onBack }) => {
     adresse: '',
     quartier: '',
     city: '',
-    agent: ''
+    agent: '',
+    // Fréquences de prix pour les locations
+    prix_jour: false,
+    prix_semaine: false,
+    prix_mois: false,
+    prix_annee: false
   });
 
   // États pour les uploads
@@ -257,7 +262,11 @@ const PropertyFormSimple: React.FC<PropertyFormProps> = ({ onBack }) => {
         adresse: '',
         quartier: '',
         city: '',
-        agent: ''
+        agent: '',
+        prix_jour: false,
+        prix_semaine: false,
+        prix_mois: false,
+        prix_annee: false
       });
       
       setImages([]);
@@ -361,6 +370,7 @@ const PropertyFormSimple: React.FC<PropertyFormProps> = ({ onBack }) => {
                   <SelectItem value="immeuble">Immeuble</SelectItem>
                   <SelectItem value="duplexe">Duplexe</SelectItem>
                   <SelectItem value="triplexe">Triplexe</SelectItem>
+                  <SelectItem value="entrepot">Entrepôt</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -376,6 +386,50 @@ const PropertyFormSimple: React.FC<PropertyFormProps> = ({ onBack }) => {
                 required
               />
             </div>
+
+            {/* Fréquences de prix pour les locations */}
+            {formData.transaction_type === 'location' && (
+              <div className="md:col-span-2">
+                <Label className="text-base font-medium">Affichage du prix selon les fréquences</Label>
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-3">
+                  <div className="flex items-center space-x-2">
+                    <Checkbox
+                      id="prix_jour"
+                      checked={formData.prix_jour}
+                      onCheckedChange={(checked) => handleInputChange('prix_jour', checked)}
+                    />
+                    <Label htmlFor="prix_jour">Par jour</Label>
+                  </div>
+
+                  <div className="flex items-center space-x-2">
+                    <Checkbox
+                      id="prix_semaine"
+                      checked={formData.prix_semaine}
+                      onCheckedChange={(checked) => handleInputChange('prix_semaine', checked)}
+                    />
+                    <Label htmlFor="prix_semaine">Par semaine</Label>
+                  </div>
+
+                  <div className="flex items-center space-x-2">
+                    <Checkbox
+                      id="prix_mois"
+                      checked={formData.prix_mois}
+                      onCheckedChange={(checked) => handleInputChange('prix_mois', checked)}
+                    />
+                    <Label htmlFor="prix_mois">Par mois</Label>
+                  </div>
+
+                  <div className="flex items-center space-x-2">
+                    <Checkbox
+                      id="prix_annee"
+                      checked={formData.prix_annee}
+                      onCheckedChange={(checked) => handleInputChange('prix_annee', checked)}
+                    />
+                    <Label htmlFor="prix_annee">Par an</Label>
+                  </div>
+                </div>
+              </div>
+            )}
 
             <div>
               <Label htmlFor="surface">Superficie (m² ou ha) *</Label>
@@ -655,7 +709,11 @@ const PropertyFormSimple: React.FC<PropertyFormProps> = ({ onBack }) => {
                     adresse: '',
                     quartier: '',
                     city: '',
-                    agent: ''
+                    agent: '',
+                    prix_jour: false,
+                    prix_semaine: false,
+                    prix_mois: false,
+                    prix_annee: false
                   });
                   setImages([]);
                   setDocuments([]);
