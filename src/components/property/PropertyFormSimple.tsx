@@ -52,7 +52,9 @@ const PropertyFormSimple: React.FC<PropertyFormProps> = ({ onBack }) => {
     prix_jour: false,
     prix_semaine: false,
     prix_mois: false,
-    prix_annee: false
+    prix_annee: false,
+    // Unité de superficie
+    surface_unit: 'm2'
   });
 
   // États pour les uploads
@@ -266,7 +268,8 @@ const PropertyFormSimple: React.FC<PropertyFormProps> = ({ onBack }) => {
         prix_jour: false,
         prix_semaine: false,
         prix_mois: false,
-        prix_annee: false
+        prix_annee: false,
+        surface_unit: 'm2'
       });
       
       setImages([]);
@@ -431,17 +434,38 @@ const PropertyFormSimple: React.FC<PropertyFormProps> = ({ onBack }) => {
               </div>
             )}
 
-            <div>
-              <Label htmlFor="surface">Superficie (m² ou ha) *</Label>
-              <Input
-                id="surface"
-                type="number"
-                step="0.01"
-                value={formData.surface}
-                onChange={(e) => handleInputChange('surface', e.target.value)}
-                min="0.01"
-                required
-              />
+            <div className="md:col-span-2">
+              <Label htmlFor="surface">Superficie *</Label>
+              <div className="space-y-3">
+                <Input
+                  id="surface"
+                  type="number"
+                  step="0.01"
+                  value={formData.surface}
+                  onChange={(e) => handleInputChange('surface', e.target.value)}
+                  min="0.01"
+                  placeholder="Superficie"
+                  required
+                />
+                <div className="flex items-center space-x-6">
+                  <div className="flex items-center space-x-2">
+                    <Checkbox
+                      id="unit_m2"
+                      checked={formData.surface_unit === 'm2'}
+                      onCheckedChange={(checked) => checked && handleInputChange('surface_unit', 'm2')}
+                    />
+                    <Label htmlFor="unit_m2">m²</Label>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <Checkbox
+                      id="unit_ha"
+                      checked={formData.surface_unit === 'ha'}
+                      onCheckedChange={(checked) => checked && handleInputChange('surface_unit', 'ha')}
+                    />
+                    <Label htmlFor="unit_ha">ha</Label>
+                  </div>
+                </div>
+              </div>
             </div>
 
             <div>
@@ -713,7 +737,8 @@ const PropertyFormSimple: React.FC<PropertyFormProps> = ({ onBack }) => {
                     prix_jour: false,
                     prix_semaine: false,
                     prix_mois: false,
-                    prix_annee: false
+                    prix_annee: false,
+                    surface_unit: 'm2'
                   });
                   setImages([]);
                   setDocuments([]);
