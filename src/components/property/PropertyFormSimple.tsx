@@ -25,7 +25,7 @@ const PropertyFormSimple: React.FC<PropertyFormProps> = ({ onBack }) => {
   // État pour tous les champs du formulaire
   const [formData, setFormData] = useState({
     titre: '',
-    type: 'appartement',
+    type: 'maison',
     transaction_type: 'vente',
     prix: '',
     surface: '',
@@ -242,7 +242,7 @@ const PropertyFormSimple: React.FC<PropertyFormProps> = ({ onBack }) => {
       // Reset et retour
       setFormData({
         titre: '',
-        type: 'appartement',
+        type: 'maison',
         transaction_type: 'vente',
         prix: '',
         surface: '',
@@ -365,14 +365,9 @@ const PropertyFormSimple: React.FC<PropertyFormProps> = ({ onBack }) => {
                   <SelectValue placeholder="Sélectionner le type" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="appartement">Appartement</SelectItem>
                   <SelectItem value="maison">Maison</SelectItem>
-                  <SelectItem value="studio">Studio</SelectItem>
                   <SelectItem value="terrain">Terrain</SelectItem>
-                  <SelectItem value="local">Local commercial</SelectItem>
                   <SelectItem value="immeuble">Immeuble</SelectItem>
-                  <SelectItem value="duplexe">Duplexe</SelectItem>
-                  <SelectItem value="triplexe">Triplexe</SelectItem>
                   <SelectItem value="entrepot">Entrepôt</SelectItem>
                 </SelectContent>
               </Select>
@@ -711,7 +706,7 @@ const PropertyFormSimple: React.FC<PropertyFormProps> = ({ onBack }) => {
                 onClick={() => {
                   setFormData({
                     titre: '',
-                    type: 'appartement',
+                    type: 'maison',
                     transaction_type: 'vente',
                     prix: '',
                     surface: '',
