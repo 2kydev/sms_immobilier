@@ -8,9 +8,10 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
-import { Plus, Search, Filter, MoreVertical, Eye, Edit, Trash2, MapPin, Building, Calendar, User, Phone, Mail, TrendingUp } from 'lucide-react';
+import { Plus, Search, Filter, MoreVertical, Eye, Edit, Trash2, MapPin, Building, Calendar, User, Phone, Mail, TrendingUp, Archive } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import { useRole } from '@/hooks/useRole';
 import PropertyImageGallery from '@/components/PropertyImageGallery';
 import PropertyDetailsDialog from '@/components/property/PropertyDetailsDialog';
 import PropertyFormSimple from '@/components/property/PropertyFormSimple';
@@ -46,9 +47,8 @@ const PropertyManagement = () => {
   const [selectedPropertyId, setSelectedPropertyId] = useState<string | null>(null);
   const [showDetailsDialog, setShowDetailsDialog] = useState(false);
   const [propertyToDelete, setPropertyToDelete] = useState<string | null>(null);
-  const {
-    toast
-  } = useToast();
+  const { toast } = useToast();
+  const { hasAnyRole } = useRole();
 
   // Statistiques
   const stats = {
@@ -116,6 +116,8 @@ const PropertyManagement = () => {
         return <Badge className="bg-red-100 text-red-800 hover:bg-red-100">Vendu</Badge>;
       case 'loue':
         return <Badge className="bg-blue-100 text-blue-800 hover:bg-blue-100">Loué</Badge>;
+      case 'archivé':
+        return <Badge className="bg-gray-100 text-gray-800 hover:bg-gray-100">Archivé</Badge>;
       default:
         return <Badge variant="secondary">{status}</Badge>;
     }
@@ -142,24 +144,55 @@ const PropertyManagement = () => {
   };
   const handleDeleteProperty = async (propertyId: string) => {
     try {
-      const {
-        error
-      } = await supabase.from('properties').delete().eq('id', propertyId);
+      const { error } = await supabase.from('properties').delete().eq('id', propertyId);
       if (error) throw error;
       toast({
         title: "Succès",
         description: "Propriété supprimée avec succès"
       });
       fetchProperties();
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error deleting property:', error);
+      // Check if it's a permission error
+      if (error.message?.includes('permission') || error.message?.includes('policy') || error.code === '42501') {
+        toast({
+          title: "Autorisation refusée",
+          description: "Vous n'avez pas les droits pour supprimer ce bien (réservé aux Admin/DG)",
+          variant: "destructive"
+        });
+      } else {
+        toast({
+          title: "Erreur",
+          description: "Impossible de supprimer la propriété",
+          variant: "destructive"
+        });
+      }
+    }
+    setPropertyToDelete(null);
+  };
+
+  const handleArchiveProperty = async (propertyId: string) => {
+    try {
+      const { error } = await supabase
+        .from('properties')
+        .update({ statut: 'archivé' })
+        .eq('id', propertyId);
+      
+      if (error) throw error;
+      
+      toast({
+        title: "Succès",
+        description: "Propriété archivée avec succès"
+      });
+      fetchProperties();
+    } catch (error) {
+      console.error('Error archiving property:', error);
       toast({
         title: "Erreur",
-        description: "Impossible de supprimer la propriété",
+        description: "Impossible d'archiver la propriété",
         variant: "destructive"
       });
     }
-    setPropertyToDelete(null);
   };
   const handleFormClose = () => {
     setShowAddForm(false);
@@ -268,6 +301,7 @@ const PropertyManagement = () => {
                 <SelectItem value="sous-offre">Sous offre</SelectItem>
                 <SelectItem value="vendu">Vendu</SelectItem>
                 <SelectItem value="loue">Loué</SelectItem>
+                <SelectItem value="archivé">Archivé</SelectItem>
               </SelectContent>
             </Select>
             <Select value={filterTransaction} onValueChange={setFilterTransaction}>
@@ -380,10 +414,16 @@ const PropertyManagement = () => {
                             Modifier
                           </DropdownMenuItem>
                           <DropdownMenuSeparator />
-                          <DropdownMenuItem onClick={() => setPropertyToDelete(property.id)} className="text-red-600">
-                            <Trash2 className="h-4 w-4 mr-2" />
-                            Supprimer
+                          <DropdownMenuItem onClick={() => handleArchiveProperty(property.id)} className="text-orange-600">
+                            <Archive className="h-4 w-4 mr-2" />
+                            Archiver
                           </DropdownMenuItem>
+                          {hasAnyRole(['admin', 'dg']) && (
+                            <DropdownMenuItem onClick={() => setPropertyToDelete(property.id)} className="text-red-600">
+                              <Trash2 className="h-4 w-4 mr-2" />
+                              Supprimer
+                            </DropdownMenuItem>
+                          )}
                         </DropdownMenuContent>
                       </DropdownMenu>
                     </TableCell>
