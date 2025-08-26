@@ -153,8 +153,17 @@ const PropertyManagement = () => {
       fetchProperties();
     } catch (error: any) {
       console.error('Error deleting property:', error);
+      
+      // Check if it's a foreign key constraint error (transactions reference this property)
+      if (error.code === '23503' && error.message?.includes('transactions_property_id_fkey')) {
+        toast({
+          title: "Suppression impossible",
+          description: "Ce bien ne peut pas être supprimé car il a des transactions associées. Utilisez l'option 'Archiver' à la place.",
+          variant: "destructive"
+        });
+      }
       // Check if it's a permission error
-      if (error.message?.includes('permission') || error.message?.includes('policy') || error.code === '42501') {
+      else if (error.message?.includes('permission') || error.message?.includes('policy') || error.code === '42501') {
         toast({
           title: "Autorisation refusée",
           description: "Vous n'avez pas les droits pour supprimer ce bien (réservé aux Admin/DG)",
