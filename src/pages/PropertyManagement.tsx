@@ -14,7 +14,6 @@ import { useToast } from '@/hooks/use-toast';
 import PropertyImageGallery from '@/components/PropertyImageGallery';
 import PropertyDetailsDialog from '@/components/property/PropertyDetailsDialog';
 import PropertyFormSimple from '@/components/property/PropertyFormSimple';
-
 interface Property {
   id: string;
   titre: string;
@@ -35,7 +34,6 @@ interface Property {
   created_at: string;
   transaction_type: 'vente' | 'location';
 }
-
 const PropertyManagement = () => {
   const [properties, setProperties] = useState<Property[]>([]);
   const [filteredProperties, setFilteredProperties] = useState<Property[]>([]);
@@ -48,7 +46,9 @@ const PropertyManagement = () => {
   const [selectedPropertyId, setSelectedPropertyId] = useState<string | null>(null);
   const [showDetailsDialog, setShowDetailsDialog] = useState(false);
   const [propertyToDelete, setPropertyToDelete] = useState<string | null>(null);
-  const { toast } = useToast();
+  const {
+    toast
+  } = useToast();
 
   // Statistiques
   const stats = {
@@ -58,22 +58,21 @@ const PropertyManagement = () => {
     loue: properties.filter(p => p.statut === 'loue').length,
     totalValue: properties.reduce((sum, p) => sum + p.prix, 0)
   };
-
   const fetchProperties = async () => {
     try {
-      const { data, error } = await supabase
-        .from('properties')
-        .select('*')
-        .order('created_at', { ascending: false });
-
+      const {
+        data,
+        error
+      } = await supabase.from('properties').select('*').order('created_at', {
+        ascending: false
+      });
       if (error) throw error;
-      
+
       // Transformer les données pour correspondre au type Property
       const transformedData = (data || []).map(item => ({
         ...item,
         transaction_type: item.transaction_type as 'vente' | 'location'
       }));
-      
       setProperties(transformedData);
     } catch (error) {
       console.error('Error fetching properties:', error);
@@ -86,7 +85,6 @@ const PropertyManagement = () => {
       setLoading(false);
     }
   };
-
   useEffect(() => {
     fetchProperties();
   }, []);
@@ -94,33 +92,20 @@ const PropertyManagement = () => {
   // Filtrage des propriétés
   useEffect(() => {
     let filtered = properties;
-
     if (searchTerm) {
-      filtered = filtered.filter(property =>
-        property.titre.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        property.adresse.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        property.city.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        property.quartier.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        property.nom_proprietaire?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        property.agent.toLowerCase().includes(searchTerm.toLowerCase())
-      );
+      filtered = filtered.filter(property => property.titre.toLowerCase().includes(searchTerm.toLowerCase()) || property.adresse.toLowerCase().includes(searchTerm.toLowerCase()) || property.city.toLowerCase().includes(searchTerm.toLowerCase()) || property.quartier.toLowerCase().includes(searchTerm.toLowerCase()) || property.nom_proprietaire?.toLowerCase().includes(searchTerm.toLowerCase()) || property.agent.toLowerCase().includes(searchTerm.toLowerCase()));
     }
-
     if (filterType !== 'tous') {
       filtered = filtered.filter(property => property.type === filterType);
     }
-
     if (filterStatus !== 'tous') {
       filtered = filtered.filter(property => property.statut === filterStatus);
     }
-
     if (filterTransaction !== 'tous') {
       filtered = filtered.filter(property => property.transaction_type === filterTransaction);
     }
-
     setFilteredProperties(filtered);
   }, [properties, searchTerm, filterType, filterStatus, filterTransaction]);
-
   const getStatusBadge = (status: string) => {
     switch (status) {
       case 'disponible':
@@ -135,34 +120,36 @@ const PropertyManagement = () => {
         return <Badge variant="secondary">{status}</Badge>;
     }
   };
-
   const getTypeIcon = (type: string) => {
     switch (type) {
-      case 'appartement': return '🏢';
-      case 'maison': return '🏠';
-      case 'terrain': return '🏞️';
-      case 'immeuble': return '🏬';
-      case 'entrepot': return '🏭';
-      case 'bureau': return '🏢';
-      case 'commerce': return '🏪';
-      default: return '🏠';
+      case 'appartement':
+        return '🏢';
+      case 'maison':
+        return '🏠';
+      case 'terrain':
+        return '🏞️';
+      case 'immeuble':
+        return '🏬';
+      case 'entrepot':
+        return '🏭';
+      case 'bureau':
+        return '🏢';
+      case 'commerce':
+        return '🏪';
+      default:
+        return '🏠';
     }
   };
-
   const handleDeleteProperty = async (propertyId: string) => {
     try {
-      const { error } = await supabase
-        .from('properties')
-        .delete()
-        .eq('id', propertyId);
-
+      const {
+        error
+      } = await supabase.from('properties').delete().eq('id', propertyId);
       if (error) throw error;
-      
       toast({
         title: "Succès",
         description: "Propriété supprimée avec succès"
       });
-      
       fetchProperties();
     } catch (error) {
       console.error('Error deleting property:', error);
@@ -174,24 +161,19 @@ const PropertyManagement = () => {
     }
     setPropertyToDelete(null);
   };
-
   const handleFormClose = () => {
     setShowAddForm(false);
     // Rafraîchir la liste des propriétés après ajout
     fetchProperties();
   };
-
   const openPropertyDetails = (propertyId: string) => {
     setSelectedPropertyId(propertyId);
     setShowDetailsDialog(true);
   };
-
   if (loading) {
     return <div className="p-6">Chargement des propriétés...</div>;
   }
-
-  return (
-    <div className="space-y-6 p-6">
+  return <div className="space-y-6 p-6">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
@@ -250,17 +232,7 @@ const PropertyManagement = () => {
             </div>
           </CardContent>
         </Card>
-        <Card>
-          <CardContent className="pt-6">
-            <div className="flex items-center gap-2">
-              <TrendingUp className="h-5 w-5 text-primary" />
-              <div>
-                <div className="text-lg font-bold">{stats.totalValue.toLocaleString()} F</div>
-                <p className="text-sm text-muted-foreground">Valeur totale</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+        
       </div>
 
       {/* Filtres et recherche */}
@@ -269,12 +241,7 @@ const PropertyManagement = () => {
           <div className="flex flex-col lg:flex-row gap-4">
             <div className="flex-1 relative">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-              <Input
-                placeholder="Rechercher par titre, adresse, propriétaire, agent..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-10"
-              />
+              <Input placeholder="Rechercher par titre, adresse, propriétaire, agent..." value={searchTerm} onChange={e => setSearchTerm(e.target.value)} className="pl-10" />
             </div>
             <Select value={filterType} onValueChange={setFilterType}>
               <SelectTrigger className="w-full lg:w-48">
@@ -344,19 +311,10 @@ const PropertyManagement = () => {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {filteredProperties.map((property) => (
-                  <TableRow key={property.id} className="hover:bg-muted/50">
+                {filteredProperties.map(property => <TableRow key={property.id} className="hover:bg-muted/50">
                     <TableCell>
                       <div className="w-16 h-12 rounded overflow-hidden bg-muted flex items-center justify-center">
-                        {property.images && property.images.length > 0 ? (
-                          <img 
-                            src={property.images[0]} 
-                            alt={property.titre}
-                            className="w-full h-full object-cover"
-                          />
-                        ) : (
-                          <span className="text-2xl">{getTypeIcon(property.type)}</span>
-                        )}
+                        {property.images && property.images.length > 0 ? <img src={property.images[0]} alt={property.titre} className="w-full h-full object-cover" /> : <span className="text-2xl">{getTypeIcon(property.type)}</span>}
                       </div>
                     </TableCell>
                     <TableCell>
@@ -372,9 +330,7 @@ const PropertyManagement = () => {
                     <TableCell>
                       <div className="text-sm">
                         <div className="font-medium">{property.nom_proprietaire || 'Non renseigné'}</div>
-                        {property.contacts_proprietaire && (
-                          <div className="text-muted-foreground text-xs">{property.contacts_proprietaire}</div>
-                        )}
+                        {property.contacts_proprietaire && <div className="text-muted-foreground text-xs">{property.contacts_proprietaire}</div>}
                       </div>
                     </TableCell>
                     <TableCell>
@@ -388,9 +344,7 @@ const PropertyManagement = () => {
                     </TableCell>
                     <TableCell>
                       <span className="font-medium">{property.surface} m²</span>
-                      {property.pieces > 0 && (
-                        <div className="text-xs text-muted-foreground">{property.pieces} pièces</div>
-                      )}
+                      {property.pieces > 0 && <div className="text-xs text-muted-foreground">{property.pieces} pièces</div>}
                     </TableCell>
                     <TableCell>
                       <div className="font-medium">{property.prix.toLocaleString()} F</div>
@@ -426,26 +380,20 @@ const PropertyManagement = () => {
                             Modifier
                           </DropdownMenuItem>
                           <DropdownMenuSeparator />
-                          <DropdownMenuItem 
-                            onClick={() => setPropertyToDelete(property.id)}
-                            className="text-red-600"
-                          >
+                          <DropdownMenuItem onClick={() => setPropertyToDelete(property.id)} className="text-red-600">
                             <Trash2 className="h-4 w-4 mr-2" />
                             Supprimer
                           </DropdownMenuItem>
                         </DropdownMenuContent>
                       </DropdownMenu>
                     </TableCell>
-                  </TableRow>
-                ))}
+                  </TableRow>)}
               </TableBody>
             </Table>
             
-            {filteredProperties.length === 0 && (
-              <div className="text-center py-8 text-muted-foreground">
+            {filteredProperties.length === 0 && <div className="text-center py-8 text-muted-foreground">
                 Aucune propriété trouvée avec ces critères
-              </div>
-            )}
+              </div>}
           </div>
         </CardContent>
       </Card>
@@ -464,14 +412,7 @@ const PropertyManagement = () => {
       </Dialog>
 
       {/* Dialog des détails */}
-      {selectedPropertyId && (
-        <PropertyDetailsDialog
-          propertyId={selectedPropertyId}
-          open={showDetailsDialog}
-          onOpenChange={setShowDetailsDialog}
-          onUpdated={fetchProperties}
-        />
-      )}
+      {selectedPropertyId && <PropertyDetailsDialog propertyId={selectedPropertyId} open={showDetailsDialog} onOpenChange={setShowDetailsDialog} onUpdated={fetchProperties} />}
 
       {/* Dialog de confirmation de suppression */}
       <AlertDialog open={!!propertyToDelete} onOpenChange={() => setPropertyToDelete(null)}>
@@ -484,17 +425,12 @@ const PropertyManagement = () => {
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Annuler</AlertDialogCancel>
-            <AlertDialogAction 
-              onClick={() => propertyToDelete && handleDeleteProperty(propertyToDelete)}
-              className="bg-red-600 hover:bg-red-700"
-            >
+            <AlertDialogAction onClick={() => propertyToDelete && handleDeleteProperty(propertyToDelete)} className="bg-red-600 hover:bg-red-700">
               Supprimer
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-    </div>
-  );
+    </div>;
 };
-
 export default PropertyManagement;
