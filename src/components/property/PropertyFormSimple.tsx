@@ -194,7 +194,8 @@ const PropertyFormSimple: React.FC<PropertyFormProps> = ({ onBack }) => {
         city: formData.city.trim(),
         description: '', // Champ supprimé du formulaire mais requis en base
         agent: formData.agent.trim(),
-        statut: 'disponible'
+        statut: 'disponible',
+        source: 'management'
       };
 
       console.log('✅ Step 2: Data prepared:', propertyData);
