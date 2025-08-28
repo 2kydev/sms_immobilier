@@ -43,6 +43,7 @@ const MaisonTable: React.FC<MaisonTableProps> = ({ onCreate }) => {
           .select("id, titre, surface, city, quartier, prix, pieces, statut, created_at")
           .eq("type", "maison")
           .eq("transaction_type", "vente")
+          .eq("source", "catalog")
           .order("created_at", { ascending: false });
 
         if (error) throw error;

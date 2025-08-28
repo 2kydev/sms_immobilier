@@ -42,6 +42,7 @@ const EntrepotTable: React.FC<EntrepotTableProps> = ({ onCreate }) => {
           .select("id, titre, surface, city, quartier, prix, statut, created_at")
           .eq("type", "entrepot")
           .eq("transaction_type", "vente")
+          .eq("source", "catalog")
           .order("created_at", { ascending: false });
 
         if (error) throw error;

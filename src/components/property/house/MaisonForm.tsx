@@ -188,6 +188,7 @@ const MaisonForm: React.FC<MaisonFormProps> = ({ onBack }) => {
             extrait_topographique: planUrls[0] || null,
             agent,
             statut: "disponible",
+            source: "catalog",
           },
         ]);
 

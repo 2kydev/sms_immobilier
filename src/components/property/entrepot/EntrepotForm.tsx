@@ -179,6 +179,7 @@ const EntrepotForm: React.FC<EntrepotFormProps> = ({ onBack }) => {
             extrait_topographique: planUrls[0] || null,
             agent,
             statut: "disponible",
+            source: "catalog",
           },
         ]);
 

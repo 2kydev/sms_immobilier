@@ -100,6 +100,7 @@ const PropertyManager = () => {
       const { data, error } = await supabase
         .from('properties')
         .select('*')
+        .eq('source', 'management')
         .order('created_at', { ascending: false });
 
       if (error) throw error;
@@ -182,7 +183,8 @@ const PropertyManager = () => {
         ...data,
         caracteristiques: data.caracteristiques || [],
         images: data.images || [],
-        charges: data.charges || null
+        charges: data.charges || null,
+        source: 'management'
       };
 
       if (selectedProperty) {

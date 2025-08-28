@@ -207,6 +207,7 @@ export type Database = {
           piscine: boolean | null
           prix: number
           quartier: string
+          source: string
           statut: string
           surface: number
           titre: string
@@ -239,6 +240,7 @@ export type Database = {
           piscine?: boolean | null
           prix: number
           quartier: string
+          source?: string
           statut: string
           surface: number
           titre: string
@@ -271,6 +273,7 @@ export type Database = {
           piscine?: boolean | null
           prix?: number
           quartier?: string
+          source?: string
           statut?: string
           surface?: number
           titre?: string
