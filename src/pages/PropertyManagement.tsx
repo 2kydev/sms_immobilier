@@ -146,24 +146,18 @@ const PropertyManagement = () => {
     try {
       const { error } = await supabase.from('properties').delete().eq('id', propertyId);
       if (error) throw error;
+      
       toast({
-        title: "Succès",
-        description: "Propriété supprimée avec succès"
+        title: "Bien supprimé",
+        description: "Le bien a été supprimé avec succès. Les transactions associées ont été conservées."
       });
+      
       fetchProperties();
     } catch (error: any) {
       console.error('Error deleting property:', error);
       
-      // Check if it's a foreign key constraint error (transactions reference this property)
-      if (error.code === '23503' && error.message?.includes('transactions_property_id_fkey')) {
-        toast({
-          title: "Suppression impossible",
-          description: "Ce bien ne peut pas être supprimé car il a des transactions associées. Utilisez l'option 'Archiver' à la place.",
-          variant: "destructive"
-        });
-      }
       // Check if it's a permission error
-      else if (error.message?.includes('permission') || error.message?.includes('policy') || error.code === '42501') {
+      if (error.message?.includes('permission') || error.message?.includes('policy') || error.code === '42501') {
         toast({
           title: "Autorisation refusée",
           description: "Vous n'avez pas les droits pour supprimer ce bien (réservé aux Admin/DG)",
@@ -172,7 +166,7 @@ const PropertyManagement = () => {
       } else {
         toast({
           title: "Erreur",
-          description: "Impossible de supprimer la propriété",
+          description: "Impossible de supprimer le bien",
           variant: "destructive"
         });
       }
@@ -469,7 +463,7 @@ const PropertyManagement = () => {
           <AlertDialogHeader>
             <AlertDialogTitle>Êtes-vous sûr ?</AlertDialogTitle>
             <AlertDialogDescription>
-              Cette action ne peut pas être annulée. Cette propriété sera définitivement supprimée.
+              Cette action ne peut pas être annulée. Cette propriété sera définitivement supprimée, mais les transactions associées seront conservées.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
