@@ -191,7 +191,6 @@ const PropertyDetailsDialog: React.FC<PropertyDetailsDialogProps> = ({ propertyI
                         </SelectTrigger>
                         <SelectContent>
                           <SelectItem value="disponible">Disponible</SelectItem>
-                          <SelectItem value="sous-offre">Sous offre</SelectItem>
                           <SelectItem value="vendu">Vendu</SelectItem>
                           <SelectItem value="loue">Loué</SelectItem>
                         </SelectContent>
