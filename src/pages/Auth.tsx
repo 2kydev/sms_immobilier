@@ -8,6 +8,7 @@ import { Label } from '@/components/ui/label';
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
 import FloatingChatButton from '@/components/FloatingChatButton';
+import { supabase } from '@/integrations/supabase/client';
 
 const Auth = () => {
   const [email, setEmail] = useState('');
@@ -85,7 +86,42 @@ const Auth = () => {
                 minLength={6}
               />
             </div>
-            
+
+            <div className="flex justify-end">
+              <Button
+                type="button"
+                variant="link"
+                className="px-0"
+                onClick={async () => {
+                  if (!email) {
+                    toast({
+                      title: 'Entrez votre email',
+                      description: 'Veuillez saisir votre email pour recevoir le lien de réinitialisation.',
+                      variant: 'destructive',
+                    });
+                    return;
+                  }
+                  try {
+                    await supabase.auth.resetPasswordForEmail(email, {
+                      redirectTo: `${window.location.origin}/reset-password`,
+                    });
+                    toast({
+                      title: 'Email envoyé',
+                      description: 'Vérifiez votre boîte de réception pour réinitialiser votre mot de passe.',
+                    });
+                  } catch (error: any) {
+                    toast({
+                      title: "Erreur d'envoi",
+                      description: error.message,
+                      variant: 'destructive',
+                    });
+                  }
+                }}
+              >
+                Mot de passe oublié ?
+              </Button>
+            </div>
+
             <Button type="submit" className="w-full" disabled={loading}>
               {loading ? 'Connexion...' : 'Se connecter'}
             </Button>
