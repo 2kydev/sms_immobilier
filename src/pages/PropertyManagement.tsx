@@ -34,6 +34,7 @@ interface Property {
   contacts_proprietaire?: string;
   created_at: string;
   transaction_type: 'vente' | 'location';
+  autres_details?: string | null;
 }
 const PropertyManagement = () => {
   const [properties, setProperties] = useState<Property[]>([]);
@@ -140,6 +141,25 @@ const PropertyManagement = () => {
         return '🏪';
       default:
         return '🏠';
+    }
+  };
+
+  // Smart display function for surface with unit
+  const formatSurface = (surface: number, autresDetails: string | null) => {
+    if (!surface) return "—";
+    try {
+      const details = autresDetails ? JSON.parse(autresDetails) : {};
+      const unit = details.surface_unit || "m2"; // Default to m2 for existing properties
+      
+      if (unit === "ha") {
+        // Convert back to hectares for display
+        const hectares = surface / 10000;
+        return `${hectares.toLocaleString()} ha`;
+      }
+      return `${surface.toLocaleString()} m²`;
+    } catch (error) {
+      // Fallback if JSON parsing fails
+      return `${surface.toLocaleString()} m²`;
     }
   };
   const handleDeleteProperty = async (propertyId: string) => {
@@ -339,7 +359,7 @@ const PropertyManagement = () => {
                   <TableHead>Type</TableHead>
                   <TableHead>Propriétaire</TableHead>
                   <TableHead>Localisation</TableHead>
-                  <TableHead>Superficie</TableHead>
+                   <TableHead>Superficie</TableHead>
                   <TableHead>Prix</TableHead>
                   <TableHead>Statut</TableHead>
                   <TableHead>Agent</TableHead>
@@ -379,10 +399,10 @@ const PropertyManagement = () => {
                         </div>
                       </div>
                     </TableCell>
-                    <TableCell>
-                      <span className="font-medium">{property.surface} m²</span>
-                      {property.pieces > 0 && <div className="text-xs text-muted-foreground">{property.pieces} pièces</div>}
-                    </TableCell>
+                     <TableCell>
+                       <span className="font-medium">{formatSurface(property.surface, property.autres_details || null)}</span>
+                       {property.pieces > 0 && <div className="text-xs text-muted-foreground">{property.pieces} pièces</div>}
+                     </TableCell>
                     <TableCell>
                       <div className="font-medium">{property.prix.toLocaleString()} F</div>
                       <div className="text-xs text-muted-foreground capitalize">{property.transaction_type}</div>

@@ -128,7 +128,7 @@ const EntrepotTable: React.FC<EntrepotTableProps> = ({ onCreate }) => {
               <TableHeader>
                 <TableRow>
                   <TableHead>Titre</TableHead>
-                  <TableHead>Superficie (m²)</TableHead>
+                  <TableHead>Superficie</TableHead>
                   <TableHead>Localisation</TableHead>
                   <TableHead>Prix (FCFA)</TableHead>
                   <TableHead>Date</TableHead>

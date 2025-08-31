@@ -31,6 +31,7 @@ interface Property {
   caracteristiques: string[];
   images: string[];
   agent: string;
+  autres_details?: string | null;
 }
 
 interface Agent {
@@ -147,6 +148,25 @@ const PropertyManager = () => {
       case 'terrain': return '🏞️';
       case 'local': return '🏪';
       default: return '🏠';
+    }
+  };
+
+  // Smart display function for surface with unit
+  const formatSurface = (surface: number, autresDetails: string | null) => {
+    if (!surface) return "—";
+    try {
+      const details = autresDetails ? JSON.parse(autresDetails) : {};
+      const unit = details.surface_unit || "m2"; // Default to m2 for existing properties
+      
+      if (unit === "ha") {
+        // Convert back to hectares for display
+        const hectares = surface / 10000;
+        return `${hectares.toLocaleString()} ha`;
+      }
+      return `${surface.toLocaleString()} m²`;
+    } catch (error) {
+      // Fallback if JSON parsing fails
+      return `${surface.toLocaleString()} m²`;
     }
   };
 
@@ -333,9 +353,9 @@ const PropertyManager = () => {
                 />
 
                 <div className="grid grid-cols-2 gap-4 text-sm">
-                  <div>
-                    <span className="font-medium">Surface:</span> {property.surface}m²
-                  </div>
+                   <div>
+                     <span className="font-medium">Superficie:</span> {formatSurface(property.surface, property.autres_details || null)}
+                   </div>
                   <div>
                     <span className="font-medium">Pièces:</span> {property.pieces}
                   </div>
@@ -453,7 +473,7 @@ const PropertyManager = () => {
                 name="surface"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Surface (m²)</FormLabel>
+                    <FormLabel>Superficie</FormLabel>
                     <FormControl>
                       <Input type="number" {...field} onChange={(e) => field.onChange(Number(e.target.value))} />
                     </FormControl>

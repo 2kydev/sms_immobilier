@@ -129,7 +129,7 @@ const MaisonTable: React.FC<MaisonTableProps> = ({ onCreate }) => {
               <TableHeader>
                 <TableRow>
                   <TableHead>Titre</TableHead>
-                  <TableHead>Superficie (m²)</TableHead>
+                  <TableHead>Superficie</TableHead>
                   <TableHead>Pièces</TableHead>
                   <TableHead>Localisation</TableHead>
                   <TableHead>Prix (FCFA)</TableHead>
