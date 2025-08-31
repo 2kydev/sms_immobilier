@@ -127,6 +127,7 @@ const TerrainForm: React.FC<TerrainFormProps> = ({ onBack }) => {
         reference_cadastrale: refCadastrale || null,
         statut_juridique: statutJuridique,
         affectation_urbanistique: affectation || null,
+        surface_unit: surfaceUnit, // Save the original unit
         dimensions: { longueur: parseFloat(longueur), largeur: parseFloat(largeur) },
         legal_documents: legalDocs.map((url, i) => ({ title: legalDocTitles[i] || "Document", url })),
         mode_paiement: modesPaiement,

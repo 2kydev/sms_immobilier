@@ -108,6 +108,25 @@ const PropertyDetailsDialog: React.FC<PropertyDetailsDialogProps> = ({ propertyI
     }
   };
 
+  // Smart display function for surface with unit
+  const formatSurface = (surface: number, autresDetails: string | null) => {
+    if (!surface) return "—";
+    try {
+      const details = autresDetails ? JSON.parse(autresDetails) : {};
+      const unit = details.surface_unit || "m2"; // Default to m2 for existing properties
+      
+      if (unit === "ha") {
+        // Convert back to hectares for display
+        const hectares = surface / 10000;
+        return `${hectares.toLocaleString()} ha`;
+      }
+      return `${surface.toLocaleString()} m²`;
+    } catch (error) {
+      // Fallback if JSON parsing fails
+      return `${surface.toLocaleString()} m²`;
+    }
+  };
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-6xl max-h-[95vh] overflow-y-auto w-[95vw] sm:w-full">
@@ -212,7 +231,7 @@ const PropertyDetailsDialog: React.FC<PropertyDetailsDialogProps> = ({ propertyI
                     )}
                   </div>
                   <div>
-                    <Label>Surface (m²)</Label>
+                    <Label>Superficie</Label>
                     {editing ? (
                       <Input
                         type="number"
@@ -221,7 +240,7 @@ const PropertyDetailsDialog: React.FC<PropertyDetailsDialogProps> = ({ propertyI
                         onChange={(e) => setProperty((p: any) => ({ ...p, surface: Number(e.target.value) || 0 }))}
                       />
                     ) : (
-                      <div className="text-sm text-foreground/90">{property?.surface?.toLocaleString?.() || "—"}</div>
+                      <div className="text-sm text-foreground/90">{formatSurface(property?.surface, property?.autres_details)}</div>
                     )}
                   </div>
                   <div>

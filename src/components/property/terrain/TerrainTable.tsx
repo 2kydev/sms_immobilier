@@ -23,6 +23,7 @@ type TerrainRow = {
   prix: number;
   statut: string;
   created_at: string;
+  autres_details: string | null;
 };
 
 const TerrainTable: React.FC<TerrainTableProps> = ({ onCreate }) => {
@@ -39,7 +40,7 @@ const TerrainTable: React.FC<TerrainTableProps> = ({ onCreate }) => {
       try {
         const { data, error } = await supabase
           .from("properties")
-          .select("id, titre, surface, city, quartier, prix, statut, created_at")
+          .select("id, titre, surface, city, quartier, prix, statut, created_at, autres_details")
           .eq("type", "terrain")
           .eq("transaction_type", "vente")
           .eq("source", "catalog")
@@ -64,6 +65,24 @@ const TerrainTable: React.FC<TerrainTableProps> = ({ onCreate }) => {
     const totalValue = disponibles.reduce((acc, r) => acc + (r.prix || 0), 0);
     return { total, totalValue };
   }, [rows]);
+
+  // Smart display function for surface with unit
+  const formatSurface = (surface: number, autresDetails: string | null) => {
+    try {
+      const details = autresDetails ? JSON.parse(autresDetails) : {};
+      const unit = details.surface_unit || "m2"; // Default to m2 for existing properties
+      
+      if (unit === "ha") {
+        // Convert back to hectares for display
+        const hectares = surface / 10000;
+        return `${hectares.toLocaleString()} ha`;
+      }
+      return `${surface.toLocaleString()} m²`;
+    } catch (error) {
+      // Fallback if JSON parsing fails
+      return `${surface.toLocaleString()} m²`;
+    }
+  };
 
   const markAsSold = async (id: string) => {
     try {
@@ -128,7 +147,7 @@ const TerrainTable: React.FC<TerrainTableProps> = ({ onCreate }) => {
               <TableHeader>
                 <TableRow>
                   <TableHead>Titre</TableHead>
-                  <TableHead>Superficie (m²)</TableHead>
+                  <TableHead>Superficie</TableHead>
                   <TableHead>Localisation</TableHead>
                   <TableHead>Prix (FCFA)</TableHead>
                   <TableHead>Date</TableHead>
@@ -140,7 +159,7 @@ const TerrainTable: React.FC<TerrainTableProps> = ({ onCreate }) => {
                 {rows.map((r) => (
                   <TableRow key={r.id}>
                     <TableCell className="font-medium">{r.titre}</TableCell>
-                    <TableCell>{r.surface?.toLocaleString()}</TableCell>
+                    <TableCell>{formatSurface(r.surface, r.autres_details)}</TableCell>
                     <TableCell>
                       {r.city}{r.quartier ? `, ${r.quartier}` : ""}
                     </TableCell>
