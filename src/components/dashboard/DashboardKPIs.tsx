@@ -54,27 +54,7 @@ const DashboardKPIs = ({
         </CardContent>
       </Card>
 
-      <Card className="bg-gradient-to-r from-yellow-500 to-yellow-600 text-white">
-        <CardContent className="pt-6">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-yellow-100 text-sm">CA Total</p>
-              <p className="text-xl font-bold">
-                {formatCurrencyFCFA(monthlyRevenue)}
-              </p>
-              <div className="flex items-center gap-1 text-xs">
-                <TrendingUp className={`h-3 w-3 ${revenueChange.isPositive ? 'text-green-200' : 'text-red-200'}`} />
-                <span className={revenueChange.isPositive ? 'text-green-200' : 'text-red-200'}>
-                  vs mois dernier
-                </span>
-              </div>
-            </div>
-            <div className="h-8 w-12 text-yellow-200 text-2xl font-bold flex items-center justify-center">
-              FCFA
-            </div>
-          </div>
-        </CardContent>
-      </Card>
+      
     </div>;
 };
 export default DashboardKPIs;
