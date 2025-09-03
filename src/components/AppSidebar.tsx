@@ -53,7 +53,7 @@ const items = [
 
 export function AppSidebar() {
   const location = useLocation();
-  const { isAdmin } = useRole();
+  const { isAdmin, canAccessDashboard } = useRole();
 
   const isActive = (url: string) => {
     if (url === "/") {
@@ -72,12 +72,13 @@ export function AppSidebar() {
           <SidebarGroupContent>
             <SidebarMenu>
               {items.map((item) => {
-                // Vérifier si l'élément nécessite des droits d'admin
-                const adminOnlyTabs = ['dashboard', 'agents', 'users'];
+                // Vérifier les permissions pour chaque élément
                 const tabName = item.url.includes('tab=') ? item.url.split('tab=')[1] : (item.url === '/' ? 'dashboard' : '');
-                const requiresAdmin = adminOnlyTabs.includes(tabName);
                 
-                if (requiresAdmin && !isAdmin()) {
+                if (tabName === 'dashboard' && !canAccessDashboard()) {
+                  return null;
+                }
+                if ((tabName === 'agents' || tabName === 'users') && !isAdmin()) {
                   return null;
                 }
 

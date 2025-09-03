@@ -13,20 +13,16 @@ import { useSearchParams } from 'react-router-dom';
 
 const Index = () => {
   const [searchParams] = useSearchParams();
-  const activeSection = searchParams.get('tab') || 'dashboard';
   const { canAccessDashboard, canManageUsers } = useRole();
+  const activeSection = searchParams.get('tab') || (canAccessDashboard() ? 'dashboard' : 'clients');
 
   const renderContent = () => {
     switch (activeSection) {
       case 'dashboard':
         return (
           <RoleGuard 
-            requiredRole="admin"
-            fallback={
-              <div className="p-6 text-center">
-                <p className="text-gray-500">Vous n'avez pas accès au tableau de bord.</p>
-              </div>
-            }
+            allowedRoles={['admin', 'dg']}
+            fallback={<ClientManager />}
           >
             <Dashboard />
           </RoleGuard>
