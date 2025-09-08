@@ -66,12 +66,12 @@ serve(async (req) => {
       });
     }
 
-    // Créer l'utilisateur via l'API Admin
+    // Créer l'utilisateur via l'API Admin avec confirmation d'email requise
     const { data: created, error: createErr } = await supabaseAdmin.auth.admin.createUser({
       email,
       password,
       user_metadata: { nom, prenom, role },
-      email_confirm: true,
+      email_confirm: false, // Force l'envoi d'un email de confirmation
     });
 
     if (createErr) {

@@ -7,6 +7,7 @@ export const useAuth = () => {
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
+  const [emailConfirmationSent, setEmailConfirmationSent] = useState(false);
 
   useEffect(() => {
     // Écouter les changements d'état d'authentification
@@ -64,12 +65,27 @@ export const useAuth = () => {
     if (error) throw error;
   };
 
+  const resendConfirmation = async (email: string) => {
+    const { error } = await supabase.auth.resend({
+      type: 'signup',
+      email: email,
+      options: {
+        emailRedirectTo: `${window.location.origin}/email-confirmation`
+      }
+    });
+    
+    if (error) throw error;
+    setEmailConfirmationSent(true);
+  };
+
   return {
     user,
     session,
     loading,
+    emailConfirmationSent,
     signIn,
     signUp,
     signOut,
+    resendConfirmation,
   };
 };

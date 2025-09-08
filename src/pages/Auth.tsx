@@ -34,6 +34,19 @@ const Auth = () => {
         description: "Bienvenue !",
       });
     } catch (error: any) {
+      // Gérer les cas spéciaux d'erreurs d'authentification
+      if (error.message.includes('Email not confirmed')) {
+        localStorage.setItem('pendingEmail', email);
+        toast({
+          title: "Email non confirmé",
+          description: "Veuillez confirmer votre email avant de vous connecter.",
+          variant: "destructive",
+        });
+        // Rediriger vers la page de confirmation
+        window.location.href = '/email-confirmation';
+        return;
+      }
+      
       toast({
         title: "Erreur d'authentification",
         description: error.message,
