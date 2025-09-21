@@ -13,22 +13,61 @@ const ResetPassword = () => {
   const [loading, setLoading] = useState(false);
   const [hasRecovery, setHasRecovery] = useState(false);
   const [sessionChecked, setSessionChecked] = useState(false);
+  const [isProcessingTokens, setIsProcessingTokens] = useState(true);
   const { toast } = useToast();
   const navigate = useNavigate();
 
   React.useEffect(() => {
     document.title = 'Réinitialiser le mot de passe | SMS Immobilier';
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
-      if (event === 'PASSWORD_RECOVERY') {
+    const checkRecoveryTokens = async () => {
+      try {
+        // Check for recovery tokens in URL hash
+        const hashParams = new URLSearchParams(window.location.hash.substring(1));
+        const accessToken = hashParams.get('access_token');
+        const refreshToken = hashParams.get('refresh_token');
+        const type = hashParams.get('type');
+
+        console.log('URL hash params:', { accessToken: !!accessToken, refreshToken: !!refreshToken, type });
+
+        if (accessToken && refreshToken && type === 'recovery') {
+          // Set the session with the recovery tokens
+          const { data: { session }, error } = await supabase.auth.setSession({
+            access_token: accessToken,
+            refresh_token: refreshToken
+          });
+          
+          if (error) {
+            console.error('Error setting recovery session:', error);
+            setHasRecovery(false);
+          } else {
+            console.log('Recovery session set successfully:', !!session);
+            setHasRecovery(true);
+          }
+        } else {
+          // Check if there's already a valid session
+          const { data: { session } } = await supabase.auth.getSession();
+          console.log('Existing session:', !!session);
+          setHasRecovery(!!session);
+        }
+      } catch (error) {
+        console.error('Error processing recovery tokens:', error);
+        setHasRecovery(false);
+      } finally {
+        setSessionChecked(true);
+        setIsProcessingTokens(false);
+      }
+    };
+
+    // Set up auth state listener
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      console.log('Auth state change:', event, !!session);
+      if (event === 'PASSWORD_RECOVERY' || event === 'TOKEN_REFRESHED') {
         setHasRecovery(true);
       }
     });
 
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setHasRecovery(!!session);
-      setSessionChecked(true);
-    });
+    checkRecoveryTokens();
 
     return () => subscription.unsubscribe();
   }, []);
