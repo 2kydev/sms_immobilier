@@ -15,6 +15,7 @@ import { useRole } from '@/hooks/useRole';
 import PropertyImageGallery from '@/components/PropertyImageGallery';
 import PropertyDetailsDialog from '@/components/property/PropertyDetailsDialog';
 import PropertyFormSimple from '@/components/property/PropertyFormSimple';
+import PriceKPIs from '@/components/PriceKPIs';
 interface Property {
   id: string;
   titre: string;
@@ -51,14 +52,53 @@ const PropertyManagement = () => {
   const { toast } = useToast();
   const { hasAnyRole } = useRole();
 
-  // Statistiques
-  const stats = {
-    total: properties.length,
-    disponible: properties.filter(p => p.statut === 'disponible').length,
-    vendu: properties.filter(p => p.statut === 'vendu').length,
-    loue: properties.filter(p => p.statut === 'loue').length,
-    totalValue: properties.reduce((sum, p) => sum + p.prix, 0)
+  // Calculs des métriques de prix
+  const calculatePriceMetrics = () => {
+    if (properties.length === 0) {
+      return {
+        totalValue: 0,
+        averagePrice: 0,
+        medianPrice: 0,
+        priceRange: { min: 0, max: 0 },
+        priceDistribution: { vente: 0, location: 0 }
+      };
+    }
+
+    const prices = properties.map(p => p.prix).sort((a, b) => a - b);
+    const totalValue = prices.reduce((sum, price) => sum + price, 0);
+    const averagePrice = totalValue / properties.length;
+    
+    // Prix médian
+    const medianIndex = Math.floor(prices.length / 2);
+    const medianPrice = prices.length % 2 === 0 
+      ? (prices[medianIndex - 1] + prices[medianIndex]) / 2 
+      : prices[medianIndex];
+
+    // Fourchette de prix
+    const priceRange = {
+      min: Math.min(...prices),
+      max: Math.max(...prices)
+    };
+
+    // Répartition par type de transaction
+    const venteProperties = properties.filter(p => p.transaction_type === 'vente');
+    const locationProperties = properties.filter(p => p.transaction_type === 'location');
+    
+    const priceDistribution = {
+      vente: venteProperties.reduce((sum, p) => sum + p.prix, 0),
+      location: locationProperties.reduce((sum, p) => sum + p.prix, 0)
+    };
+
+    return {
+      totalValue,
+      averagePrice,
+      medianPrice,
+      priceRange,
+      priceDistribution
+    };
   };
+
+  const priceMetrics = calculatePriceMetrics();
   const fetchProperties = async () => {
     try {
       const {
@@ -242,54 +282,14 @@ const PropertyManagement = () => {
         </Button>
       </div>
 
-      {/* Statistiques */}
-      <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
-        <Card>
-          <CardContent className="pt-6">
-            <div className="flex items-center gap-2">
-              <Building className="h-5 w-5 text-primary" />
-              <div>
-                <div className="text-2xl font-bold">{stats.total}</div>
-                <p className="text-sm text-muted-foreground">Total</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="pt-6">
-            <div className="flex items-center gap-2">
-              <div className="w-3 h-3 bg-green-500 rounded-full"></div>
-              <div>
-                <div className="text-2xl font-bold">{stats.disponible}</div>
-                <p className="text-sm text-muted-foreground">Disponibles</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="pt-6">
-            <div className="flex items-center gap-2">
-              <div className="w-3 h-3 bg-red-500 rounded-full"></div>
-              <div>
-                <div className="text-2xl font-bold">{stats.vendu}</div>
-                <p className="text-sm text-muted-foreground">Vendus</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="pt-6">
-            <div className="flex items-center gap-2">
-              <div className="w-3 h-3 bg-blue-500 rounded-full"></div>
-              <div>
-                <div className="text-2xl font-bold">{stats.loue}</div>
-                <p className="text-sm text-muted-foreground">Loués</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-        
-      </div>
+      {/* KPI Prix */}
+      <PriceKPIs 
+        totalValue={priceMetrics.totalValue}
+        averagePrice={priceMetrics.averagePrice}
+        medianPrice={priceMetrics.medianPrice}
+        priceRange={priceMetrics.priceRange}
+        priceDistribution={priceMetrics.priceDistribution}
+      />
 
       {/* Filtres et recherche */}
       <Card>

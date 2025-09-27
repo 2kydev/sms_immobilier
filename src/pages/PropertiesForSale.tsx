@@ -1,6 +1,8 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { Button } from "@/components/ui/button";
+import { supabase } from '@/integrations/supabase/client';
+import PriceKPIs from '@/components/PriceKPIs';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import PropertyListView from "@/components/property/PropertyListView";
 import TerrainTable from "@/components/property/terrain/TerrainTable";
@@ -11,12 +13,92 @@ import EntrepotForm from "@/components/property/entrepot/EntrepotForm";
 import EntrepotTable from "@/components/property/entrepot/EntrepotTable";
 import ImmeubleForm from "@/components/property/immeuble/ImmeubleForm";
 import ImmeubleTable from "@/components/property/immeuble/ImmeubleTable";
+interface Property {
+  id: string;
+  type: string;
+  prix: number;
+  transaction_type: 'vente' | 'location';
+  statut: string;
+}
+
 const PropertiesForSale = () => {
   const [selectedType, setSelectedType] = useState<"terrain" | "maison" | "entrepot" | "immeuble">("terrain");
   const [showForm, setShowForm] = useState(false); // terrain
   const [showMaisonForm, setShowMaisonForm] = useState(false);
   const [showEntrepotForm, setShowEntrepotForm] = useState(false);
   const [showImmeubleForm, setShowImmeubleForm] = useState(false);
+  const [properties, setProperties] = useState<Property[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  // Fetch properties data for price KPIs
+  const fetchProperties = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('properties')
+        .select('id, type, prix, transaction_type, statut')
+        .eq('transaction_type', 'vente')
+        .neq('statut', 'archivé');
+      
+      if (error) throw error;
+      
+      // Transform data to match interface
+      const transformedData = (data || []).map(item => ({
+        ...item,
+        transaction_type: item.transaction_type as 'vente' | 'location'
+      }));
+      
+      setProperties(transformedData);
+    } catch (error) {
+      console.error('Error fetching properties:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Calculate price metrics for current type filter
+  const calculatePriceMetrics = () => {
+    const filteredProps = properties.filter(p => p.type === selectedType);
+    
+    if (filteredProps.length === 0) {
+      return {
+        totalValue: 0,
+        averagePrice: 0,
+        medianPrice: 0,
+        priceRange: { min: 0, max: 0 },
+        priceDistribution: { vente: 0, location: 0 }
+      };
+    }
+
+    const prices = filteredProps.map(p => p.prix).sort((a, b) => a - b);
+    const totalValue = prices.reduce((sum, price) => sum + price, 0);
+    const averagePrice = totalValue / filteredProps.length;
+    
+    // Prix médian
+    const medianIndex = Math.floor(prices.length / 2);
+    const medianPrice = prices.length % 2 === 0 
+      ? (prices[medianIndex - 1] + prices[medianIndex]) / 2 
+      : prices[medianIndex];
+
+    // Fourchette de prix
+    const priceRange = {
+      min: Math.min(...prices),
+      max: Math.max(...prices)
+    };
+
+    // Pour biens à vendre, tout est en vente
+    const priceDistribution = {
+      vente: totalValue,
+      location: 0
+    };
+
+    return {
+      totalValue,
+      averagePrice,
+      medianPrice,
+      priceRange,
+      priceDistribution
+    };
+  };
   useEffect(() => {
     // Basic SEO for this page
     document.title = "Biens à vendre | Gestion des propriétés";
@@ -29,6 +111,9 @@ const PropertiesForSale = () => {
       m.content = "Page des biens à vendre: filtres par type (Terrain, Maison, Entrepôt, Immeuble), tableau récapitulatif et création de nouveaux terrains.";
       document.head.appendChild(m);
     }
+
+    // Fetch properties data
+    fetchProperties();
   }, []);
   const headerTitle = useMemo(() => {
     switch (selectedType) {
@@ -44,6 +129,8 @@ const PropertiesForSale = () => {
         return "Biens à vendre";
     }
   }, [selectedType]);
+
+  const priceMetrics = calculatePriceMetrics();
   return <div className="space-y-6 p-6">
       <header className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
         <h1 className="text-3xl font-bold text-primary">{headerTitle}</h1>
@@ -67,6 +154,16 @@ const PropertiesForSale = () => {
           <span className="sr-only">Contrôles d’actions disponibles dans chaque tableau</span>
         </div>
       </header>
+
+      {/* KPI Prix pour le type sélectionné */}
+      {!loading && (
+        <PriceKPIs 
+          totalValue={priceMetrics.totalValue}
+          averagePrice={priceMetrics.averagePrice}
+          medianPrice={priceMetrics.medianPrice}
+          priceRange={priceMetrics.priceRange}
+        />
+      )}
 
       <main>
         {selectedType === "terrain" ? showForm ? <TerrainForm onBack={() => setShowForm(false)} /> : <TerrainTable onCreate={() => setShowForm(true)} /> : selectedType === "maison" ? showMaisonForm ? <MaisonForm onBack={() => setShowMaisonForm(false)} /> : <MaisonTable onCreate={() => setShowMaisonForm(true)} /> : selectedType === "entrepot" ? showEntrepotForm ? <EntrepotForm onBack={() => setShowEntrepotForm(false)} /> : <EntrepotTable onCreate={() => setShowEntrepotForm(true)} /> : selectedType === "immeuble" ? showImmeubleForm ? <ImmeubleForm onBack={() => setShowImmeubleForm(false)} /> : <ImmeubleTable onCreate={() => setShowImmeubleForm(true)} /> : <Card>
