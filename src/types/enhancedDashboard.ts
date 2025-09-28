@@ -9,6 +9,31 @@ export interface PropertyKPIs {
     percentage: number;
     isPositive: boolean;
   };
+  // Nouvelles propriétés pour la gestion des biens
+  availableMaisons?: number;
+  availableTerrains?: number;
+  availableEntrepots?: number;
+  valueByType?: {
+    maison: number;
+    terrain: number;
+    entrepot: number;
+    autres: number;
+  };
+  // Nouvelles propriétés pour les biens à vendre par type
+  saleValueByType?: {
+    terrain: number;
+    maison: number;
+    entrepot: number;
+    immeuble: number;
+    autres: number;
+  };
+  saleCountByType?: {
+    terrain: number;
+    maison: number;
+    entrepot: number;
+    immeuble: number;
+    autres: number;
+  };
 }
 
 export interface SalesKPIs {

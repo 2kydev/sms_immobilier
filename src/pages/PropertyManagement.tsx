@@ -15,7 +15,6 @@ import { useRole } from '@/hooks/useRole';
 import PropertyImageGallery from '@/components/PropertyImageGallery';
 import PropertyDetailsDialog from '@/components/property/PropertyDetailsDialog';
 import PropertyFormSimple from '@/components/property/PropertyFormSimple';
-import PropertyManagementKPIs from '@/components/PropertyManagementKPIs';
 interface Property {
   id: string;
   titre: string;
@@ -52,48 +51,6 @@ const PropertyManagement = () => {
   const { toast } = useToast();
   const { hasAnyRole } = useRole();
 
-  // Calculs des métriques pour les KPIs
-  const calculateKPIMetrics = () => {
-    if (properties.length === 0) {
-      return {
-        totalProperties: 0,
-        availableProperties: 0,
-        availableMaisons: 0,
-        availableTerrains: 0,
-        availableEntrepots: 0,
-        valueByType: { maison: 0, terrain: 0, entrepot: 0, autres: 0 }
-      };
-    }
-
-    const availableProps = properties.filter(p => p.statut === 'disponible');
-    const availableMaisons = availableProps.filter(p => p.type === 'maison').length;
-    const availableTerrains = availableProps.filter(p => p.type === 'terrain').length;
-    const availableEntrepots = availableProps.filter(p => p.type === 'entrepot').length;
-
-    // Calcul des valeurs par type (tous biens confondus)
-    const maisonValue = properties.filter(p => p.type === 'maison').reduce((sum, p) => sum + p.prix, 0);
-    const terrainValue = properties.filter(p => p.type === 'terrain').reduce((sum, p) => sum + p.prix, 0);
-    const entrepotValue = properties.filter(p => p.type === 'entrepot').reduce((sum, p) => sum + p.prix, 0);
-    const autresValue = properties
-      .filter(p => !['maison', 'terrain', 'entrepot'].includes(p.type))
-      .reduce((sum, p) => sum + p.prix, 0);
-
-    return {
-      totalProperties: properties.length,
-      availableProperties: availableProps.length,
-      availableMaisons,
-      availableTerrains,
-      availableEntrepots,
-      valueByType: {
-        maison: maisonValue,
-        terrain: terrainValue,
-        entrepot: entrepotValue,
-        autres: autresValue
-      }
-    };
-  };
-
-  const kpiMetrics = calculateKPIMetrics();
   const fetchProperties = async () => {
     try {
       const {
@@ -277,15 +234,6 @@ const PropertyManagement = () => {
         </Button>
       </div>
 
-      {/* KPIs Gestion de Biens */}
-      <PropertyManagementKPIs 
-        totalProperties={kpiMetrics.totalProperties}
-        availableProperties={kpiMetrics.availableProperties}
-        availableMaisons={kpiMetrics.availableMaisons}
-        availableTerrains={kpiMetrics.availableTerrains}
-        availableEntrepots={kpiMetrics.availableEntrepots}
-        valueByType={kpiMetrics.valueByType}
-      />
 
       {/* Filtres et recherche */}
       <Card>

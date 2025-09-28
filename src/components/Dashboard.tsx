@@ -6,6 +6,8 @@ import DashboardChartsPro from './dashboard/DashboardChartsPro';
 import DashboardAlerts from './dashboard/DashboardAlerts';
 import UpcomingVisits from './dashboard/UpcomingVisits';
 import RecentActivities from './dashboard/RecentActivities';
+import PropertyManagementKPIs from '@/components/PropertyManagementKPIs';
+import SalePropertiesKPIs from '@/components/SalePropertiesKPIs';
 
 const Dashboard = () => {
   const { dashboardData, loading, lastUpdated } = useEnhancedDashboard();
@@ -44,6 +46,29 @@ const Dashboard = () => {
               minute: '2-digit'
             })}
           </div>
+        </div>
+      </div>
+
+      {/* KPIs Gestion de Biens */}
+      <div className="space-y-6">
+        <div>
+          <h2 className="text-2xl font-semibold text-primary mb-4">Gestion des Biens</h2>
+          <PropertyManagementKPIs 
+            totalProperties={dashboardData.propertyKPIs.totalProperties}
+            availableProperties={dashboardData.propertyKPIs.availableProperties}
+            availableMaisons={dashboardData.propertyKPIs.availableMaisons || 0}
+            availableTerrains={dashboardData.propertyKPIs.availableTerrains || 0}
+            availableEntrepots={dashboardData.propertyKPIs.availableEntrepots || 0}
+            valueByType={dashboardData.propertyKPIs.valueByType || { maison: 0, terrain: 0, entrepot: 0, autres: 0 }}
+          />
+        </div>
+        
+        <div>
+          <h2 className="text-2xl font-semibold text-primary mb-4">Biens à Vendre par Type</h2>
+          <SalePropertiesKPIs 
+            valueByType={dashboardData.propertyKPIs.saleValueByType || { terrain: 0, maison: 0, entrepot: 0, immeuble: 0, autres: 0 }}
+            countByType={dashboardData.propertyKPIs.saleCountByType || { terrain: 0, maison: 0, entrepot: 0, immeuble: 0, autres: 0 }}
+          />
         </div>
       </div>
 

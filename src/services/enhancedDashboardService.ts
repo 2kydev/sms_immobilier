@@ -5,7 +5,7 @@ import { getMonthDateRange, getCurrentAndLastMonth } from '@/utils/timeUtils';
 export const fetchPropertyKPIs = async (): Promise<PropertyKPIs> => {
   const { data: properties } = await supabase
     .from('properties')
-    .select('statut, prix, created_at');
+    .select('statut, prix, created_at, type, transaction_type');
 
   const { data: transactions } = await supabase
     .from('transactions')
@@ -19,6 +19,39 @@ export const fetchPropertyKPIs = async (): Promise<PropertyKPIs> => {
   const underNegotiation = properties?.filter(p => p.statut === 'en_negociation').length || 0;
   const totalValue = properties?.reduce((sum, p) => sum + (p.prix || 0), 0) || 0;
   const averagePrice = totalProperties > 0 ? totalValue / totalProperties : 0;
+
+  // Calculate available properties by type
+  const availableProps = properties?.filter(p => p.statut === 'disponible') || [];
+  const availableMaisons = availableProps.filter(p => p.type === 'maison').length;
+  const availableTerrains = availableProps.filter(p => p.type === 'terrain').length;
+  const availableEntrepots = availableProps.filter(p => p.type === 'entrepot').length;
+
+  // Calculate value by type (all properties)
+  const valueByType = {
+    maison: properties?.filter(p => p.type === 'maison').reduce((sum, p) => sum + (p.prix || 0), 0) || 0,
+    terrain: properties?.filter(p => p.type === 'terrain').reduce((sum, p) => sum + (p.prix || 0), 0) || 0,
+    entrepot: properties?.filter(p => p.type === 'entrepot').reduce((sum, p) => sum + (p.prix || 0), 0) || 0,
+    autres: properties?.filter(p => !['maison', 'terrain', 'entrepot'].includes(p.type)).reduce((sum, p) => sum + (p.prix || 0), 0) || 0
+  };
+
+  // Calculate sale properties by type (exclude archived)
+  const saleProps = properties?.filter(p => p.transaction_type === 'vente' && p.statut !== 'archivé') || [];
+  
+  const saleValueByType = {
+    terrain: saleProps.filter(p => p.type === 'terrain').reduce((sum, p) => sum + (p.prix || 0), 0),
+    maison: saleProps.filter(p => p.type === 'maison').reduce((sum, p) => sum + (p.prix || 0), 0),
+    entrepot: saleProps.filter(p => p.type === 'entrepot').reduce((sum, p) => sum + (p.prix || 0), 0),
+    immeuble: saleProps.filter(p => p.type === 'immeuble').reduce((sum, p) => sum + (p.prix || 0), 0),
+    autres: saleProps.filter(p => !['terrain', 'maison', 'entrepot', 'immeuble'].includes(p.type)).reduce((sum, p) => sum + (p.prix || 0), 0)
+  };
+
+  const saleCountByType = {
+    terrain: saleProps.filter(p => p.type === 'terrain').length,
+    maison: saleProps.filter(p => p.type === 'maison').length,
+    entrepot: saleProps.filter(p => p.type === 'entrepot').length,
+    immeuble: saleProps.filter(p => p.type === 'immeuble').length,
+    autres: saleProps.filter(p => !['terrain', 'maison', 'entrepot', 'immeuble'].includes(p.type)).length
+  };
 
   // Calculate sales trend (compare with last month)
   const lastMonth = new Date();
@@ -43,7 +76,13 @@ export const fetchPropertyKPIs = async (): Promise<PropertyKPIs> => {
     underNegotiation,
     averagePrice,
     totalValue,
-    salesTrend
+    salesTrend,
+    availableMaisons,
+    availableTerrains,
+    availableEntrepots,
+    valueByType,
+    saleValueByType,
+    saleCountByType
   };
 };
 

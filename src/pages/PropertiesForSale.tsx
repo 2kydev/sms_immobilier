@@ -2,7 +2,7 @@ import React, { useEffect, useMemo, useState } from "react";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { Button } from "@/components/ui/button";
 import { supabase } from '@/integrations/supabase/client';
-import SalePropertiesKPIs from '@/components/SalePropertiesKPIs';
+
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import PropertyListView from "@/components/property/PropertyListView";
 import TerrainTable from "@/components/property/terrain/TerrainTable";
@@ -55,28 +55,6 @@ const PropertiesForSale = () => {
     }
   };
 
-  // Calculate metrics for sale properties by type
-  const calculateSaleMetrics = () => {
-    const saleProps = properties.filter(p => p.statut !== 'archivé');
-    
-    const valueByType = {
-      terrain: saleProps.filter(p => p.type === 'terrain').reduce((sum, p) => sum + p.prix, 0),
-      maison: saleProps.filter(p => p.type === 'maison').reduce((sum, p) => sum + p.prix, 0),
-      entrepot: saleProps.filter(p => p.type === 'entrepot').reduce((sum, p) => sum + p.prix, 0),
-      immeuble: saleProps.filter(p => p.type === 'immeuble').reduce((sum, p) => sum + p.prix, 0),
-      autres: saleProps.filter(p => !['terrain', 'maison', 'entrepot', 'immeuble'].includes(p.type)).reduce((sum, p) => sum + p.prix, 0)
-    };
-
-    const countByType = {
-      terrain: saleProps.filter(p => p.type === 'terrain').length,
-      maison: saleProps.filter(p => p.type === 'maison').length,
-      entrepot: saleProps.filter(p => p.type === 'entrepot').length,
-      immeuble: saleProps.filter(p => p.type === 'immeuble').length,
-      autres: saleProps.filter(p => !['terrain', 'maison', 'entrepot', 'immeuble'].includes(p.type)).length
-    };
-
-    return { valueByType, countByType };
-  };
   useEffect(() => {
     // Basic SEO for this page
     document.title = "Biens à vendre | Gestion des propriétés";
@@ -108,7 +86,7 @@ const PropertiesForSale = () => {
     }
   }, [selectedType]);
 
-  const saleMetrics = calculateSaleMetrics();
+  
   return <div className="space-y-6 p-6">
       <header className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
         <h1 className="text-3xl font-bold text-primary">{headerTitle}</h1>
@@ -133,13 +111,6 @@ const PropertiesForSale = () => {
         </div>
       </header>
 
-      {/* KPIs Biens à Vendre par Type */}
-      {!loading && (
-        <SalePropertiesKPIs 
-          valueByType={saleMetrics.valueByType}
-          countByType={saleMetrics.countByType}
-        />
-      )}
 
       <main>
         {selectedType === "terrain" ? showForm ? <TerrainForm onBack={() => setShowForm(false)} /> : <TerrainTable onCreate={() => setShowForm(true)} /> : selectedType === "maison" ? showMaisonForm ? <MaisonForm onBack={() => setShowMaisonForm(false)} /> : <MaisonTable onCreate={() => setShowMaisonForm(true)} /> : selectedType === "entrepot" ? showEntrepotForm ? <EntrepotForm onBack={() => setShowEntrepotForm(false)} /> : <EntrepotTable onCreate={() => setShowEntrepotForm(true)} /> : selectedType === "immeuble" ? showImmeubleForm ? <ImmeubleForm onBack={() => setShowImmeubleForm(false)} /> : <ImmeubleTable onCreate={() => setShowImmeubleForm(true)} /> : <Card>
