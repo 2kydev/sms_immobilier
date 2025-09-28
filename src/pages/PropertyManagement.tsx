@@ -15,7 +15,7 @@ import { useRole } from '@/hooks/useRole';
 import PropertyImageGallery from '@/components/PropertyImageGallery';
 import PropertyDetailsDialog from '@/components/property/PropertyDetailsDialog';
 import PropertyFormSimple from '@/components/property/PropertyFormSimple';
-import PriceKPIs from '@/components/PriceKPIs';
+import PropertyManagementKPIs from '@/components/PropertyManagementKPIs';
 interface Property {
   id: string;
   titre: string;
@@ -52,53 +52,48 @@ const PropertyManagement = () => {
   const { toast } = useToast();
   const { hasAnyRole } = useRole();
 
-  // Calculs des métriques de prix
-  const calculatePriceMetrics = () => {
+  // Calculs des métriques pour les KPIs
+  const calculateKPIMetrics = () => {
     if (properties.length === 0) {
       return {
-        totalValue: 0,
-        averagePrice: 0,
-        medianPrice: 0,
-        priceRange: { min: 0, max: 0 },
-        priceDistribution: { vente: 0, location: 0 }
+        totalProperties: 0,
+        availableProperties: 0,
+        availableMaisons: 0,
+        availableTerrains: 0,
+        availableEntrepots: 0,
+        valueByType: { maison: 0, terrain: 0, entrepot: 0, autres: 0 }
       };
     }
 
-    const prices = properties.map(p => p.prix).sort((a, b) => a - b);
-    const totalValue = prices.reduce((sum, price) => sum + price, 0);
-    const averagePrice = totalValue / properties.length;
-    
-    // Prix médian
-    const medianIndex = Math.floor(prices.length / 2);
-    const medianPrice = prices.length % 2 === 0 
-      ? (prices[medianIndex - 1] + prices[medianIndex]) / 2 
-      : prices[medianIndex];
+    const availableProps = properties.filter(p => p.statut === 'disponible');
+    const availableMaisons = availableProps.filter(p => p.type === 'maison').length;
+    const availableTerrains = availableProps.filter(p => p.type === 'terrain').length;
+    const availableEntrepots = availableProps.filter(p => p.type === 'entrepot').length;
 
-    // Fourchette de prix
-    const priceRange = {
-      min: Math.min(...prices),
-      max: Math.max(...prices)
-    };
-
-    // Répartition par type de transaction
-    const venteProperties = properties.filter(p => p.transaction_type === 'vente');
-    const locationProperties = properties.filter(p => p.transaction_type === 'location');
-    
-    const priceDistribution = {
-      vente: venteProperties.reduce((sum, p) => sum + p.prix, 0),
-      location: locationProperties.reduce((sum, p) => sum + p.prix, 0)
-    };
+    // Calcul des valeurs par type (tous biens confondus)
+    const maisonValue = properties.filter(p => p.type === 'maison').reduce((sum, p) => sum + p.prix, 0);
+    const terrainValue = properties.filter(p => p.type === 'terrain').reduce((sum, p) => sum + p.prix, 0);
+    const entrepotValue = properties.filter(p => p.type === 'entrepot').reduce((sum, p) => sum + p.prix, 0);
+    const autresValue = properties
+      .filter(p => !['maison', 'terrain', 'entrepot'].includes(p.type))
+      .reduce((sum, p) => sum + p.prix, 0);
 
     return {
-      totalValue,
-      averagePrice,
-      medianPrice,
-      priceRange,
-      priceDistribution
+      totalProperties: properties.length,
+      availableProperties: availableProps.length,
+      availableMaisons,
+      availableTerrains,
+      availableEntrepots,
+      valueByType: {
+        maison: maisonValue,
+        terrain: terrainValue,
+        entrepot: entrepotValue,
+        autres: autresValue
+      }
     };
   };
 
-  const priceMetrics = calculatePriceMetrics();
+  const kpiMetrics = calculateKPIMetrics();
   const fetchProperties = async () => {
     try {
       const {
@@ -282,13 +277,14 @@ const PropertyManagement = () => {
         </Button>
       </div>
 
-      {/* KPI Prix */}
-      <PriceKPIs 
-        totalValue={priceMetrics.totalValue}
-        averagePrice={priceMetrics.averagePrice}
-        medianPrice={priceMetrics.medianPrice}
-        priceRange={priceMetrics.priceRange}
-        priceDistribution={priceMetrics.priceDistribution}
+      {/* KPIs Gestion de Biens */}
+      <PropertyManagementKPIs 
+        totalProperties={kpiMetrics.totalProperties}
+        availableProperties={kpiMetrics.availableProperties}
+        availableMaisons={kpiMetrics.availableMaisons}
+        availableTerrains={kpiMetrics.availableTerrains}
+        availableEntrepots={kpiMetrics.availableEntrepots}
+        valueByType={kpiMetrics.valueByType}
       />
 
       {/* Filtres et recherche */}

@@ -2,7 +2,7 @@ import React, { useEffect, useMemo, useState } from "react";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { Button } from "@/components/ui/button";
 import { supabase } from '@/integrations/supabase/client';
-import PriceKPIs from '@/components/PriceKPIs';
+import SalePropertiesKPIs from '@/components/SalePropertiesKPIs';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import PropertyListView from "@/components/property/PropertyListView";
 import TerrainTable from "@/components/property/terrain/TerrainTable";
@@ -55,49 +55,27 @@ const PropertiesForSale = () => {
     }
   };
 
-  // Calculate price metrics for current type filter
-  const calculatePriceMetrics = () => {
-    const filteredProps = properties.filter(p => p.type === selectedType);
+  // Calculate metrics for sale properties by type
+  const calculateSaleMetrics = () => {
+    const saleProps = properties.filter(p => p.statut !== 'archivé');
     
-    if (filteredProps.length === 0) {
-      return {
-        totalValue: 0,
-        averagePrice: 0,
-        medianPrice: 0,
-        priceRange: { min: 0, max: 0 },
-        priceDistribution: { vente: 0, location: 0 }
-      };
-    }
-
-    const prices = filteredProps.map(p => p.prix).sort((a, b) => a - b);
-    const totalValue = prices.reduce((sum, price) => sum + price, 0);
-    const averagePrice = totalValue / filteredProps.length;
-    
-    // Prix médian
-    const medianIndex = Math.floor(prices.length / 2);
-    const medianPrice = prices.length % 2 === 0 
-      ? (prices[medianIndex - 1] + prices[medianIndex]) / 2 
-      : prices[medianIndex];
-
-    // Fourchette de prix
-    const priceRange = {
-      min: Math.min(...prices),
-      max: Math.max(...prices)
+    const valueByType = {
+      terrain: saleProps.filter(p => p.type === 'terrain').reduce((sum, p) => sum + p.prix, 0),
+      maison: saleProps.filter(p => p.type === 'maison').reduce((sum, p) => sum + p.prix, 0),
+      entrepot: saleProps.filter(p => p.type === 'entrepot').reduce((sum, p) => sum + p.prix, 0),
+      immeuble: saleProps.filter(p => p.type === 'immeuble').reduce((sum, p) => sum + p.prix, 0),
+      autres: saleProps.filter(p => !['terrain', 'maison', 'entrepot', 'immeuble'].includes(p.type)).reduce((sum, p) => sum + p.prix, 0)
     };
 
-    // Pour biens à vendre, tout est en vente
-    const priceDistribution = {
-      vente: totalValue,
-      location: 0
+    const countByType = {
+      terrain: saleProps.filter(p => p.type === 'terrain').length,
+      maison: saleProps.filter(p => p.type === 'maison').length,
+      entrepot: saleProps.filter(p => p.type === 'entrepot').length,
+      immeuble: saleProps.filter(p => p.type === 'immeuble').length,
+      autres: saleProps.filter(p => !['terrain', 'maison', 'entrepot', 'immeuble'].includes(p.type)).length
     };
 
-    return {
-      totalValue,
-      averagePrice,
-      medianPrice,
-      priceRange,
-      priceDistribution
-    };
+    return { valueByType, countByType };
   };
   useEffect(() => {
     // Basic SEO for this page
@@ -130,7 +108,7 @@ const PropertiesForSale = () => {
     }
   }, [selectedType]);
 
-  const priceMetrics = calculatePriceMetrics();
+  const saleMetrics = calculateSaleMetrics();
   return <div className="space-y-6 p-6">
       <header className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
         <h1 className="text-3xl font-bold text-primary">{headerTitle}</h1>
@@ -155,13 +133,11 @@ const PropertiesForSale = () => {
         </div>
       </header>
 
-      {/* KPI Prix pour le type sélectionné */}
+      {/* KPIs Biens à Vendre par Type */}
       {!loading && (
-        <PriceKPIs 
-          totalValue={priceMetrics.totalValue}
-          averagePrice={priceMetrics.averagePrice}
-          medianPrice={priceMetrics.medianPrice}
-          priceRange={priceMetrics.priceRange}
+        <SalePropertiesKPIs 
+          valueByType={saleMetrics.valueByType}
+          countByType={saleMetrics.countByType}
         />
       )}
 
