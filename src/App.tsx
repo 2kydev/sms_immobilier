@@ -14,7 +14,6 @@ import PropertiesForSale from "./pages/PropertiesForSale";
 import PropertyManagement from "./pages/PropertyManagement";
 import ResetPassword from "./pages/ResetPassword";
 import EmailConfirmation from "./pages/EmailConfirmation";
-import Profile from "./pages/Profile";
 
 const queryClient = new QueryClient();
 
@@ -40,7 +39,6 @@ const App = () => (
             <Route index element={<Index />} />
             <Route path="properties-for-sale" element={<PropertiesForSale />} />
             <Route path="property-management" element={<PropertyManagement />} />
-            <Route path="profile" element={<Profile />} />
           </Route>
           <Route path="*" element={<NotFound />} />
         </Routes>

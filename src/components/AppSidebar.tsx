@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { Calendar, Home, Users, Building2, UserPlus, Settings, BarChart3, ShoppingCart, User } from "lucide-react";
+import { Calendar, Home, Users, Building2, UserPlus, Settings, BarChart3, ShoppingCart } from "lucide-react";
 import { useRole } from "@/hooks/useRole";
 import {
   Sidebar,
@@ -48,11 +48,6 @@ const items = [
     title: "Utilisateurs",
     url: "/?tab=users",
     icon: Settings,
-  },
-  {
-    title: "Mon Profil",
-    url: "/profile",
-    icon: User,
   },
 ];
 
