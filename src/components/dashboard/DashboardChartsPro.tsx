@@ -59,6 +59,96 @@ const DashboardChartsPro = ({
     }
     return null;
   };
-  return;
+  return (
+    <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+      {/* Évolution des ventes par mois */}
+      <Card className="col-span-full lg:col-span-2">
+        <CardHeader>
+          <CardTitle>Évolution des ventes par mois</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <ResponsiveContainer width="100%" height={300}>
+            <LineChart data={monthlyData}>
+              <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+              <XAxis 
+                dataKey="month" 
+                stroke="hsl(var(--muted-foreground))"
+              />
+              <YAxis stroke="hsl(var(--muted-foreground))" />
+              <Tooltip content={<CustomTooltip />} />
+              <Legend />
+              <Line 
+                type="monotone" 
+                dataKey="sales" 
+                name="Biens vendus"
+                stroke="hsl(var(--primary))" 
+                strokeWidth={2}
+                dot={{ fill: 'hsl(var(--primary))', r: 4 }}
+                activeDot={{ r: 6 }}
+              />
+            </LineChart>
+          </ResponsiveContainer>
+        </CardContent>
+      </Card>
+
+      {/* Types de clients */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Types de clients</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <ResponsiveContainer width="100%" height={300}>
+            <PieChart>
+              <Pie
+                data={clientsByType}
+                dataKey="count"
+                nameKey="type"
+                cx="50%"
+                cy="50%"
+                outerRadius={80}
+                label={(entry) => `${entry.type}: ${entry.count}`}
+              >
+                {clientsByType.map((entry, index) => (
+                  <Cell key={`cell-${index}`} fill={clientColors[index % clientColors.length]} />
+                ))}
+              </Pie>
+              <Tooltip />
+            </PieChart>
+          </ResponsiveContainer>
+        </CardContent>
+      </Card>
+
+      {/* Revenue mensuel des ventes */}
+      <Card className="col-span-full lg:col-span-3">
+        <CardHeader>
+          <CardTitle>Revenue mensuel des ventes</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <ResponsiveContainer width="100%" height={300}>
+            <LineChart data={monthlyData}>
+              <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+              <XAxis 
+                dataKey="month" 
+                stroke="hsl(var(--muted-foreground))"
+              />
+              <YAxis stroke="hsl(var(--muted-foreground))" />
+              <Tooltip content={<CustomTooltip />} />
+              <Legend />
+              <Line 
+                type="monotone" 
+                dataKey="revenue" 
+                name="Revenue"
+                stroke="hsl(var(--chart-2))" 
+                strokeWidth={2}
+                dot={{ fill: 'hsl(var(--chart-2))', r: 4 }}
+                activeDot={{ r: 6 }}
+              />
+            </LineChart>
+          </ResponsiveContainer>
+        </CardContent>
+      </Card>
+    </div>
+  );
 };
+
 export default DashboardChartsPro;
