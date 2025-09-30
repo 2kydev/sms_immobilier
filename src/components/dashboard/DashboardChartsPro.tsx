@@ -59,6 +59,112 @@ const DashboardChartsPro = ({
     }
     return null;
   };
-  return;
+  return (
+    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      {/* Pipeline des transactions */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Pipeline des Transactions</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <ResponsiveContainer width="100%" height={300}>
+            <BarChart data={pipelineData}>
+              <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
+              <XAxis dataKey="name" className="text-xs" />
+              <YAxis className="text-xs" />
+              <Tooltip content={<CustomTooltip />} />
+              <Bar dataKey="count" radius={[8, 8, 0, 0]}>
+                {pipelineData.map((entry, index) => (
+                  <Cell key={`cell-${index}`} fill={entry.color} />
+                ))}
+              </Bar>
+            </BarChart>
+          </ResponsiveContainer>
+        </CardContent>
+      </Card>
+
+      {/* Évolution des ventes par mois */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Évolution des Ventes</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <ResponsiveContainer width="100%" height={300}>
+            <LineChart data={monthlyData}>
+              <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
+              <XAxis dataKey="month" className="text-xs" />
+              <YAxis className="text-xs" />
+              <Tooltip content={<CustomTooltip />} />
+              <Legend />
+              <Line 
+                type="monotone" 
+                dataKey="sales" 
+                stroke="#10b981" 
+                strokeWidth={2}
+                name="Ventes"
+                dot={{ fill: '#10b981', r: 4 }}
+                activeDot={{ r: 6 }}
+              />
+            </LineChart>
+          </ResponsiveContainer>
+        </CardContent>
+      </Card>
+
+      {/* Répartition des clients par type */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Types de Clients</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <ResponsiveContainer width="100%" height={300}>
+            <PieChart>
+              <Pie
+                data={clientsByType}
+                cx="50%"
+                cy="50%"
+                labelLine={false}
+                label={({ name, percentage }) => `${name}: ${percentage}%`}
+                outerRadius={100}
+                fill="#8884d8"
+                dataKey="count"
+              >
+                {clientsByType.map((entry, index) => (
+                  <Cell key={`cell-${index}`} fill={clientColors[index % clientColors.length]} />
+                ))}
+              </Pie>
+              <Tooltip content={<CustomTooltip />} />
+            </PieChart>
+          </ResponsiveContainer>
+        </CardContent>
+      </Card>
+
+      {/* Évolution du chiffre d'affaires */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Chiffre d'Affaires Mensuel</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <ResponsiveContainer width="100%" height={300}>
+            <LineChart data={monthlyData}>
+              <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
+              <XAxis dataKey="month" className="text-xs" />
+              <YAxis className="text-xs" />
+              <Tooltip content={<CustomTooltip />} />
+              <Legend />
+              <Line 
+                type="monotone" 
+                dataKey="revenue" 
+                stroke="#3b82f6" 
+                strokeWidth={2}
+                name="Revenu"
+                dot={{ fill: '#3b82f6', r: 4 }}
+                activeDot={{ r: 6 }}
+              />
+            </LineChart>
+          </ResponsiveContainer>
+        </CardContent>
+      </Card>
+    </div>
+  );
 };
 export default DashboardChartsPro;
