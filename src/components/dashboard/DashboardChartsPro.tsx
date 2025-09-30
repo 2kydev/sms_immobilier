@@ -59,23 +59,6 @@ const DashboardChartsPro = ({
     }
     return null;
   };
-  return <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-      {/* Pipeline des Transactions */}
-      
-
-      {/* Évolution Mensuelle */}
-      <Card className="lg:col-span-1">
-        
-        
-      </Card>
-
-      {/* Répartition des Clients */}
-      <Card className="lg:col-span-2">
-        
-        <CardContent>
-          
-        </CardContent>
-      </Card>
-    </div>;
+  return;
 };
 export default DashboardChartsPro;
