@@ -83,18 +83,7 @@ const Dashboard = () => {
       <DashboardChartsPro transactionPipeline={dashboardData.transactionPipeline} monthlyData={dashboardData.monthlyData} clientsByType={dashboardData.clientKPIs.clientsByType} />
 
       {/* Section Alertes et Activités */}
-      <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
-        {/* Alertes - 1/3 de l'espace */}
-        <div className="xl:col-span-1">
-          <DashboardAlerts alerts={dashboardData.alerts} />
-        </div>
-
-        {/* Visites et Activités - 2/3 de l'espace */}
-        <div className="xl:col-span-2 grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <UpcomingVisits upcomingVisits={[]} />
-          <RecentActivities recentActivities={[]} />
-        </div>
-      </div>
+      
     </div>;
 };
 export default Dashboard;
