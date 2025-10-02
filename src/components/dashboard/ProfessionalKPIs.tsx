@@ -68,6 +68,32 @@ const ProfessionalKPIs = ({
     color: "from-teal-500 to-teal-600",
     details: `${visitKPIs.completedVisits} visites réalisées`
   }];
-  return;
+
+  return (
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      {kpiCards.map((kpi, idx) => (
+        <Card key={idx} className="overflow-hidden">
+          <div className={`h-2 bg-gradient-to-r ${kpi.color}`} />
+          <CardContent className="p-4">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <kpi.icon className="h-5 w-5 text-primary" />
+                <span className="text-sm text-muted-foreground">{kpi.title}</span>
+              </div>
+              <Badge variant={kpi.trend.isPositive ? 'default' : 'destructive'}>
+                {kpi.trend.isPositive ? <TrendingUp className="h-3 w-3 mr-1" /> : <TrendingDown className="h-3 w-3 mr-1" />}
+                {kpi.trend.percentage.toFixed(1)}%
+              </Badge>
+            </div>
+            <div className="mt-3">
+              <div className="text-2xl font-bold text-primary">{kpi.value}</div>
+              <div className="text-sm text-muted-foreground">{kpi.subtitle}</div>
+              <div className="text-xs text-muted-foreground mt-2">{kpi.details}</div>
+            </div>
+          </CardContent>
+        </Card>
+      ))}
+    </div>
+  );
 };
 export default ProfessionalKPIs;

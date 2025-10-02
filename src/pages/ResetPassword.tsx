@@ -22,34 +22,63 @@ const ResetPassword = () => {
 
     const checkRecoveryTokens = async () => {
       try {
-        // Check for recovery tokens in URL hash
+        const currentUrl = new URL(window.location.href);
+        const searchParams = currentUrl.searchParams;
         const hashParams = new URLSearchParams(window.location.hash.substring(1));
-        const accessToken = hashParams.get('access_token');
-        const refreshToken = hashParams.get('refresh_token');
-        const type = hashParams.get('type');
 
-        console.log('URL hash params:', { accessToken: !!accessToken, refreshToken: !!refreshToken, type });
+        const hashAccessToken = hashParams.get('access_token');
+        const hashRefreshToken = hashParams.get('refresh_token');
+        const hashType = hashParams.get('type');
+        const code = searchParams.get('code');
+        const queryType = searchParams.get('type');
 
-        if (accessToken && refreshToken && type === 'recovery') {
-          // Set the session with the recovery tokens
+        console.log('Recovery URL params:', {
+          hashAccessToken: !!hashAccessToken,
+          hashRefreshToken: !!hashRefreshToken,
+          hashType,
+          code: !!code,
+          queryType
+        });
+
+        // Case 1: Tokens in hash fragment
+        if (hashAccessToken && hashRefreshToken && (hashType === 'recovery' || hashType === 'recovery_token')) {
           const { data: { session }, error } = await supabase.auth.setSession({
-            access_token: accessToken,
-            refresh_token: refreshToken
+            access_token: hashAccessToken,
+            refresh_token: hashRefreshToken
           });
-          
           if (error) {
-            console.error('Error setting recovery session:', error);
+            console.error('Error setting recovery session from hash:', error);
             setHasRecovery(false);
           } else {
-            console.log('Recovery session set successfully:', !!session);
+            console.log('Recovery session set from hash:', !!session);
             setHasRecovery(true);
+            // Clean hash from URL
+            history.replaceState(null, '', currentUrl.pathname + currentUrl.search);
           }
-        } else {
-          // Check if there's already a valid session
-          const { data: { session } } = await supabase.auth.getSession();
-          console.log('Existing session:', !!session);
-          setHasRecovery(!!session);
+          return;
         }
+
+        // Case 2: Code flow (Supabase v2)
+        if (code && (queryType === 'recovery' || !queryType)) {
+          const { data, error } = await supabase.auth.exchangeCodeForSession(code);
+          if (error) {
+            console.error('Error exchanging code for session:', error);
+            setHasRecovery(false);
+          } else {
+            console.log('Recovery session set from code:', !!data.session);
+            setHasRecovery(true);
+            // Clean query params
+            searchParams.delete('code');
+            searchParams.delete('type');
+            history.replaceState(null, '', currentUrl.pathname + (searchParams.toString() ? `?${searchParams.toString()}` : ''));
+          }
+          return;
+        }
+
+        // Fallback: is there an existing signed session?
+        const { data: { session } } = await supabase.auth.getSession();
+        console.log('Existing session on /reset-password:', !!session);
+        setHasRecovery(!!session);
       } catch (error) {
         console.error('Error processing recovery tokens:', error);
         setHasRecovery(false);
@@ -59,10 +88,9 @@ const ResetPassword = () => {
       }
     };
 
-    // Set up auth state listener
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
-      console.log('Auth state change:', event, !!session);
-      if (event === 'PASSWORD_RECOVERY' || event === 'TOKEN_REFRESHED') {
+      console.log('Auth state change on /reset-password:', event, !!session);
+      if (event === 'PASSWORD_RECOVERY' || event === 'TOKEN_REFRESHED' || event === 'SIGNED_IN') {
         setHasRecovery(true);
       }
     });
