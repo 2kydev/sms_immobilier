@@ -103,7 +103,7 @@ export function AppSidebar() {
 
   return (
     <Sidebar>
-      <SidebarHeader className="flex items-center justify-center py-4">
+      <SidebarHeader className="flex items-center justify-center py-4 px-0 w-full">
         <img 
           src="/lovable-uploads/2f182060-60bf-4ab5-a6b2-e6092170b088.png" 
           alt="SMS Immobilier" 
