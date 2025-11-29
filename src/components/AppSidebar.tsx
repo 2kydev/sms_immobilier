@@ -104,8 +104,12 @@ export function AppSidebar() {
     <Sidebar>
       <SidebarContent>
         <SidebarGroup>
-          <SidebarGroupLabel className="text-lg font-semibold text-primary mb-4">
-            SMS Immobilier
+          <SidebarGroupLabel className="mb-4 flex justify-center">
+            <img 
+              src="/lovable-uploads/2f182060-60bf-4ab5-a6b2-e6092170b088.png" 
+              alt="SMS Immobilier" 
+              className="h-12 w-auto object-contain"
+            />
           </SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
