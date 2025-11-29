@@ -1,12 +1,8 @@
 import React from 'react';
 import { useEnhancedDashboard } from '@/hooks/useEnhancedDashboard';
-import ProfessionalKPIs from './dashboard/ProfessionalKPIs';
-import DashboardChartsPro from './dashboard/DashboardChartsPro';
-import DashboardAlerts from './dashboard/DashboardAlerts';
-import UpcomingVisits from './dashboard/UpcomingVisits';
-import RecentActivities from './dashboard/RecentActivities';
-import PropertyManagementKPIs from '@/components/PropertyManagementKPIs';
-import SalePropertiesKPIs from '@/components/SalePropertiesKPIs';
+import SimplifiedKPIs from './dashboard/SimplifiedKPIs';
+import PropertyTypeBreakdown from './dashboard/PropertyTypeBreakdown';
+import SalesEvolutionChart from './dashboard/SalesEvolutionChart';
 const Dashboard = () => {
   const {
     dashboardData,
@@ -46,43 +42,30 @@ const Dashboard = () => {
         </div>
       </div>
 
-      {/* KPIs Gestion de Biens */}
-      <div className="space-y-6">
-        <div>
-          <h2 className="text-2xl font-semibold text-primary mb-4">Gestion des Biens</h2>
-          <PropertyManagementKPIs totalProperties={dashboardData.propertyKPIs.totalProperties} availableProperties={dashboardData.propertyKPIs.availableProperties} availableMaisons={dashboardData.propertyKPIs.availableMaisons || 0} availableTerrains={dashboardData.propertyKPIs.availableTerrains || 0} availableEntrepots={dashboardData.propertyKPIs.availableEntrepots || 0} valueByType={dashboardData.propertyKPIs.valueByType || {
-          maison: 0,
-          terrain: 0,
-          entrepot: 0,
-          autres: 0
-        }} />
-        </div>
-        
-        <div>
-          <h2 className="text-2xl font-semibold text-primary mb-4">Biens à Vendre</h2>
-          <SalePropertiesKPIs valueByType={dashboardData.propertyKPIs.saleValueByType || {
-          terrain: 0,
-          maison: 0,
-          entrepot: 0,
-          immeuble: 0,
-          autres: 0
-        }} countByType={dashboardData.propertyKPIs.saleCountByType || {
+      {/* KPIs Essentiels */}
+      <SimplifiedKPIs 
+        propertyKPIs={dashboardData.propertyKPIs}
+        clientKPIs={dashboardData.clientKPIs}
+        visitKPIs={dashboardData.visitKPIs}
+        salesKPIs={dashboardData.salesKPIs}
+      />
+
+      {/* Répartition par Type */}
+      <PropertyTypeBreakdown 
+        availableMaisons={dashboardData.propertyKPIs.availableMaisons || 0}
+        availableTerrains={dashboardData.propertyKPIs.availableTerrains || 0}
+        availableEntrepots={dashboardData.propertyKPIs.availableEntrepots || 0}
+        saleCountByType={dashboardData.propertyKPIs.saleCountByType || {
           terrain: 0,
           maison: 0,
           entrepot: 0,
           immeuble: 0,
           autres: 0
-        }} />
-        </div>
-      </div>
+        }}
+      />
 
-      {/* KPIs Professionnels */}
-      <ProfessionalKPIs propertyKPIs={dashboardData.propertyKPIs} salesKPIs={dashboardData.salesKPIs} clientKPIs={dashboardData.clientKPIs} visitKPIs={dashboardData.visitKPIs} />
-
-      {/* Graphiques et Analyses */}
-      <DashboardChartsPro transactionPipeline={dashboardData.transactionPipeline} monthlyData={dashboardData.monthlyData} clientsByType={dashboardData.clientKPIs.clientsByType} />
-
-      {/* Section Alertes et Activités */}
+      {/* Graphique Évolution Ventes */}
+      <SalesEvolutionChart monthlyData={dashboardData.monthlyData} />
       
     </div>;
 };
