@@ -12,6 +12,7 @@ import {
   SidebarGroup,
   SidebarGroupContent,
   SidebarGroupLabel,
+  SidebarHeader,
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
@@ -102,15 +103,16 @@ export function AppSidebar() {
 
   return (
     <Sidebar>
+      <SidebarHeader className="flex items-center justify-center py-4">
+        <img 
+          src="/lovable-uploads/2f182060-60bf-4ab5-a6b2-e6092170b088.png" 
+          alt="SMS Immobilier" 
+          className="h-12 w-auto object-contain"
+        />
+      </SidebarHeader>
+      
       <SidebarContent>
         <SidebarGroup>
-          <SidebarGroupLabel className="mb-4 flex justify-center">
-            <img 
-              src="/lovable-uploads/2f182060-60bf-4ab5-a6b2-e6092170b088.png" 
-              alt="SMS Immobilier" 
-              className="h-12 w-auto object-contain"
-            />
-          </SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
               {items.map((item) => {
