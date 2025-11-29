@@ -1,10 +1,14 @@
 
 import React from 'react';
-import { Calendar, Home, Users, Building2, UserPlus, Settings, BarChart3, ShoppingCart } from "lucide-react";
+import { Calendar, Home, Users, Building2, UserPlus, Settings, LogOut } from "lucide-react";
 import { useRole } from "@/hooks/useRole";
+import { useAuth } from "@/hooks/useAuth";
+import { Button } from "@/components/ui/button";
+import { useToast } from "@/components/ui/use-toast";
 import {
   Sidebar,
   SidebarContent,
+  SidebarFooter,
   SidebarGroup,
   SidebarGroupContent,
   SidebarGroupLabel,
@@ -53,7 +57,41 @@ const items = [
 
 export function AppSidebar() {
   const location = useLocation();
-  const { isAdmin, canAccessDashboard } = useRole();
+  const { isAdmin, canAccessDashboard, role } = useRole();
+  const { signOut, user } = useAuth();
+  const { toast } = useToast();
+
+  const handleSignOut = async () => {
+    try {
+      await signOut();
+      toast({
+        title: "Déconnexion réussie",
+        description: "À bientôt !"
+      });
+    } catch (error: any) {
+      toast({
+        title: "Erreur de déconnexion",
+        description: error.message,
+        variant: "destructive"
+      });
+    }
+  };
+
+  const getRoleLabel = (role: string | null) => {
+    if (!role) return '';
+    switch (role) {
+      case 'admin':
+        return 'Administrateur';
+      case 'dg':
+        return 'Directeur Général';
+      case 'commercial':
+        return 'Commercial';
+      case 'agent':
+        return 'Agent Immobilier';
+      default:
+        return role;
+    }
+  };
 
   const isActive = (url: string) => {
     if (url === "/") {
@@ -115,6 +153,34 @@ export function AppSidebar() {
           </SidebarGroupContent>
         </SidebarGroup>
       </SidebarContent>
+      
+      <SidebarFooter className="border-t">
+        <div className="flex items-center gap-3 p-3">
+          <div className="w-8 h-8 bg-primary rounded-full flex items-center justify-center">
+            <span className="text-primary-foreground font-medium text-sm">
+              {user?.email?.charAt(0).toUpperCase()}
+            </span>
+          </div>
+          <div className="flex-1 min-w-0">
+            <p className="text-sm font-medium truncate text-foreground">
+              {user?.email?.split('@')[0] || 'Admin'}
+            </p>
+            {role && (
+              <p className="text-xs text-muted-foreground">
+                {getRoleLabel(role)}
+              </p>
+            )}
+          </div>
+          <Button 
+            variant="ghost" 
+            size="icon" 
+            onClick={handleSignOut}
+            className="h-8 w-8"
+          >
+            <LogOut className="h-4 w-4" />
+          </Button>
+        </div>
+      </SidebarFooter>
     </Sidebar>
   );
 }
