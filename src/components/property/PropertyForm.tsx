@@ -10,6 +10,7 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '
 import { useForm } from 'react-hook-form';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import { logAction } from '@/services/auditService';
 import { ArrowLeft } from 'lucide-react';
 import ImageUpload from '@/components/ImageUpload';
 import FileUpload from '@/components/FileUpload';
@@ -180,16 +181,18 @@ const PropertyForm: React.FC<PropertyFormProps> = ({ onBack }) => {
 
       console.log('Supabase connection test successful');
 
-      const { error } = await supabase
+      const { data: inserted, error } = await supabase
         .from('properties')
-        .insert([propertyData]);
+        .insert([propertyData])
+        .select('id')
+        .single();
 
       if (error) {
         console.error('Supabase insert error:', error);
         throw error;
       }
 
-      console.log('Property inserted successfully');
+      if (inserted) logAction({ action: 'create', table: 'properties', recordId: inserted.id, label: propertyData.titre });
 
       toast({
         title: "Succès",

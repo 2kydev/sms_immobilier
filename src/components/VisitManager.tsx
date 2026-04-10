@@ -5,12 +5,17 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useForm } from 'react-hook-form';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import { logAction } from '@/services/auditService';
 import { Calendar, List } from 'lucide-react';
 import VisitCalendar from './VisitCalendar';
 import VisitCard from './visit/VisitCard';
 import VisitFilters from './visit/VisitFilters';
 import VisitForm from './visit/VisitForm';
 import VisitStats from './visit/VisitStats';
+import PaginationControls from '@/components/ui/PaginationControls';
+import { usePagination } from '@/hooks/usePagination';
+
+const PAGE_SIZE = 15;
 
 interface Visit {
   id: string;
@@ -27,11 +32,6 @@ interface Visit {
   agent: string;
   notes?: string;
   feedback_client?: string;
-  notification_enabled?: boolean;
-  notification_delay_hours?: number;
-  notification_email?: string;
-  agent_notification_email?: string;
-  client_notification_email?: string;
 }
 
 interface Client {
@@ -63,6 +63,7 @@ interface Agent {
 
 const VisitManager = () => {
   const [visits, setVisits] = useState<Visit[]>([]);
+  const [visitStats, setVisitStats] = useState({ total: 0, planifiee: 0, realisee: 0, annulee: 0, reportee: 0 });
   const [clients, setClients] = useState<Client[]>([]);
   const [properties, setProperties] = useState<Property[]>([]);
   const [agents, setAgents] = useState<Agent[]>([]);
@@ -73,6 +74,7 @@ const VisitManager = () => {
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('list');
   const { toast } = useToast();
+  const pagination = usePagination(PAGE_SIZE);
 
   const form = useForm<Visit>({
     defaultValues: {
@@ -86,23 +88,41 @@ const VisitManager = () => {
       statut: 'planifiee',
       agent: '',
       notes: '',
-      notification_enabled: false,
-      notification_delay_hours: 24,
-      notification_email: '',
-      agent_notification_email: '',
-      client_notification_email: ''
     }
   });
 
-  const fetchVisits = async () => {
+  const fetchStats = async () => {
+    const { data } = await supabase.from('visits').select('statut');
+    if (!data) return;
+    setVisitStats({
+      total: data.length,
+      planifiee: data.filter(v => v.statut === 'planifiee').length,
+      realisee: data.filter(v => v.statut === 'realisee').length,
+      annulee: data.filter(v => v.statut === 'annulee').length,
+      reportee: data.filter(v => v.statut === 'reportee').length,
+    });
+  };
+
+  const fetchVisits = async (forcePage = pagination.page) => {
+    setLoading(true);
+    const from = (forcePage - 1) * PAGE_SIZE;
+    const to = from + PAGE_SIZE - 1;
     try {
-      const { data, error } = await supabase
-        .from('visits')
-        .select('*')
+      let query = supabase.from('visits').select('*', { count: 'exact' });
+      if (searchTerm) {
+        query = query.or(
+          `client_nom.ilike.%${searchTerm}%,client_prenom.ilike.%${searchTerm}%,propriete_titre.ilike.%${searchTerm}%`
+        );
+      }
+      if (filterStatut !== 'tous') query = query.eq('statut', filterStatut);
+
+      const { data, error, count } = await query
         .order('date', { ascending: true })
-        .order('heure', { ascending: true });
+        .order('heure', { ascending: true })
+        .range(from, to);
 
       if (error) throw error;
+      pagination.setTotalCount(count ?? 0);
       setVisits((data || []).map(visit => ({
         ...visit,
         statut: visit.statut as 'planifiee' | 'realisee' | 'annulee' | 'reportee'
@@ -114,6 +134,8 @@ const VisitManager = () => {
         description: "Impossible de charger les visites",
         variant: "destructive"
       });
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -164,99 +186,28 @@ const VisitManager = () => {
   };
 
   useEffect(() => {
-    fetchVisits();
+    fetchStats();
     fetchClients();
     fetchProperties();
     fetchAgents();
   }, []);
 
-  const filteredVisits = visits.filter(visit => {
-    const matchesSearch = `${visit.client_prenom} ${visit.client_nom} ${visit.propriete_titre}`.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesStatut = filterStatut === 'tous' || visit.statut === filterStatut;
-    return matchesSearch && matchesStatut;
-  });
+  useEffect(() => {
+    fetchVisits();
+  }, [pagination.page]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  const scheduleVisitNotifications = async (visit: Visit) => {
-    try {
-      const emailsToSend = [];
-      
-      // Ajouter l'email de l'agent si sélectionné
-      if (visit.agent_notification_email && visit.agent_notification_email.trim() !== '') {
-        emailsToSend.push({
-          email: visit.agent_notification_email,
-          type: 'agent'
-        });
-      }
-      
-      // Ajouter l'email du client si sélectionné
-      if (visit.client_notification_email && visit.client_notification_email.trim() !== '') {
-        emailsToSend.push({
-          email: visit.client_notification_email,
-          type: 'client'
-        });
-      }
-
-      // Programmer les notifications pour chaque email
-      for (const emailConfig of emailsToSend) {
-        console.log(`Scheduling notification for ${emailConfig.type}:`, emailConfig.email);
-
-        const { data, error } = await supabase.functions.invoke('schedule-visit-notification', {
-          body: {
-            visitId: visit.id,
-            agentEmail: emailConfig.email,
-            visitDate: visit.date,
-            visitTime: visit.heure,
-            clientName: `${visit.client_prenom} ${visit.client_nom}`,
-            clientPhone: visit.client_telephone,
-            propertyTitle: visit.propriete_titre,
-            propertyAddress: visit.propriete_adresse,
-            notificationDelayHours: visit.notification_delay_hours || 24,
-            recipientType: emailConfig.type
-          }
-        });
-
-        if (error) throw error;
-
-        // Enregistrer le log de programmation
-        await supabase.from('email_logs').insert([{
-          visit_id: visit.id,
-          recipient_email: emailConfig.email,
-          email_type: 'visit_reminder',
-          status: 'scheduled',
-          sent_at: null
-        }]);
-      }
-
-      if (emailsToSend.length > 0) {
-        const visitDateTime = new Date(`${visit.date}T${visit.heure}`);
-        const notificationTime = new Date(visitDateTime.getTime() - ((visit.notification_delay_hours || 24) * 60 * 60 * 1000));
-        
-        const recipientsList = emailsToSend.map(e => e.email).join(', ');
-        
-        toast({
-          title: "Notifications programmées",
-          description: `Des emails de rappel seront envoyés à ${recipientsList} le ${notificationTime.toLocaleDateString('fr-FR')} à ${notificationTime.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}`
-        });
-      }
-    } catch (error) {
-      console.error('Error scheduling notifications:', error);
-      
-      toast({
-        title: "Erreur",
-        description: error instanceof Error ? error.message : "Les notifications n'ont pas pu être programmées",
-        variant: "destructive"
-      });
+  useEffect(() => {
+    if (pagination.page === 1) {
+      fetchVisits(1);
+    } else {
+      pagination.setPage(1);
     }
-  };
+  }, [searchTerm, filterStatut]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const openVisitDialog = (visit?: Visit) => {
     if (visit) {
       setSelectedVisit(visit);
-      form.reset({
-        ...visit,
-        agent_notification_email: visit.agent_notification_email || '',
-        client_notification_email: visit.client_notification_email || ''
-      });
+      form.reset({ ...visit });
     } else {
       setSelectedVisit(null);
       form.reset({
@@ -270,45 +221,25 @@ const VisitManager = () => {
         statut: 'planifiee',
         agent: '',
         notes: '',
-        notification_enabled: false,
-        notification_delay_hours: 24,
-        notification_email: '',
-        agent_notification_email: '',
-        client_notification_email: ''
       });
     }
     setIsDialogOpen(true);
   };
 
   const handleClientSelect = (clientId: string) => {
-    console.log('🔍 ETAPE 1: Sélection client - ID:', clientId);
     const selectedClient = clients.find(c => c.id === clientId);
-    console.log('🔍 ETAPE 2: Client trouvé:', selectedClient);
-    
     if (selectedClient) {
-      console.log('📝 ETAPE 3: Mise à jour des champs client...');
       form.setValue('client_nom', selectedClient.nom);
       form.setValue('client_prenom', selectedClient.prenom);
       form.setValue('client_telephone', selectedClient.telephone);
       form.setValue('client_id', clientId);
-      
-      if (selectedClient.email && selectedClient.email.trim() !== '') {
-        console.log('📧 ETAPE 4: Attribution email client:', selectedClient.email);
-        form.setValue('client_notification_email', selectedClient.email);
-      } else {
-        console.log('⚠️ ETAPE 4: Pas d\'email valide pour le client');
-        form.setValue('client_notification_email', '');
-      }
     }
   };
 
   const handlePropertySelect = (propertyId: string) => {
-    console.log('🔍 ETAPE 1: Sélection propriété - ID:', propertyId);
     const selectedProperty = properties.find(p => p.id === propertyId);
-    console.log('🔍 ETAPE 2: Propriété trouvée:', selectedProperty);
     
     if (selectedProperty) {
-      console.log('📝 ETAPE 3: Mise à jour des champs propriété...');
       form.setValue('propriete_titre', selectedProperty.titre);
       form.setValue('propriete_adresse', `${selectedProperty.city} - ${selectedProperty.quartier}`);
       form.setValue('property_id', propertyId);
@@ -316,31 +247,16 @@ const VisitManager = () => {
   };
 
   const handleAgentSelect = (agentName: string) => {
-    console.log('🔍 ETAPE 1: Sélection agent - Nom:', agentName);
     const selectedAgent = agents.find(a => a.nom === agentName);
-    console.log('🔍 ETAPE 2: Agent trouvé:', selectedAgent);
-    
     if (selectedAgent) {
-      console.log('📝 ETAPE 3: Mise à jour des champs agent...');
       form.setValue('agent', agentName);
-      form.setValue('notification_email', selectedAgent.email);
-      
-      if (selectedAgent.email && selectedAgent.email.trim() !== '') {
-        console.log('📧 ETAPE 4: Attribution email agent:', selectedAgent.email);
-        form.setValue('agent_notification_email', selectedAgent.email);
-      } else {
-        console.log('⚠️ ETAPE 4: Pas d\'email valide pour l\'agent');
-        form.setValue('agent_notification_email', '');
-      }
     }
   };
 
   const onSubmit = async (data: Visit) => {
-    console.log('🚀 DEBUT SAUVEGARDE - Données reçues:', JSON.stringify(data, null, 2));
     
     try {
       // ETAPE 1: Validation de base
-      console.log('📋 ETAPE 1: Validation de base');
       if (!data.client_nom?.trim()) {
         throw new Error('Le nom du client est obligatoire');
       }
@@ -359,21 +275,7 @@ const VisitManager = () => {
       if (!data.agent?.trim()) {
         throw new Error('L\'agent est obligatoire');
       }
-      console.log('✅ ETAPE 1: Validation de base OK');
 
-      // ETAPE 2: Validation notifications
-      console.log('📧 ETAPE 2: Validation notifications');
-      if (data.notification_enabled) {
-        console.log('Notifications activées, vérification emails...');
-        if (!data.agent_notification_email?.trim() && !data.client_notification_email?.trim()) {
-          throw new Error('Au moins un email de notification est requis si les notifications sont activées');
-        }
-        console.log('✅ Au moins un email de notification présent');
-      }
-      console.log('✅ ETAPE 2: Validation notifications OK');
-
-      // ETAPE 3: Préparation des données
-      console.log('🧹 ETAPE 3: Préparation des données');
       const visitData = {
         client_nom: data.client_nom.trim(),
         client_prenom: data.client_prenom.trim(),
@@ -388,76 +290,36 @@ const VisitManager = () => {
         feedback_client: data.feedback_client?.trim() || null,
         client_id: data.client_id || null,
         property_id: data.property_id || null,
-        notification_enabled: Boolean(data.notification_enabled),
-        notification_delay_hours: Number(data.notification_delay_hours) || 24,
-        agent_notification_email: data.agent_notification_email?.trim() || null,
-        client_notification_email: data.client_notification_email?.trim() || null,
-        notification_email: data.notification_email?.trim() || null
       };
-      console.log('📦 ETAPE 3: Données préparées:', JSON.stringify(visitData, null, 2));
 
-      // ETAPE 4: Test de connexion Supabase
-      console.log('🔗 ETAPE 4: Test connexion Supabase');
-      const { error: connectionError } = await supabase.from('visits').select('count').limit(1);
-      if (connectionError) {
-        console.error('❌ Erreur connexion:', connectionError);
-        throw new Error(`Problème de connexion: ${connectionError.message}`);
-      }
-      console.log('✅ ETAPE 4: Connexion Supabase OK');
-
-      // ETAPE 5: Sauvegarde
       if (selectedVisit?.id) {
-        console.log('🔄 ETAPE 5: MISE À JOUR visite ID:', selectedVisit.id);
-        const { data: result, error } = await supabase
+        const { error } = await supabase
           .from('visits')
           .update(visitData)
-          .eq('id', selectedVisit.id)
-          .select()
-          .single();
-
-        if (error) {
-          console.error('❌ Erreur mise à jour:', error);
-          console.error('❌ Code:', error.code);
-          console.error('❌ Message:', error.message);
-          console.error('❌ Détails:', error.details);
-          throw new Error(`Erreur mise à jour: ${error.message}`);
-        }
-
-        console.log('✅ ETAPE 5: Mise à jour réussie:', result);
+          .eq('id', selectedVisit.id);
+        if (error) throw error;
+        logAction({ action: 'update', table: 'visits', recordId: selectedVisit.id, label: `${visitData.client_prenom} ${visitData.client_nom} — ${visitData.propriete_titre}` });
       } else {
-        console.log('🆕 ETAPE 5: CRÉATION nouvelle visite');
-        const { data: result, error } = await supabase
+        const { data: inserted, error } = await supabase
           .from('visits')
           .insert([visitData])
-          .select()
+          .select('id')
           .single();
-
-        if (error) {
-          console.error('❌ Erreur création:', error);
-          console.error('❌ Code:', error.code);
-          console.error('❌ Message:', error.message);
-          console.error('❌ Détails:', error.details);
-          throw new Error(`Erreur création: ${error.message}`);
-        }
-
-        console.log('✅ ETAPE 5: Création réussie:', result);
+        if (error) throw error;
+        if (inserted) logAction({ action: 'create', table: 'visits', recordId: inserted.id, label: `${visitData.client_prenom} ${visitData.client_nom} — ${visitData.propriete_titre}` });
       }
 
-      console.log('🎉 SAUVEGARDE TERMINÉE AVEC SUCCÈS');
       toast({
         title: "Succès",
         description: selectedVisit ? "Visite mise à jour avec succès" : "Visite créée avec succès"
       });
       
       setIsDialogOpen(false);
+      fetchStats();
       await fetchVisits();
 
     } catch (error) {
-      console.error('💥 ERREUR CRITIQUE:', error);
-      console.error('💥 Type:', typeof error);
-      console.error('💥 Message:', error instanceof Error ? error.message : 'Erreur inconnue');
-      console.error('💥 Stack:', error instanceof Error ? error.stack : 'Pas de stack');
-      
+      console.error('Error saving visit:', error);
       toast({
         title: "Erreur",
         description: error instanceof Error ? error.message : "Impossible de sauvegarder la visite",
@@ -466,7 +328,7 @@ const VisitManager = () => {
     }
   };
 
-  if (loading) {
+  if (loading && visits.length === 0) {
     return <div className="p-6">Chargement des visites...</div>;
   }
 
@@ -479,7 +341,7 @@ const VisitManager = () => {
         </Button>
       </div>
 
-      <VisitStats visits={visits} />
+      <VisitStats stats={visitStats} />
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
         <TabsList className="grid w-full grid-cols-2">
@@ -502,14 +364,27 @@ const VisitManager = () => {
           />
 
           <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
-            {filteredVisits.map((visit) => (
+            {visits.map((visit) => (
               <VisitCard
                 key={visit.id}
                 visit={visit}
                 onEdit={openVisitDialog}
               />
             ))}
+            {visits.length === 0 && !loading && (
+              <p className="col-span-3 text-center py-8 text-muted-foreground">
+                Aucune visite trouvée avec ces critères
+              </p>
+            )}
           </div>
+
+          <PaginationControls
+            page={pagination.page}
+            totalPages={pagination.totalPages}
+            totalCount={pagination.totalCount}
+            pageSize={PAGE_SIZE}
+            onPageChange={pagination.setPage}
+          />
         </TabsContent>
 
         <TabsContent value="calendar">

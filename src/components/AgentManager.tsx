@@ -10,7 +10,13 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '
 import { useForm } from 'react-hook-form';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
-import { Users, Mail, Phone, Edit2, Plus } from 'lucide-react';
+import { logAction } from '@/services/auditService';
+import { Users, Mail, Phone, Edit2, Plus, Trash2 } from 'lucide-react';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
+import PaginationControls from '@/components/ui/PaginationControls';
+import { usePagination } from '@/hooks/usePagination';
+
+const PAGE_SIZE = 12;
 
 interface Agent {
   id: string;
@@ -24,10 +30,14 @@ interface Agent {
 
 const AgentManager = () => {
   const [agents, setAgents] = useState<Agent[]>([]);
+  const [totalAgents, setTotalAgents] = useState(0);
+  const [activeCount, setActiveCount] = useState(0);
   const [selectedAgent, setSelectedAgent] = useState<Agent | null>(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [agentToDelete, setAgentToDelete] = useState<Agent | null>(null);
   const [loading, setLoading] = useState(true);
   const { toast } = useToast();
+  const pagination = usePagination(PAGE_SIZE);
 
   const form = useForm<Agent>({
     defaultValues: {
@@ -38,22 +48,27 @@ const AgentManager = () => {
     }
   });
 
-  const fetchAgents = async () => {
+  const fetchStats = async () => {
+    const { data } = await supabase.from('agents').select('statut');
+    if (!data) return;
+    setTotalAgents(data.length);
+    setActiveCount(data.filter(a => a.statut === 'actif').length);
+  };
+
+  const fetchAgents = async (forcePage = pagination.page) => {
+    setLoading(true);
+    const from = (forcePage - 1) * PAGE_SIZE;
+    const to = from + PAGE_SIZE - 1;
     try {
-      const { data, error } = await supabase
+      const { data, error, count } = await supabase
         .from('agents')
-        .select('*')
-        .order('nom', { ascending: true });
+        .select('*', { count: 'exact' })
+        .order('nom', { ascending: true })
+        .range(from, to);
 
       if (error) throw error;
-      
-      // Transformer les données pour s'assurer que le statut est du bon type
-      const transformedData = (data || []).map(agent => ({
-        ...agent,
-        statut: agent.statut as 'actif' | 'inactif'
-      }));
-      
-      setAgents(transformedData);
+      pagination.setTotalCount(count ?? 0);
+      setAgents((data || []).map(agent => ({ ...agent, statut: agent.statut as 'actif' | 'inactif' })));
     } catch (error) {
       console.error('Error fetching agents:', error);
       toast({
@@ -67,8 +82,12 @@ const AgentManager = () => {
   };
 
   useEffect(() => {
-    fetchAgents();
+    fetchStats();
   }, []);
+
+  useEffect(() => {
+    fetchAgents();
+  }, [pagination.page]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const openAgentDialog = (agent?: Agent) => {
     if (agent) {
@@ -95,16 +114,20 @@ const AgentManager = () => {
           .eq('id', selectedAgent.id);
 
         if (error) throw error;
+        logAction({ action: 'update', table: 'agents', recordId: selectedAgent.id, label: data.nom });
         toast({
           title: "Succès",
           description: "Agent mis à jour avec succès"
         });
       } else {
-        const { error } = await supabase
+        const { data: inserted, error } = await supabase
           .from('agents')
-          .insert([data]);
+          .insert([data])
+          .select('id')
+          .single();
 
         if (error) throw error;
+        if (inserted) logAction({ action: 'create', table: 'agents', recordId: inserted.id, label: data.nom });
         toast({
           title: "Succès",
           description: "Agent créé avec succès"
@@ -112,6 +135,7 @@ const AgentManager = () => {
       }
 
       setIsDialogOpen(false);
+      fetchStats();
       fetchAgents();
     } catch (error) {
       console.error('Error saving agent:', error);
@@ -121,6 +145,21 @@ const AgentManager = () => {
         variant: "destructive"
       });
     }
+  };
+
+  const handleDeleteAgent = async (agent: Agent) => {
+    try {
+      const { error } = await supabase.from('agents').delete().eq('id', agent.id);
+      if (error) throw error;
+      logAction({ action: 'delete', table: 'agents', recordId: agent.id, label: agent.nom });
+      toast({ title: "Succès", description: "Agent supprimé avec succès" });
+      fetchStats();
+      fetchAgents();
+    } catch (error) {
+      console.error('Error deleting agent:', error);
+      toast({ title: "Erreur", description: "Impossible de supprimer l'agent", variant: "destructive" });
+    }
+    setAgentToDelete(null);
   };
 
   const getStatusColor = (statut: string) => {
@@ -145,23 +184,19 @@ const AgentManager = () => {
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <Card>
           <CardContent className="pt-6">
-            <div className="text-2xl font-bold text-primary">{agents.length}</div>
+            <div className="text-2xl font-bold text-primary">{totalAgents}</div>
             <p className="text-sm text-gray-600">Total Agents</p>
           </CardContent>
         </Card>
         <Card>
           <CardContent className="pt-6">
-            <div className="text-2xl font-bold text-green-600">
-              {agents.filter(a => a.statut === 'actif').length}
-            </div>
+            <div className="text-2xl font-bold text-green-600">{activeCount}</div>
             <p className="text-sm text-gray-600">Agents Actifs</p>
           </CardContent>
         </Card>
         <Card>
           <CardContent className="pt-6">
-            <div className="text-2xl font-bold text-red-600">
-              {agents.filter(a => a.statut === 'inactif').length}
-            </div>
+            <div className="text-2xl font-bold text-red-600">{totalAgents - activeCount}</div>
             <p className="text-sm text-gray-600">Agents Inactifs</p>
           </CardContent>
         </Card>
@@ -193,21 +228,58 @@ const AgentManager = () => {
                   {agent.telephone}
                 </p>
               </div>
-              <div className="mt-4 pt-4 border-t">
-                <Button 
-                  variant="outline" 
-                  size="sm" 
+              <div className="mt-4 pt-4 border-t flex gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
                   onClick={() => openAgentDialog(agent)}
-                  className="w-full"
+                  className="flex-1"
                 >
                   <Edit2 className="h-4 w-4 mr-2" />
                   Modifier
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setAgentToDelete(agent)}
+                  className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                >
+                  <Trash2 className="h-4 w-4" />
                 </Button>
               </div>
             </CardContent>
           </Card>
         ))}
       </div>
+
+      <PaginationControls
+        page={pagination.page}
+        totalPages={pagination.totalPages}
+        totalCount={pagination.totalCount}
+        pageSize={PAGE_SIZE}
+        onPageChange={pagination.setPage}
+      />
+
+      {/* Dialog de confirmation de suppression */}
+      <AlertDialog open={!!agentToDelete} onOpenChange={() => setAgentToDelete(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Supprimer cet agent ?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Cette action est irréversible. L'agent <strong>{agentToDelete?.nom}</strong> sera définitivement supprimé.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Annuler</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => agentToDelete && handleDeleteAgent(agentToDelete)}
+              className="bg-red-600 hover:bg-red-700"
+            >
+              Supprimer
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       {/* Dialog pour créer/éditer un agent */}
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>

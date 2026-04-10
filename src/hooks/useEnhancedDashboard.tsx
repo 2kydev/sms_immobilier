@@ -46,7 +46,9 @@ export const useEnhancedDashboard = () => {
       totalValue: 0
     },
     alerts: [],
-    monthlyData: []
+    monthlyData: [],
+    agentPerformance: [],
+    topVisitedProperties: [],
   });
   
   const [loading, setLoading] = useState(true);

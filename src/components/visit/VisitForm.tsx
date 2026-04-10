@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
@@ -7,9 +6,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Textarea } from '@/components/ui/textarea';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { UseFormReturn } from 'react-hook-form';
-import VisitNotificationSection from './VisitNotificationSection';
 
-interface Visit {
+export interface Visit {
   id: string;
   client_id?: string;
   property_id?: string;
@@ -24,11 +22,6 @@ interface Visit {
   agent: string;
   notes?: string;
   feedback_client?: string;
-  notification_enabled?: boolean;
-  notification_delay_hours?: number;
-  notification_email?: string;
-  agent_notification_email?: string;
-  client_notification_email?: string;
 }
 
 interface Client {
@@ -100,7 +93,7 @@ const VisitForm: React.FC<VisitFormProps> = ({
             Programmez une visite avec un client
           </DialogDescription>
         </DialogHeader>
-        
+
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {/* Sélection du client */}
@@ -230,14 +223,6 @@ const VisitForm: React.FC<VisitFormProps> = ({
                   <FormMessage />
                 </FormItem>
               )}
-            />
-
-            {/* Section Notifications Email */}
-            <VisitNotificationSection
-              control={form.control}
-              agents={agents}
-              clients={clients}
-              notificationEnabled={form.watch('notification_enabled')}
             />
 
             <FormField

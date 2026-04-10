@@ -2,15 +2,20 @@
 import React from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Home } from 'lucide-react';
 import { Client } from './types';
 import { getTypeColor } from './utils';
 
 interface ClientCardProps {
   client: Client;
   onClick: () => void;
+  onMatchClick?: (e: React.MouseEvent) => void;
 }
 
-const ClientCard: React.FC<ClientCardProps> = ({ client, onClick }) => {
+const MATCH_TYPES = ['acheteur', 'prospect', 'locataire'];
+
+const ClientCard: React.FC<ClientCardProps> = ({ client, onClick, onMatchClick }) => {
   return (
     <Card className="card-hover cursor-pointer" onClick={onClick}>
       <CardHeader>
@@ -18,9 +23,22 @@ const ClientCard: React.FC<ClientCardProps> = ({ client, onClick }) => {
           <CardTitle className="text-lg">
             {client.civilite} {client.prenom} {client.nom}
           </CardTitle>
-          <Badge className={getTypeColor(client.type)}>
-            {client.type}
-          </Badge>
+          <div className="flex items-center gap-2">
+            {MATCH_TYPES.includes(client.type) && onMatchClick && (
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-7 w-7"
+                title="Biens correspondants"
+                onClick={onMatchClick}
+              >
+                <Home className="h-4 w-4 text-muted-foreground" />
+              </Button>
+            )}
+            <Badge className={getTypeColor(client.type)}>
+              {client.type}
+            </Badge>
+          </div>
         </div>
         <CardDescription>{client.email}</CardDescription>
       </CardHeader>

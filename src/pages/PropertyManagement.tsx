@@ -8,13 +8,17 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
-import { Plus, Search, Filter, MoreVertical, Eye, Edit, Trash2, MapPin, Building, Calendar, User, Phone, Mail, TrendingUp, Archive } from 'lucide-react';
+import { Plus, Search, Filter, MoreVertical, Eye, Edit, Trash2, MapPin, Building, Calendar, User, Phone, Mail, TrendingUp, Archive, FileDown } from 'lucide-react';
+import { printPropertySheet } from '@/components/property/PropertyPrintSheet';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import { logAction } from '@/services/auditService';
 import { useRole } from '@/hooks/useRole';
 import PropertyImageGallery from '@/components/PropertyImageGallery';
 import PropertyDetailsDialog from '@/components/property/PropertyDetailsDialog';
 import PropertyFormSimple from '@/components/property/PropertyFormSimple';
+import PaginationControls from '@/components/ui/PaginationControls';
+import { usePagination } from '@/hooks/usePagination';
 interface Property {
   id: string;
   titre: string;
@@ -36,9 +40,10 @@ interface Property {
   transaction_type: 'vente' | 'location';
   autres_details?: string | null;
 }
+const PAGE_SIZE = 20;
+
 const PropertyManagement = () => {
   const [properties, setProperties] = useState<Property[]>([]);
-  const [filteredProperties, setFilteredProperties] = useState<Property[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [filterType, setFilterType] = useState<string>('tous');
@@ -47,26 +52,37 @@ const PropertyManagement = () => {
   const [showAddForm, setShowAddForm] = useState(false);
   const [selectedPropertyId, setSelectedPropertyId] = useState<string | null>(null);
   const [showDetailsDialog, setShowDetailsDialog] = useState(false);
+  const [detailsInitialEditing, setDetailsInitialEditing] = useState(false);
   const [propertyToDelete, setPropertyToDelete] = useState<string | null>(null);
   const { toast } = useToast();
   const { hasAnyRole } = useRole();
+  const pagination = usePagination(PAGE_SIZE);
 
-  const fetchProperties = async () => {
+  const fetchProperties = async (forcePage = pagination.page) => {
+    setLoading(true);
+    const from = (forcePage - 1) * PAGE_SIZE;
+    const to = from + PAGE_SIZE - 1;
     try {
-      const {
-        data,
-        error
-      } = await supabase.from('properties').select('*').order('created_at', {
-        ascending: false
-      });
-      if (error) throw error;
+      let query = supabase.from('properties').select('*', { count: 'exact' });
+      if (searchTerm) {
+        query = query.or(
+          `titre.ilike.%${searchTerm}%,adresse.ilike.%${searchTerm}%,city.ilike.%${searchTerm}%,quartier.ilike.%${searchTerm}%,nom_proprietaire.ilike.%${searchTerm}%,agent.ilike.%${searchTerm}%`
+        );
+      }
+      if (filterType !== 'tous') query = query.eq('type', filterType);
+      if (filterStatus !== 'tous') query = query.eq('statut', filterStatus);
+      if (filterTransaction !== 'tous') query = query.eq('transaction_type', filterTransaction);
 
-      // Transformer les données pour correspondre au type Property
-      const transformedData = (data || []).map(item => ({
+      const { data, error, count } = await query
+        .order('created_at', { ascending: false })
+        .range(from, to);
+
+      if (error) throw error;
+      pagination.setTotalCount(count ?? 0);
+      setProperties((data || []).map(item => ({
         ...item,
         transaction_type: item.transaction_type as 'vente' | 'location'
-      }));
-      setProperties(transformedData);
+      })));
     } catch (error) {
       console.error('Error fetching properties:', error);
       toast({
@@ -78,27 +94,20 @@ const PropertyManagement = () => {
       setLoading(false);
     }
   };
+
+  // Re-fetch when page changes
   useEffect(() => {
     fetchProperties();
-  }, []);
+  }, [pagination.page]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // Filtrage des propriétés
+  // When filters change: reset to page 1 (triggers page effect above) or fetch directly if already on page 1
   useEffect(() => {
-    let filtered = properties;
-    if (searchTerm) {
-      filtered = filtered.filter(property => property.titre.toLowerCase().includes(searchTerm.toLowerCase()) || property.adresse.toLowerCase().includes(searchTerm.toLowerCase()) || property.city.toLowerCase().includes(searchTerm.toLowerCase()) || property.quartier.toLowerCase().includes(searchTerm.toLowerCase()) || property.nom_proprietaire?.toLowerCase().includes(searchTerm.toLowerCase()) || property.agent.toLowerCase().includes(searchTerm.toLowerCase()));
+    if (pagination.page === 1) {
+      fetchProperties(1);
+    } else {
+      pagination.setPage(1);
     }
-    if (filterType !== 'tous') {
-      filtered = filtered.filter(property => property.type === filterType);
-    }
-    if (filterStatus !== 'tous') {
-      filtered = filtered.filter(property => property.statut === filterStatus);
-    }
-    if (filterTransaction !== 'tous') {
-      filtered = filtered.filter(property => property.transaction_type === filterTransaction);
-    }
-    setFilteredProperties(filtered);
-  }, [properties, searchTerm, filterType, filterStatus, filterTransaction]);
+  }, [searchTerm, filterType, filterStatus, filterTransaction]); // eslint-disable-line react-hooks/exhaustive-deps
   const getStatusBadge = (status: string) => {
     switch (status) {
       case 'disponible':
@@ -156,9 +165,11 @@ const PropertyManagement = () => {
   };
   const handleDeleteProperty = async (propertyId: string) => {
     try {
+      const label = properties.find(p => p.id === propertyId)?.titre ?? propertyId;
       const { error } = await supabase.from('properties').delete().eq('id', propertyId);
       if (error) throw error;
-      
+      logAction({ action: 'delete', table: 'properties', recordId: propertyId, label });
+
       toast({
         title: "Bien supprimé",
         description: "Le bien a été supprimé avec succès. Les transactions associées ont été conservées."
@@ -188,13 +199,15 @@ const PropertyManagement = () => {
 
   const handleArchiveProperty = async (propertyId: string) => {
     try {
+      const label = properties.find(p => p.id === propertyId)?.titre ?? propertyId;
       const { error } = await supabase
         .from('properties')
         .update({ statut: 'archivé' })
         .eq('id', propertyId);
-      
+
       if (error) throw error;
-      
+      logAction({ action: 'update', table: 'properties', recordId: propertyId, label: `[archivé] ${label}` });
+
       toast({
         title: "Succès",
         description: "Propriété archivée avec succès"
@@ -215,6 +228,13 @@ const PropertyManagement = () => {
     fetchProperties();
   };
   const openPropertyDetails = (propertyId: string) => {
+    setDetailsInitialEditing(false);
+    setSelectedPropertyId(propertyId);
+    setShowDetailsDialog(true);
+  };
+
+  const openPropertyEdit = (propertyId: string) => {
+    setDetailsInitialEditing(true);
     setSelectedPropertyId(propertyId);
     setShowDetailsDialog(true);
   };
@@ -288,7 +308,7 @@ const PropertyManagement = () => {
       {/* Tableau des propriétés */}
       <Card>
         <CardHeader>
-          <CardTitle>Liste des biens ({filteredProperties.length})</CardTitle>
+          <CardTitle>Liste des biens ({pagination.totalCount})</CardTitle>
           <CardDescription>
             Gérez l'ensemble de votre portefeuille immobilier
           </CardDescription>
@@ -312,7 +332,7 @@ const PropertyManagement = () => {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {filteredProperties.map(property => <TableRow key={property.id} className="hover:bg-muted/50">
+                {properties.map(property => <TableRow key={property.id} className="hover:bg-muted/50">
                     <TableCell>
                       <div className="w-16 h-12 rounded overflow-hidden bg-muted flex items-center justify-center">
                         {property.images && property.images.length > 0 ? <img src={property.images[0]} alt={property.titre} className="w-full h-full object-cover" /> : <span className="text-2xl">{getTypeIcon(property.type)}</span>}
@@ -376,9 +396,13 @@ const PropertyManagement = () => {
                             <Eye className="h-4 w-4 mr-2" />
                             Voir détails
                           </DropdownMenuItem>
-                          <DropdownMenuItem onClick={() => openPropertyDetails(property.id)}>
+                          <DropdownMenuItem onClick={() => openPropertyEdit(property.id)}>
                             <Edit className="h-4 w-4 mr-2" />
                             Modifier
+                          </DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => printPropertySheet(property)}>
+                            <FileDown className="h-4 w-4 mr-2" />
+                            Fiche PDF
                           </DropdownMenuItem>
                           <DropdownMenuSeparator />
                           <DropdownMenuItem onClick={() => handleArchiveProperty(property.id)} className="text-orange-600">
@@ -398,10 +422,20 @@ const PropertyManagement = () => {
               </TableBody>
             </Table>
             
-            {filteredProperties.length === 0 && <div className="text-center py-8 text-muted-foreground">
+            {properties.length === 0 && !loading && (
+              <div className="text-center py-8 text-muted-foreground">
                 Aucune propriété trouvée avec ces critères
-              </div>}
+              </div>
+            )}
           </div>
+
+          <PaginationControls
+            page={pagination.page}
+            totalPages={pagination.totalPages}
+            totalCount={pagination.totalCount}
+            pageSize={PAGE_SIZE}
+            onPageChange={pagination.setPage}
+          />
         </CardContent>
       </Card>
 
@@ -419,7 +453,7 @@ const PropertyManagement = () => {
       </Dialog>
 
       {/* Dialog des détails */}
-      {selectedPropertyId && <PropertyDetailsDialog propertyId={selectedPropertyId} open={showDetailsDialog} onOpenChange={setShowDetailsDialog} onUpdated={fetchProperties} />}
+      {selectedPropertyId && <PropertyDetailsDialog propertyId={selectedPropertyId} open={showDetailsDialog} onOpenChange={setShowDetailsDialog} onUpdated={fetchProperties} initialEditing={detailsInitialEditing} />}
 
       {/* Dialog de confirmation de suppression */}
       <AlertDialog open={!!propertyToDelete} onOpenChange={() => setPropertyToDelete(null)}>

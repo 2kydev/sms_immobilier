@@ -93,6 +93,20 @@ export interface DashboardAlerts {
   createdAt: string;
 }
 
+export interface AgentPerformance {
+  agent: string;
+  visits: number;
+  deals: number;
+  revenue: number;
+}
+
+export interface TopVisitedProperty {
+  id: string;
+  titre: string;
+  city: string;
+  visitCount: number;
+}
+
 export interface EnhancedDashboardData {
   propertyKPIs: PropertyKPIs;
   salesKPIs: SalesKPIs;
@@ -107,4 +121,6 @@ export interface EnhancedDashboardData {
     visits: number;
     revenue: number;
   }>;
+  agentPerformance: AgentPerformance[];
+  topVisitedProperties: TopVisitedProperty[];
 }

@@ -1,9 +1,7 @@
-
 import React from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Mail } from 'lucide-react';
 
 interface Visit {
   id: string;
@@ -20,9 +18,6 @@ interface Visit {
   agent: string;
   notes?: string;
   feedback_client?: string;
-  notification_enabled?: boolean;
-  notification_delay_hours?: number;
-  notification_email?: string;
 }
 
 interface VisitCardProps {
@@ -74,17 +69,11 @@ const VisitCard: React.FC<VisitCardProps> = ({ visit, onEdit }) => {
             <p className="text-gray-600 italic">"{visit.notes.substring(0, 50)}..."</p>
           )}
           <p><span className="font-medium">Agent:</span> {visit.agent}</p>
-          {visit.notification_enabled && (
-            <p className="flex items-center gap-1 text-blue-600">
-              <Mail className="h-3 w-3" />
-              <span className="text-xs">Notification activée</span>
-            </p>
-          )}
         </div>
         <div className="mt-3 pt-3 border-t">
-          <Button 
-            variant="outline" 
-            size="sm" 
+          <Button
+            variant="outline"
+            size="sm"
             onClick={() => onEdit(visit)}
             className="w-full"
           >

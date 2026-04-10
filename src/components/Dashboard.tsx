@@ -3,6 +3,8 @@ import { useEnhancedDashboard } from '@/hooks/useEnhancedDashboard';
 import SimplifiedKPIs from './dashboard/SimplifiedKPIs';
 import PropertyTypeBreakdown from './dashboard/PropertyTypeBreakdown';
 import SalesEvolutionChart from './dashboard/SalesEvolutionChart';
+import AgentPerformanceTable from './dashboard/AgentPerformanceTable';
+import TopVisitedProperties from './dashboard/TopVisitedProperties';
 const Dashboard = () => {
   const {
     dashboardData,
@@ -66,7 +68,12 @@ const Dashboard = () => {
 
       {/* Graphique Évolution Ventes */}
       <SalesEvolutionChart monthlyData={dashboardData.monthlyData} />
-      
+
+      {/* Performance agents + Top biens visités */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <AgentPerformanceTable agents={dashboardData.agentPerformance} />
+        <TopVisitedProperties properties={dashboardData.topVisitedProperties} />
+      </div>
     </div>;
 };
 export default Dashboard;

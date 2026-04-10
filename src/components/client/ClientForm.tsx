@@ -10,6 +10,7 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '
 import { useForm } from 'react-hook-form';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import { logAction } from '@/services/auditService';
 import { Client, TYPES_BIEN } from './types';
 
 interface ClientFormProps {
@@ -109,16 +110,20 @@ const ClientForm: React.FC<ClientFormProps> = ({
           .eq('id', selectedClient.id);
 
         if (error) throw error;
+        logAction({ action: 'update', table: 'clients', recordId: selectedClient.id, label: `${data.prenom} ${data.nom}` });
         toast({
           title: "Succès",
           description: "Client mis à jour avec succès"
         });
       } else {
-        const { error } = await supabase
+        const { data: inserted, error } = await supabase
           .from('clients')
-          .insert([clientData]);
+          .insert([clientData])
+          .select('id')
+          .single();
 
         if (error) throw error;
+        if (inserted) logAction({ action: 'create', table: 'clients', recordId: inserted.id, label: `${data.prenom} ${data.nom}` });
         toast({
           title: "Succès",
           description: "Client créé avec succès"

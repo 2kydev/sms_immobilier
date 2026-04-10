@@ -1,5 +1,5 @@
 import { supabase } from '@/integrations/supabase/client';
-import { PropertyKPIs, SalesKPIs, ClientKPIs, VisitKPIs, TransactionPipeline, DashboardAlerts, EnhancedDashboardData } from '@/types/enhancedDashboard';
+import { PropertyKPIs, SalesKPIs, ClientKPIs, VisitKPIs, TransactionPipeline, DashboardAlerts, EnhancedDashboardData, AgentPerformance, TopVisitedProperty } from '@/types/enhancedDashboard';
 import { getMonthDateRange, getCurrentAndLastMonth } from '@/utils/timeUtils';
 
 export const fetchPropertyKPIs = async (): Promise<PropertyKPIs> => {
@@ -338,6 +338,53 @@ export const fetchDashboardAlerts = async (): Promise<DashboardAlerts[]> => {
   return alerts.slice(0, 5); // Limit to 5 alerts
 };
 
+export const fetchAgentPerformance = async (): Promise<AgentPerformance[]> => {
+  const [{ data: visits }, { data: transactions }] = await Promise.all([
+    supabase.from('visits').select('agent'),
+    supabase.from('transactions').select('agent, valeur, etape').eq('etape', 'finalise'),
+  ]);
+
+  const agentMap: Record<string, AgentPerformance> = {};
+
+  for (const v of visits || []) {
+    if (!agentMap[v.agent]) agentMap[v.agent] = { agent: v.agent, visits: 0, deals: 0, revenue: 0 };
+    agentMap[v.agent].visits += 1;
+  }
+  for (const t of transactions || []) {
+    if (!agentMap[t.agent]) agentMap[t.agent] = { agent: t.agent, visits: 0, deals: 0, revenue: 0 };
+    agentMap[t.agent].deals += 1;
+    agentMap[t.agent].revenue += t.valeur || 0;
+  }
+
+  return Object.values(agentMap).sort((a, b) => b.deals - a.deals || b.visits - a.visits);
+};
+
+export const fetchTopVisitedProperties = async (): Promise<TopVisitedProperty[]> => {
+  const { data: visits } = await supabase
+    .from('visits')
+    .select('property_id, propriete_titre, propriete_adresse');
+
+  if (!visits) return [];
+
+  const counts: Record<string, TopVisitedProperty> = {};
+  for (const v of visits) {
+    if (!v.property_id) continue;
+    if (!counts[v.property_id]) {
+      counts[v.property_id] = {
+        id: v.property_id,
+        titre: v.propriete_titre,
+        city: v.propriete_adresse,
+        visitCount: 0,
+      };
+    }
+    counts[v.property_id].visitCount += 1;
+  }
+
+  return Object.values(counts)
+    .sort((a, b) => b.visitCount - a.visitCount)
+    .slice(0, 8);
+};
+
 export const fetchEnhancedDashboardData = async (): Promise<EnhancedDashboardData> => {
   const [
     propertyKPIs,
@@ -345,14 +392,18 @@ export const fetchEnhancedDashboardData = async (): Promise<EnhancedDashboardDat
     clientKPIs,
     visitKPIs,
     transactionPipeline,
-    alerts
+    alerts,
+    agentPerformance,
+    topVisitedProperties,
   ] = await Promise.all([
     fetchPropertyKPIs(),
     fetchSalesKPIs(),
     fetchClientKPIs(),
     fetchVisitKPIs(),
     fetchTransactionPipeline(),
-    fetchDashboardAlerts()
+    fetchDashboardAlerts(),
+    fetchAgentPerformance(),
+    fetchTopVisitedProperties(),
   ]);
 
   // Fetch monthly data for charts
@@ -388,6 +439,8 @@ export const fetchEnhancedDashboardData = async (): Promise<EnhancedDashboardDat
     visitKPIs,
     transactionPipeline,
     alerts,
-    monthlyData
+    monthlyData,
+    agentPerformance,
+    topVisitedProperties,
   };
 };

@@ -14,6 +14,39 @@ export type Database = {
   }
   public: {
     Tables: {
+      audit_logs: {
+        Row: {
+          id: string
+          user_id: string | null
+          user_email: string
+          action: string
+          table_name: string
+          record_id: string
+          label: string
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          user_id?: string | null
+          user_email?: string
+          action: string
+          table_name: string
+          record_id: string
+          label?: string
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          user_id?: string | null
+          user_email?: string
+          action?: string
+          table_name?: string
+          record_id?: string
+          label?: string
+          created_at?: string
+        }
+        Relationships: []
+      }
       agents: {
         Row: {
           created_at: string
@@ -103,50 +136,6 @@ export type Database = {
           updated_at?: string
         }
         Relationships: []
-      }
-      email_logs: {
-        Row: {
-          created_at: string
-          email_type: string
-          error_message: string | null
-          id: string
-          recipient_email: string
-          sent_at: string | null
-          status: string
-          updated_at: string
-          visit_id: string | null
-        }
-        Insert: {
-          created_at?: string
-          email_type?: string
-          error_message?: string | null
-          id?: string
-          recipient_email: string
-          sent_at?: string | null
-          status?: string
-          updated_at?: string
-          visit_id?: string | null
-        }
-        Update: {
-          created_at?: string
-          email_type?: string
-          error_message?: string | null
-          id?: string
-          recipient_email?: string
-          sent_at?: string | null
-          status?: string
-          updated_at?: string
-          visit_id?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "email_logs_visit_id_fkey"
-            columns: ["visit_id"]
-            isOneToOne: false
-            referencedRelation: "visits"
-            referencedColumns: ["id"]
-          },
-        ]
       }
       profiles: {
         Row: {
@@ -346,10 +335,8 @@ export type Database = {
       visits: {
         Row: {
           agent: string
-          agent_notification_email: string | null
           client_id: string | null
           client_nom: string
-          client_notification_email: string | null
           client_prenom: string
           client_telephone: string
           created_at: string
@@ -359,9 +346,6 @@ export type Database = {
           id: string
           note_visite: number | null
           notes: string | null
-          notification_delay_hours: number | null
-          notification_email: string | null
-          notification_enabled: boolean | null
           property_id: string | null
           propriete_adresse: string
           propriete_titre: string
@@ -370,10 +354,8 @@ export type Database = {
         }
         Insert: {
           agent: string
-          agent_notification_email?: string | null
           client_id?: string | null
           client_nom: string
-          client_notification_email?: string | null
           client_prenom: string
           client_telephone: string
           created_at?: string
@@ -383,9 +365,6 @@ export type Database = {
           id?: string
           note_visite?: number | null
           notes?: string | null
-          notification_delay_hours?: number | null
-          notification_email?: string | null
-          notification_enabled?: boolean | null
           property_id?: string | null
           propriete_adresse: string
           propriete_titre: string
@@ -394,10 +373,8 @@ export type Database = {
         }
         Update: {
           agent?: string
-          agent_notification_email?: string | null
           client_id?: string | null
           client_nom?: string
-          client_notification_email?: string | null
           client_prenom?: string
           client_telephone?: string
           created_at?: string
@@ -407,9 +384,6 @@ export type Database = {
           id?: string
           note_visite?: number | null
           notes?: string | null
-          notification_delay_hours?: number | null
-          notification_email?: string | null
-          notification_enabled?: boolean | null
           property_id?: string | null
           propriete_adresse?: string
           propriete_titre?: string
@@ -442,7 +416,7 @@ export type Database = {
       is_admin: { Args: { _user_id: string }; Returns: boolean }
     }
     Enums: {
-      user_role: "admin" | "directeur" | "agent" | "commercial"
+      user_role: "admin" | "dg" | "agent" | "commercial"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -570,7 +544,7 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
-      user_role: ["admin", "directeur", "agent", "commercial"],
+      user_role: ["admin", "dg", "agent", "commercial"],
     },
   },
 } as const

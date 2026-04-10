@@ -4,9 +4,9 @@ import Dashboard from '../components/Dashboard';
 import ClientManager from '../components/ClientManager';
 import PropertyManager from '../components/PropertyManager';
 import VisitManager from '../components/VisitManager';
-
 import UserManager from '../components/UserManager';
 import AgentManager from '../components/AgentManager';
+import AuditLogViewer from '../components/AuditLogViewer';
 import RoleGuard from '../components/RoleGuard';
 import { useRole } from '../hooks/useRole';
 import { useSearchParams } from 'react-router-dom';
@@ -48,7 +48,7 @@ const Index = () => {
         );
       case 'users':
         return (
-          <RoleGuard 
+          <RoleGuard
             requiredRole="admin"
             fallback={
               <div className="p-6 text-center">
@@ -57,6 +57,19 @@ const Index = () => {
             }
           >
             <UserManager />
+          </RoleGuard>
+        );
+      case 'audit':
+        return (
+          <RoleGuard
+            allowedRoles={['admin', 'dg']}
+            fallback={
+              <div className="p-6 text-center">
+                <p className="text-gray-500">Accès réservé aux administrateurs.</p>
+              </div>
+            }
+          >
+            <AuditLogViewer />
           </RoleGuard>
         );
       default:

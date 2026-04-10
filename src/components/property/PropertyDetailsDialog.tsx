@@ -10,16 +10,19 @@ import { Textarea } from "@/components/ui/textarea";
 import PropertyImageGallery from "@/components/PropertyImageGallery";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { Pencil, Save, Loader2, CheckCircle, X } from "lucide-react";
+import { logAction } from "@/services/auditService";
+import { Pencil, Save, Loader2, CheckCircle, X, FileDown } from "lucide-react";
+import { printPropertySheet } from "./PropertyPrintSheet";
 
 interface PropertyDetailsDialogProps {
   propertyId: string | null;
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onUpdated?: (updated: any) => void;
+  initialEditing?: boolean;
 }
 
-const PropertyDetailsDialog: React.FC<PropertyDetailsDialogProps> = ({ propertyId, open, onOpenChange, onUpdated }) => {
+const PropertyDetailsDialog: React.FC<PropertyDetailsDialogProps> = ({ propertyId, open, onOpenChange, onUpdated, initialEditing = false }) => {
   const [property, setProperty] = useState<any | null>(null);
   const [loading, setLoading] = useState(false);
   const [editing, setEditing] = useState(false);
@@ -47,6 +50,10 @@ const PropertyDetailsDialog: React.FC<PropertyDetailsDialogProps> = ({ propertyI
     };
     fetchDetails();
   }, [open, propertyId, toast]);
+
+  useEffect(() => {
+    if (open) setEditing(initialEditing);
+  }, [open, initialEditing]);
 
   const images: string[] = useMemo(() => property?.images || [], [property]);
 
@@ -77,6 +84,7 @@ const PropertyDetailsDialog: React.FC<PropertyDetailsDialogProps> = ({ propertyI
         .update(payload)
         .eq("id", property.id);
       if (error) throw error;
+      logAction({ action: 'update', table: 'properties', recordId: property.id, label: property.titre });
       toast({ title: "Enregistré", description: "Le bien a été mis à jour." });
       setEditing(false);
       onUpdated?.(payload);
@@ -380,6 +388,9 @@ const PropertyDetailsDialog: React.FC<PropertyDetailsDialogProps> = ({ propertyI
                 )}
               </div>
               <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 w-full sm:w-auto">
+                <Button variant="outline" onClick={() => printPropertySheet(property)} className="w-full sm:w-auto">
+                  <FileDown className="h-4 w-4 mr-2" /> Fiche PDF
+                </Button>
                 {!editing ? (
                   <Button variant="secondary" onClick={() => setEditing(true)} className="w-full sm:w-auto">
                     <Pencil className="h-4 w-4 mr-2" /> Modifier
