@@ -1,39 +1,30 @@
-
 import React, { useState } from 'react';
 import { Navigate } from 'react-router-dom';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
+import { Building2, Lock, Mail } from 'lucide-react';
 
 const Auth = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
-  
+
   const { user, signIn } = useAuth();
   const { toast } = useToast();
 
-  // Si l'utilisateur est déjà connecté, rediriger vers la page principale
-  if (user) {
-    return <Navigate to="/" replace />;
-  }
+  if (user) return <Navigate to="/" replace />;
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
-
     try {
       await signIn(email, password);
-      toast({
-        title: "Connexion réussie",
-        description: "Bienvenue !",
-      });
+      toast({ title: "Connexion réussie", description: "Bienvenue !" });
     } catch (error: any) {
-      // Gérer les cas spéciaux d'erreurs d'authentification
       if (error.message.includes('Email not confirmed')) {
         localStorage.setItem('pendingEmail', email);
         toast({
@@ -41,14 +32,12 @@ const Auth = () => {
           description: "Veuillez confirmer votre email avant de vous connecter.",
           variant: "destructive",
         });
-        // Rediriger vers la page de confirmation
         window.location.href = '/email-confirmation';
         return;
       }
-      
       toast({
-        title: "Erreur d'authentification",
-        description: error.message,
+        title: "Identifiants incorrects",
+        description: "Email ou mot de passe invalide.",
         variant: "destructive",
       });
     } finally {
@@ -56,98 +45,117 @@ const Auth = () => {
     }
   };
 
+  const handleForgotPassword = async () => {
+    if (!email) {
+      toast({ title: 'Entrez votre email', description: 'Saisissez votre email pour recevoir le lien.', variant: 'destructive' });
+      return;
+    }
+    try {
+      await supabase.auth.resetPasswordForEmail(email, {
+        redirectTo: `${window.location.origin}/reset-password`,
+      });
+      toast({ title: 'Email envoyé', description: 'Vérifiez votre boîte de réception.' });
+    } catch (error: any) {
+      toast({ title: "Erreur", description: error.message, variant: 'destructive' });
+    }
+  };
+
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 p-4">
-      <Card className="w-full max-w-md">
-        <CardHeader className="space-y-4 text-center">
-          <div className="flex justify-center mb-4">
-            <img 
-              src="/lovable-uploads/2f182060-60bf-4ab5-a6b2-e6092170b088.png" 
-              alt="SMS Immobilier Logo" 
-              className="w-24 h-24 object-contain"
+    <div className="min-h-screen flex bg-gray-50">
+      {/* Left panel */}
+      <div className="hidden lg:flex lg:w-1/2 bg-primary flex-col justify-between p-12">
+        <div className="flex items-center gap-3">
+          <img
+            src="/lovable-uploads/2f182060-60bf-4ab5-a6b2-e6092170b088.png"
+            alt="SMS Immobilier"
+            className="h-12 w-12 object-contain"
+          />
+          <span className="text-white text-xl font-bold">SMS Immobilier</span>
+        </div>
+        <div>
+          <h1 className="text-white text-4xl font-bold leading-tight mb-4">
+            Gérez votre activité immobilière en toute simplicité
+          </h1>
+          <p className="text-white/70 text-lg">
+            Clients, biens, visites et performances — tout en un seul endroit.
+          </p>
+        </div>
+        <div className="flex items-center gap-2 text-white/50 text-sm">
+          <Building2 className="h-4 w-4" />
+          <span>SMS Immobilier CRM</span>
+        </div>
+      </div>
+
+      {/* Right panel */}
+      <div className="flex-1 flex items-center justify-center p-6">
+        <div className="w-full max-w-md">
+          {/* Mobile logo */}
+          <div className="flex items-center gap-3 mb-8 lg:hidden">
+            <img
+              src="/lovable-uploads/2f182060-60bf-4ab5-a6b2-e6092170b088.png"
+              alt="SMS Immobilier"
+              className="h-10 w-10 object-contain"
             />
+            <span className="text-primary text-xl font-bold">SMS Immobilier</span>
           </div>
-          <CardTitle className="text-2xl text-center text-primary">
-            SMS Immobilier
-          </CardTitle>
-          <CardDescription className="text-center">
-            Connectez-vous à votre compte
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <form onSubmit={handleSubmit} className="space-y-4">
+
+          <h2 className="text-3xl font-bold text-gray-900 mb-2">Connexion</h2>
+          <p className="text-gray-500 mb-8">Entrez vos identifiants pour accéder à votre espace.</p>
+
+          <form onSubmit={handleSubmit} className="space-y-5">
             <div className="space-y-2">
               <Label htmlFor="email">Email</Label>
-              <Input
-                id="email"
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                required
-              />
+              <div className="relative">
+                <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+                <Input
+                  id="email"
+                  type="email"
+                  placeholder="vous@exemple.com"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  className="pl-10"
+                  required
+                />
+              </div>
             </div>
-            
+
             <div className="space-y-2">
-              <Label htmlFor="password">Mot de passe</Label>
-              <Input
-                id="password"
-                type="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                required
-                minLength={6}
-              />
+              <div className="flex items-center justify-between">
+                <Label htmlFor="password">Mot de passe</Label>
+                <button
+                  type="button"
+                  onClick={handleForgotPassword}
+                  className="text-sm text-primary hover:underline"
+                >
+                  Mot de passe oublié ?
+                </button>
+              </div>
+              <div className="relative">
+                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+                <Input
+                  id="password"
+                  type="password"
+                  placeholder="••••••••"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  className="pl-10"
+                  required
+                  minLength={6}
+                />
+              </div>
             </div>
 
-            <div className="flex justify-end">
-              <Button
-                type="button"
-                variant="link"
-                className="px-0"
-                onClick={async () => {
-                  if (!email) {
-                    toast({
-                      title: 'Entrez votre email',
-                      description: 'Veuillez saisir votre email pour recevoir le lien de réinitialisation.',
-                      variant: 'destructive',
-                    });
-                    return;
-                  }
-                  try {
-                    await supabase.auth.resetPasswordForEmail(email, {
-                      redirectTo: `${window.location.origin}/reset-password`,
-                    });
-                    toast({
-                      title: 'Email envoyé',
-                      description: 'Vérifiez votre boîte de réception pour réinitialiser votre mot de passe.',
-                    });
-                  } catch (error: any) {
-                    toast({
-                      title: "Erreur d'envoi",
-                      description: error.message,
-                      variant: 'destructive',
-                    });
-                  }
-                }}
-              >
-                Mot de passe oublié ?
-              </Button>
-            </div>
-
-            <Button type="submit" className="w-full" disabled={loading}>
-              {loading ? 'Connexion...' : 'Se connecter'}
+            <Button type="submit" className="w-full h-11 text-base" disabled={loading}>
+              {loading ? 'Connexion en cours...' : 'Se connecter'}
             </Button>
           </form>
-          
-          <div className="mt-4 p-4 bg-blue-50 rounded-lg">
-            <p className="text-sm text-blue-800 text-center">
-              <strong>Note : </strong>  
-              Vous n'avez pas encore de compte ? 
-              Veuillez contacter votre administrateur système pour demander la création d'un compte utilisateur.
-            </p>
-          </div>
-        </CardContent>
-      </Card>
+
+          <p className="mt-8 text-center text-sm text-gray-500">
+            Pas encore de compte ?{' '}
+            <span className="text-primary font-medium">Contactez votre administrateur.</span>
+          </p>
+        </div>
+      </div>
     </div>
   );
 };
