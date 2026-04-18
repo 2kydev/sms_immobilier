@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { Calendar, Home, Users, Building2, UserPlus, Settings, LogOut, ClipboardList } from "lucide-react";
+import { Calendar, Home, Users, Building2, UserPlus, Settings, LogOut, ClipboardList, TrendingUp } from "lucide-react";
 import { useRole } from "@/hooks/useRole";
 import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
@@ -43,6 +43,11 @@ const items = [
     title: "Visites",
     url: "/?tab=visits",
     icon: Calendar,
+  },
+  {
+    title: "Ventes",
+    url: "/?tab=pipeline",
+    icon: TrendingUp,
   },
   {
     title: "Agents",

@@ -273,10 +273,10 @@ export const fetchTransactionPipeline = async (): Promise<TransactionPipeline> =
   const totalValue = transactions?.reduce((sum, t) => sum + (t.valeur || 0), 0) || 0;
 
   return {
-    prospection: pipeline.prospection || 0,
-    qualification: pipeline.qualification || 0,
-    negotiation: pipeline.negotiation || 0,
-    signature: pipeline.signature || 0,
+    prospection: pipeline.prospect || 0,
+    qualification: pipeline.visite || 0,
+    negotiation: pipeline.negociation || 0,
+    signature: pipeline.compromis || 0,
     finalise: pipeline.finalise || 0,
     totalValue
   };

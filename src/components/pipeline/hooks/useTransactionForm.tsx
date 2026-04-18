@@ -1,15 +1,19 @@
 
 import { useState, useEffect } from 'react';
 import { Transaction } from '../types';
+import { useAuth } from '@/hooks/useAuth';
 
 interface UseTransactionFormProps {
   transaction: Transaction | null;
 }
 
 export const useTransactionForm = ({ transaction }: UseTransactionFormProps) => {
+  const { user } = useAuth();
+  const defaultAgent = user?.email?.split('@')[0] || '';
+
   const [formData, setFormData] = useState({
     valeur: '',
-    agent: 'Marie Dupont',
+    agent: defaultAgent,
     etape: 'prospect',
     notes: ''
   });
@@ -18,7 +22,7 @@ export const useTransactionForm = ({ transaction }: UseTransactionFormProps) => 
     if (transaction) {
       setFormData({
         valeur: transaction.id ? transaction.valeur.toString() : '',
-        agent: transaction.agent || 'Marie Dupont',
+        agent: transaction.agent || defaultAgent,
         etape: transaction.etape || 'prospect',
         notes: transaction.notes || ''
       });

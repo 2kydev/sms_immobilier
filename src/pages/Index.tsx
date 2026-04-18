@@ -8,6 +8,7 @@ import VisitManager from '../components/VisitManager';
 import UserManager from '../components/UserManager';
 import AgentManager from '../components/AgentManager';
 import AuditLogViewer from '../components/AuditLogViewer';
+import Pipeline from '../components/Pipeline';
 import RoleGuard from '../components/RoleGuard';
 import { useRole } from '../hooks/useRole';
 import { useSearchParams } from 'react-router-dom';
@@ -34,6 +35,8 @@ const Index = () => {
         return <PropertyManager />;
       case 'visits':
         return <VisitManager />;
+      case 'pipeline':
+        return <Pipeline />;
       case 'agents':
         return (
           <RoleGuard 
