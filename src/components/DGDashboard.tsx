@@ -12,11 +12,13 @@ import {
 
 // ─── helpers ────────────────────────────────────────────────────────────────
 const fmt = (n: number) =>
-  n >= 1_000_000
-    ? `${(n / 1_000_000).toFixed(1)} M€`
+  n >= 1_000_000_000
+    ? `${(n / 1_000_000_000).toFixed(2)} Md FCFA`
+    : n >= 1_000_000
+    ? `${(n / 1_000_000).toFixed(1)} M FCFA`
     : n >= 1_000
-    ? `${(n / 1_000).toFixed(0)} K€`
-    : `${n.toFixed(0)} €`;
+    ? `${(n / 1_000).toFixed(0)} k FCFA`
+    : `${n.toLocaleString('fr-FR')} FCFA`;
 
 const pct = (n: number) => `${n.toFixed(1)} %`;
 

@@ -96,15 +96,15 @@ export const fetchSalesKPIs = async (): Promise<SalesKPIs> => {
     .from('transactions')
     .select('valeur, etape')
     .eq('etape', 'finalise')
-    .gte('date_creation', currentStartDate)
-    .lt('date_creation', currentEndDate);
+    .gte('created_at', currentStartDate)
+    .lt('created_at', currentEndDate);
 
   const { data: lastMonthTransactions } = await supabase
     .from('transactions')
     .select('valeur, etape')
     .eq('etape', 'finalise')
-    .gte('date_creation', lastStartDate)
-    .lt('date_creation', lastEndDate);
+    .gte('created_at', lastStartDate)
+    .lt('created_at', lastEndDate);
 
   const { data: allTransactions } = await supabase
     .from('transactions')
@@ -418,9 +418,9 @@ export const fetchEnhancedDashboardData = async (): Promise<EnhancedDashboardDat
     
     const [propertiesData, salesData, visitsData, revenueData] = await Promise.all([
       supabase.from('properties').select('id').gte('created_at', startDate).lt('created_at', endDate),
-      supabase.from('transactions').select('id').eq('etape', 'finalise').gte('date_creation', startDate).lt('date_creation', endDate),
+      supabase.from('transactions').select('id').eq('etape', 'finalise').gte('created_at', startDate).lt('created_at', endDate),
       supabase.from('visits').select('id').gte('created_at', startDate).lt('created_at', endDate),
-      supabase.from('transactions').select('valeur').eq('etape', 'finalise').gte('date_creation', startDate).lt('date_creation', endDate)
+      supabase.from('transactions').select('valeur').eq('etape', 'finalise').gte('created_at', startDate).lt('created_at', endDate)
     ]);
     
     monthlyData.push({
