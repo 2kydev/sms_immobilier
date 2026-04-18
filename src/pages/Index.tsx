@@ -1,6 +1,7 @@
 
 import React, { useState } from 'react';
 import Dashboard from '../components/Dashboard';
+import DGDashboard from '../components/DGDashboard';
 import ClientManager from '../components/ClientManager';
 import PropertyManager from '../components/PropertyManager';
 import VisitManager from '../components/VisitManager';
@@ -13,18 +14,18 @@ import { useSearchParams } from 'react-router-dom';
 
 const Index = () => {
   const [searchParams] = useSearchParams();
-  const { canAccessDashboard, canManageUsers } = useRole();
+  const { canAccessDashboard, canManageUsers, role } = useRole();
   const activeSection = searchParams.get('tab') || (canAccessDashboard() ? 'dashboard' : 'clients');
 
   const renderContent = () => {
     switch (activeSection) {
       case 'dashboard':
         return (
-          <RoleGuard 
+          <RoleGuard
             allowedRoles={['admin', 'dg']}
             fallback={<ClientManager />}
           >
-            <Dashboard />
+            <DGDashboard />
           </RoleGuard>
         );
       case 'clients':
@@ -73,7 +74,7 @@ const Index = () => {
           </RoleGuard>
         );
       default:
-        return canAccessDashboard() ? <Dashboard /> : <ClientManager />;
+        return canAccessDashboard() ? <DGDashboard /> : <ClientManager />;
     }
   };
 
