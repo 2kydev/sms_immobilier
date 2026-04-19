@@ -50,11 +50,6 @@ const items = [
     icon: UserPlus,
   },
   {
-    title: "Utilisateurs",
-    url: "/?tab=users",
-    icon: Settings,
-  },
-  {
     title: "Journal",
     url: "/?tab=audit",
     icon: ClipboardList,
@@ -128,7 +123,7 @@ export function AppSidebar() {
                 if (tabName === 'dashboard' && !canAccessDashboard()) {
                   return null;
                 }
-                if ((tabName === 'agents' || tabName === 'users') && !isAdmin()) {
+                if (tabName === 'agents' && !isAdmin()) {
                   return null;
                 }
                 if (tabName === 'audit' && !canAccessDashboard()) {
