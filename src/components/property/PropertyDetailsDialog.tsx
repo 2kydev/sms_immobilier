@@ -40,7 +40,7 @@ const PropertyDetailsDialog: React.FC<PropertyDetailsDialogProps> = ({ propertyI
           .eq("id", propertyId)
           .single();
         if (error) throw error;
-        setProperty(data);
+        setProperty({ ...data, _originalStatut: data.statut });
       } catch (err) {
         console.error(err);
         toast({ title: "Erreur", description: "Impossible de charger le bien", variant: "destructive" });
@@ -61,6 +61,7 @@ const PropertyDetailsDialog: React.FC<PropertyDetailsDialogProps> = ({ propertyI
     if (!property) return;
     setSaving(true);
     try {
+      const previousStatut = property._originalStatut;
       const payload = {
         titre: property.titre,
         type: property.type,
@@ -84,6 +85,27 @@ const PropertyDetailsDialog: React.FC<PropertyDetailsDialogProps> = ({ propertyI
         .update(payload)
         .eq("id", property.id);
       if (error) throw error;
+
+      // Créer une transaction finalisée si le bien vient d'être marqué vendu
+      if (property.statut === 'vendu' && previousStatut !== 'vendu') {
+        const { data: existing } = await supabase
+          .from('transactions')
+          .select('id')
+          .eq('property_id', property.id)
+          .eq('etape', 'finalise')
+          .maybeSingle();
+        if (!existing) {
+          await supabase.from('transactions').insert([{
+            property_id: property.id,
+            valeur: property.prix || 0,
+            etape: 'finalise',
+            agent: property.agent || '',
+            date_creation: new Date().toISOString().split('T')[0],
+            derniere_activite: new Date().toISOString().split('T')[0],
+          }]);
+        }
+      }
+
       logAction({ action: 'update', table: 'properties', recordId: property.id, label: property.titre });
       toast({ title: "Enregistré", description: "Le bien a été mis à jour." });
       setEditing(false);
