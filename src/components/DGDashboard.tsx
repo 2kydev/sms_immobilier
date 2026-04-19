@@ -58,11 +58,11 @@ const KPICard: React.FC<KPICardProps> = ({ title, value, sub, trend, icon: Icon,
 // ─── Pipeline Funnel ─────────────────────────────────────────────────────────
 const FUNNEL_COLORS = ['#6366f1', '#8b5cf6', '#a855f7', '#c084fc', '#10b981'];
 const FUNNEL_LABELS: Record<string, string> = {
-  prospection: 'Prospect',
-  qualification: 'Visite',
+  prospection: 'Disponible',
+  qualification: 'Sous offre',
   negotiation: 'Négociation',
   signature: 'Compromis',
-  finalise: 'Vente finalisée',
+  finalise: 'Vendu',
 };
 
 interface PipelinePanelProps {

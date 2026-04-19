@@ -88,37 +88,34 @@ export const fetchPropertyKPIs = async (): Promise<PropertyKPIs> => {
 
 export const fetchSalesKPIs = async (): Promise<SalesKPIs> => {
   const { currentMonth, currentYear, lastMonth, lastMonthYear } = getCurrentAndLastMonth();
-  
   const { startDate: currentStartDate, endDate: currentEndDate } = getMonthDateRange(currentYear, currentMonth);
   const { startDate: lastStartDate, endDate: lastEndDate } = getMonthDateRange(lastMonthYear, lastMonth);
 
-  const { data: currentMonthTransactions } = await supabase
-    .from('transactions')
-    .select('valeur, etape')
-    .eq('etape', 'finalise')
-    .gte('created_at', currentStartDate)
-    .lt('created_at', currentEndDate);
+  // Utilise la table properties : statut = 'vendu', updated_at = date de vente
+  const { data: allProperties } = await supabase
+    .from('properties')
+    .select('prix, statut, updated_at');
 
-  const { data: lastMonthTransactions } = await supabase
-    .from('transactions')
-    .select('valeur, etape')
-    .eq('etape', 'finalise')
-    .gte('created_at', lastStartDate)
-    .lt('created_at', lastEndDate);
+  const soldThisMonth = allProperties?.filter(p =>
+    p.statut === 'vendu' &&
+    p.updated_at >= currentStartDate &&
+    p.updated_at < currentEndDate
+  ) || [];
 
-  const { data: allTransactions } = await supabase
-    .from('transactions')
-    .select('etape');
+  const soldLastMonth = allProperties?.filter(p =>
+    p.statut === 'vendu' &&
+    p.updated_at >= lastStartDate &&
+    p.updated_at < lastEndDate
+  ) || [];
 
-  const monthlyRevenue = currentMonthTransactions?.reduce((sum, t) => sum + (t.valeur || 0), 0) || 0;
-  const lastMonthRevenue = lastMonthTransactions?.reduce((sum, t) => sum + (t.valeur || 0), 0) || 0;
-  const totalDeals = currentMonthTransactions?.length || 0;
+  const allSold = allProperties?.filter(p => p.statut === 'vendu') || [];
+  const totalProperties = allProperties?.length || 0;
+
+  const monthlyRevenue = soldThisMonth.reduce((sum, p) => sum + (p.prix || 0), 0);
+  const lastMonthRevenue = soldLastMonth.reduce((sum, p) => sum + (p.prix || 0), 0);
+  const totalDeals = soldThisMonth.length;
   const averageDealValue = totalDeals > 0 ? monthlyRevenue / totalDeals : 0;
-
-  // Calculate conversion rate (finalized vs total transactions)
-  const totalTransactions = allTransactions?.length || 0;
-  const finalizedTransactions = allTransactions?.filter(t => t.etape === 'finalise').length || 0;
-  const conversionRate = totalTransactions > 0 ? (finalizedTransactions / totalTransactions) * 100 : 0;
+  const conversionRate = totalProperties > 0 ? (allSold.length / totalProperties) * 100 : 0;
 
   const revenueTrend = {
     percentage: lastMonthRevenue > 0 ? Math.abs(((monthlyRevenue - lastMonthRevenue) / lastMonthRevenue) * 100) : 0,
@@ -260,24 +257,20 @@ export const fetchVisitKPIs = async (): Promise<VisitKPIs> => {
 };
 
 export const fetchTransactionPipeline = async (): Promise<TransactionPipeline> => {
-  const { data: transactions } = await supabase
-    .from('transactions')
-    .select('etape, valeur');
+  const { data: properties } = await supabase
+    .from('properties')
+    .select('statut, prix');
 
-  const pipeline = transactions?.reduce((acc, transaction) => {
-    const stage = transaction.etape;
-    acc[stage] = (acc[stage] || 0) + 1;
-    return acc;
-  }, {} as any) || {};
+  const totalValue = properties?.reduce((sum, p) => sum + (p.prix || 0), 0) || 0;
 
-  const totalValue = transactions?.reduce((sum, t) => sum + (t.valeur || 0), 0) || 0;
+  const count = (statut: string) => properties?.filter(p => p.statut === statut).length || 0;
 
   return {
-    prospection: pipeline.prospect || 0,
-    qualification: pipeline.visite || 0,
-    negotiation: pipeline.negociation || 0,
-    signature: pipeline.compromis || 0,
-    finalise: pipeline.finalise || 0,
+    prospection: count('disponible'),
+    qualification: count('sous-offre'),
+    negotiation: 0,
+    signature: 0,
+    finalise: count('vendu'),
     totalValue
   };
 };
@@ -416,11 +409,10 @@ export const fetchEnhancedDashboardData = async (): Promise<EnhancedDashboardDat
     
     const { startDate, endDate } = getMonthDateRange(year, month);
     
-    const [propertiesData, salesData, visitsData, revenueData] = await Promise.all([
+    const [propertiesData, salesData, visitsData] = await Promise.all([
       supabase.from('properties').select('id').gte('created_at', startDate).lt('created_at', endDate),
-      supabase.from('transactions').select('id').eq('etape', 'finalise').gte('created_at', startDate).lt('created_at', endDate),
+      supabase.from('properties').select('prix').eq('statut', 'vendu').gte('updated_at', startDate).lt('updated_at', endDate),
       supabase.from('visits').select('id').gte('created_at', startDate).lt('created_at', endDate),
-      supabase.from('transactions').select('valeur').eq('etape', 'finalise').gte('created_at', startDate).lt('created_at', endDate)
     ]);
     
     monthlyData.push({
@@ -428,7 +420,7 @@ export const fetchEnhancedDashboardData = async (): Promise<EnhancedDashboardDat
       properties: propertiesData.data?.length || 0,
       sales: salesData.data?.length || 0,
       visits: visitsData.data?.length || 0,
-      revenue: revenueData.data?.reduce((sum, t) => sum + (t.valeur || 0), 0) || 0
+      revenue: salesData.data?.reduce((sum, p) => sum + (p.prix || 0), 0) || 0
     });
   }
 
