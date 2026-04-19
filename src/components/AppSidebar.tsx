@@ -26,6 +26,11 @@ const items = [
     icon: Home,
   },
   {
+    title: "Clients",
+    url: "/?tab=clients",
+    icon: Users,
+  },
+  {
     title: "Propriétés",
     url: "#",
     icon: Building2,
@@ -33,11 +38,6 @@ const items = [
       { title: "Gestion de bien", url: "/property-management" },
       { title: "Biens à vendre", url: "/properties-for-sale" },
     ]
-  },
-  {
-    title: "Clients",
-    url: "/?tab=clients",
-    icon: Users,
   },
   {
     title: "Visites",
