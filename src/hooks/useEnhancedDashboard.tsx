@@ -72,29 +72,20 @@ export const useEnhancedDashboard = () => {
   useEffect(() => {
     fetchData();
 
-    // Set up real-time subscriptions
+    // Rafraîchissement automatique toutes les 30 secondes
+    const interval = setInterval(fetchData, 30000);
+
+    // Realtime subscriptions
     const channel = supabase
       .channel('enhanced-dashboard-changes')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'properties' }, () => {
-        console.log('Properties table changed, refetching dashboard data');
-        fetchData();
-      })
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'clients' }, () => {
-        console.log('Clients table changed, refetching dashboard data');
-        fetchData();
-      })
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'visits' }, () => {
-        console.log('Visits table changed, refetching dashboard data');
-        fetchData();
-      })
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'transactions' }, () => {
-        console.log('Transactions table changed, refetching dashboard data');
-        fetchData();
-      })
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'properties' }, fetchData)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'clients' }, fetchData)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'visits' }, fetchData)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'transactions' }, fetchData)
       .subscribe();
 
     return () => {
-      console.log('Cleaning up enhanced dashboard subscriptions');
+      clearInterval(interval);
       supabase.removeChannel(channel);
     };
   }, []);

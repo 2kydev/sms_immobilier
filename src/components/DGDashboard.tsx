@@ -3,7 +3,7 @@ import { useEnhancedDashboard } from '@/hooks/useEnhancedDashboard';
 import {
   TrendingUp, TrendingDown, Building2, Users, Calendar,
   DollarSign, Target, Activity, AlertTriangle, CheckCircle2,
-  ArrowUpRight, ArrowDownRight, BarChart3, Eye, Home
+  ArrowUpRight, ArrowDownRight, BarChart3, Eye, Home, RefreshCw
 } from 'lucide-react';
 import {
   AreaChart, Area, BarChart, Bar, XAxis, YAxis, CartesianGrid,
@@ -269,7 +269,7 @@ const ActivityPanel: React.FC<ActivityPanelProps> = ({ alerts, visitKPIs, client
 
 // ─── Main DGDashboard ────────────────────────────────────────────────────────
 const DGDashboard: React.FC = () => {
-  const { dashboardData, loading, lastUpdated } = useEnhancedDashboard();
+  const { dashboardData, loading, lastUpdated, refetch } = useEnhancedDashboard();
 
   if (loading) {
     return (
@@ -298,12 +298,22 @@ const DGDashboard: React.FC = () => {
           <h1 className="text-3xl font-bold text-gray-900">Tableau de bord</h1>
           <p className="text-sm text-gray-500 mt-1">Vue exécutive — Direction Générale</p>
         </div>
-        <p className="text-xs text-gray-400">
-          Mis à jour le {lastUpdated.toLocaleDateString('fr-FR', {
-            weekday: 'short', day: 'numeric', month: 'short',
-            hour: '2-digit', minute: '2-digit'
-          })}
-        </p>
+        <div className="flex items-center gap-3">
+          <p className="text-xs text-gray-400">
+            Mis à jour le {lastUpdated.toLocaleDateString('fr-FR', {
+              weekday: 'short', day: 'numeric', month: 'short',
+              hour: '2-digit', minute: '2-digit'
+            })}
+          </p>
+          <button
+            onClick={refetch}
+            disabled={loading}
+            className="flex items-center gap-1.5 text-xs text-indigo-500 hover:text-indigo-700 disabled:opacity-40"
+          >
+            <RefreshCw className={`w-3.5 h-3.5 ${loading ? 'animate-spin' : ''}`} />
+            Actualiser
+          </button>
+        </div>
       </div>
 
       {/* KPI Row */}
