@@ -9,6 +9,15 @@
   </head>
 
   <body>
+    <script>
+      // Restaure l'URL après redirection depuis 404.html
+      (function() {
+        var p = new URLSearchParams(window.location.search).get('p');
+        if (p) {
+          window.history.replaceState(null, null, decodeURIComponent(p));
+        }
+      })();
+    </script>
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
   </body>
