@@ -241,14 +241,14 @@ const PropertyManagement = () => {
   if (loading) {
     return <div className="p-6">Chargement des propriétés...</div>;
   }
-  return <div className="space-y-6 p-6">
+  return <div className="space-y-6 p-4 sm:p-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-primary">Gestion des Biens Immobiliers</h1>
+          <h1 className="text-2xl sm:text-3xl font-bold text-primary">Gestion des Biens Immobiliers</h1>
           <p className="text-muted-foreground mt-1">Gérez votre portefeuille immobilier</p>
         </div>
-        <Button onClick={() => setShowAddForm(true)} className="flex items-center gap-2">
+        <Button onClick={() => setShowAddForm(true)} className="flex items-center gap-2 w-full sm:w-auto">
           <Plus className="h-4 w-4" />
           Ajouter un Bien
         </Button>
@@ -318,22 +318,22 @@ const PropertyManagement = () => {
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Photo</TableHead>
+                  <TableHead className="hidden sm:table-cell">Photo</TableHead>
                   <TableHead>Titre / Référence</TableHead>
-                  <TableHead>Type</TableHead>
-                  <TableHead>Propriétaire</TableHead>
-                  <TableHead>Localisation</TableHead>
-                   <TableHead>Superficie</TableHead>
+                  <TableHead className="hidden md:table-cell">Type</TableHead>
+                  <TableHead className="hidden lg:table-cell">Propriétaire</TableHead>
+                  <TableHead className="hidden sm:table-cell">Localisation</TableHead>
+                  <TableHead className="hidden md:table-cell">Superficie</TableHead>
                   <TableHead>Prix</TableHead>
                   <TableHead>Statut</TableHead>
-                  <TableHead>Agent</TableHead>
-                  <TableHead>Date d'ajout</TableHead>
+                  <TableHead className="hidden lg:table-cell">Agent</TableHead>
+                  <TableHead className="hidden lg:table-cell">Date d'ajout</TableHead>
                   <TableHead>Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {properties.map(property => <TableRow key={property.id} className="hover:bg-muted/50">
-                    <TableCell>
+                    <TableCell className="hidden sm:table-cell">
                       <div className="w-16 h-12 rounded overflow-hidden bg-muted flex items-center justify-center">
                         {property.images && property.images.length > 0 ? <img src={property.images[0]} alt={property.titre} className="w-full h-full object-cover" /> : <span className="text-2xl">{getTypeIcon(property.type)}</span>}
                       </div>
@@ -342,19 +342,19 @@ const PropertyManagement = () => {
                       <div className="font-medium">{property.titre}</div>
                       <div className="text-sm text-muted-foreground">#{property.id.slice(0, 8)}</div>
                     </TableCell>
-                    <TableCell>
+                    <TableCell className="hidden md:table-cell">
                       <div className="flex items-center gap-2">
                         <span>{getTypeIcon(property.type)}</span>
                         <span className="capitalize">{property.type}</span>
                       </div>
                     </TableCell>
-                    <TableCell>
+                    <TableCell className="hidden lg:table-cell">
                       <div className="text-sm">
                         <div className="font-medium">{property.nom_proprietaire || 'Non renseigné'}</div>
                         {property.contacts_proprietaire && <div className="text-muted-foreground text-xs">{property.contacts_proprietaire}</div>}
                       </div>
                     </TableCell>
-                    <TableCell>
+                    <TableCell className="hidden sm:table-cell">
                       <div className="flex items-center gap-1 text-sm">
                         <MapPin className="h-3 w-3" />
                         <div>
@@ -363,22 +363,22 @@ const PropertyManagement = () => {
                         </div>
                       </div>
                     </TableCell>
-                     <TableCell>
-                       <span className="font-medium">{formatSurface(property.surface, property.autres_details || null)}</span>
-                       {property.pieces > 0 && <div className="text-xs text-muted-foreground">{property.pieces} pièces</div>}
-                     </TableCell>
+                    <TableCell className="hidden md:table-cell">
+                      <span className="font-medium">{formatSurface(property.surface, property.autres_details || null)}</span>
+                      {property.pieces > 0 && <div className="text-xs text-muted-foreground">{property.pieces} pièces</div>}
+                    </TableCell>
                     <TableCell>
                       <div className="font-medium">{property.prix.toLocaleString()} F</div>
                       <div className="text-xs text-muted-foreground capitalize">{property.transaction_type}</div>
                     </TableCell>
                     <TableCell>{getStatusBadge(property.statut)}</TableCell>
-                    <TableCell>
+                    <TableCell className="hidden lg:table-cell">
                       <div className="flex items-center gap-1 text-sm">
                         <User className="h-3 w-3" />
                         {property.agent}
                       </div>
                     </TableCell>
-                    <TableCell>
+                    <TableCell className="hidden lg:table-cell">
                       <div className="flex items-center gap-1 text-sm">
                         <Calendar className="h-3 w-3" />
                         {new Date(property.created_at).toLocaleDateString('fr-FR')}
@@ -441,7 +441,7 @@ const PropertyManagement = () => {
 
       {/* Dialog pour ajouter un bien */}
       <Dialog open={showAddForm} onOpenChange={setShowAddForm}>
-        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+        <DialogContent className="w-[95vw] sm:w-full max-w-4xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Ajouter un nouveau bien</DialogTitle>
             <DialogDescription>

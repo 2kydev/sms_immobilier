@@ -172,9 +172,9 @@ const AgentManager = () => {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <h1 className="text-3xl font-bold text-primary">Gestion des Agents</h1>
-        <Button onClick={() => openAgentDialog()} className="bg-primary hover:bg-primary/90">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <h1 className="text-2xl sm:text-3xl font-bold text-primary">Gestion des Agents</h1>
+        <Button onClick={() => openAgentDialog()} className="bg-primary hover:bg-primary/90 w-full sm:w-auto">
           <Plus className="h-4 w-4 mr-2" />
           Nouvel Agent
         </Button>

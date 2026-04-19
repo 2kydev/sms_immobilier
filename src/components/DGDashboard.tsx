@@ -290,11 +290,11 @@ const DGDashboard: React.FC = () => {
   const ytdRevenue = monthlyData.reduce((s, m) => s + m.revenue, 0);
 
   return (
-    <div className="p-6 space-y-6 bg-gray-50 min-h-screen">
+    <div className="p-4 sm:p-6 space-y-6 bg-gray-50 min-h-screen">
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-2">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">Tableau de bord</h1>
+          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">Tableau de bord</h1>
           <p className="text-sm text-gray-500 mt-1">Vue exécutive — Direction Générale</p>
         </div>
         <div className="flex items-center gap-3">
@@ -350,7 +350,7 @@ const DGDashboard: React.FC = () => {
       </div>
 
       {/* Charts Row */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <div className="lg:col-span-2">
           <RevenueChart monthlyData={monthlyData} />
         </div>

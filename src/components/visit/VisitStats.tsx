@@ -15,7 +15,7 @@ interface VisitStatsProps {
 
 const VisitStats: React.FC<VisitStatsProps> = ({ stats }) => {
   return (
-    <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
+    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-4">
       <Card>
         <CardContent className="pt-6">
           <div className="text-2xl font-bold text-primary">{stats.total}</div>
