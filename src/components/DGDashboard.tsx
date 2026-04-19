@@ -2,7 +2,7 @@ import React from 'react';
 import { useEnhancedDashboard } from '@/hooks/useEnhancedDashboard';
 import {
   TrendingUp, TrendingDown, Building2, Users, Calendar,
-  DollarSign, Target, Activity, AlertTriangle, CheckCircle2,
+  DollarSign, Activity, AlertTriangle, CheckCircle2,
   ArrowUpRight, ArrowDownRight, BarChart3, Eye, Home, RefreshCw
 } from 'lucide-react';
 import {
@@ -20,7 +20,6 @@ const fmt = (n: number) =>
     ? `${(n / 1_000).toFixed(0)} k FCFA`
     : `${n.toLocaleString('fr-FR')} FCFA`;
 
-const pct = (n: number) => `${n.toFixed(1)} %`;
 
 // ─── KPI Card ────────────────────────────────────────────────────────────────
 interface KPICardProps {
@@ -317,7 +316,7 @@ const DGDashboard: React.FC = () => {
       </div>
 
       {/* KPI Row */}
-      <div className="grid grid-cols-2 lg:grid-cols-6 gap-4">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         <KPICard
           title="CA du mois"
           value={fmt(salesKPIs.monthlyRevenue)}
@@ -332,20 +331,6 @@ const DGDashboard: React.FC = () => {
           sub={`${salesKPIs.totalDeals} transaction${salesKPIs.totalDeals > 1 ? 's' : ''} ce mois`}
           icon={TrendingUp}
           accent="bg-violet-500"
-        />
-        <KPICard
-          title="Pipeline total"
-          value={fmt(transactionPipeline.totalValue)}
-          sub={`${transactionPipeline.prospection + transactionPipeline.qualification + transactionPipeline.negotiation + transactionPipeline.signature} affaires en cours`}
-          icon={Target}
-          accent="bg-blue-500"
-        />
-        <KPICard
-          title="Taux de conversion"
-          value={pct(salesKPIs.conversionRate)}
-          sub="Transactions finalisées / total"
-          icon={Activity}
-          accent="bg-emerald-500"
         />
         <KPICard
           title="Biens disponibles"
