@@ -27,8 +27,10 @@ export const getWeekRange = () => {
 };
 
 export const getMonthDateRange = (year: number, month: number) => {
-  const startDate = `${year}-${month.toString().padStart(2, '0')}-01`;
-  const endDate = `${year}-${(month + 1).toString().padStart(2, '0')}-01`;
+  const startDate = new Date(year, month - 1, 1).toISOString();
+  const nextMonth = month === 12 ? 1 : month + 1;
+  const nextYear = month === 12 ? year + 1 : year;
+  const endDate = new Date(nextYear, nextMonth - 1, 1).toISOString();
   return { startDate, endDate };
 };
 
