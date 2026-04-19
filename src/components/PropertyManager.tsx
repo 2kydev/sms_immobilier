@@ -12,6 +12,7 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '
 import { useForm } from 'react-hook-form';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import { useAuth } from '@/hooks/useAuth';
 import ImageUpload from './ImageUpload';
 import PropertyImageGallery from './PropertyImageGallery';
 
@@ -41,6 +42,7 @@ interface Agent {
 }
 
 const PropertyManager = () => {
+  const { user } = useAuth();
   const [properties, setProperties] = useState<Property[]>([]);
   const [agents, setAgents] = useState<Agent[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
@@ -214,6 +216,28 @@ const PropertyManager = () => {
           .eq('id', selectedProperty.id);
 
         if (error) throw error;
+
+        // Si le bien vient d'être marqué vendu → créer une transaction finalisée
+        if (data.statut === 'vendu' && selectedProperty.statut !== 'vendu') {
+          const { data: existing } = await supabase
+            .from('transactions')
+            .select('id')
+            .eq('property_id', selectedProperty.id)
+            .eq('etape', 'finalise')
+            .maybeSingle();
+
+          if (!existing) {
+            await supabase.from('transactions').insert([{
+              property_id: selectedProperty.id,
+              valeur: data.prix,
+              etape: 'finalise',
+              agent: data.agent || user?.email?.split('@')[0] || '',
+              derniere_activite: new Date().toISOString().split('T')[0],
+              date_creation: new Date().toISOString().split('T')[0],
+            }]);
+          }
+        }
+
         toast({
           title: "Succès",
           description: "Propriété mise à jour avec succès"
