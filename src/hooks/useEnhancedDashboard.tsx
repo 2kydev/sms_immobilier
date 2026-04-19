@@ -72,22 +72,14 @@ export const useEnhancedDashboard = () => {
   useEffect(() => {
     fetchData();
 
-    // Rafraîchissement automatique toutes les 30 secondes
-    const interval = setInterval(fetchData, 30000);
-
-    // Realtime subscriptions
     const channel = supabase
       .channel('enhanced-dashboard-changes')
       .on('postgres_changes', { event: '*', schema: 'public', table: 'properties' }, fetchData)
       .on('postgres_changes', { event: '*', schema: 'public', table: 'clients' }, fetchData)
       .on('postgres_changes', { event: '*', schema: 'public', table: 'visits' }, fetchData)
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'transactions' }, fetchData)
       .subscribe();
 
-    return () => {
-      clearInterval(interval);
-      supabase.removeChannel(channel);
-    };
+    return () => { supabase.removeChannel(channel); };
   }, []);
 
   return { 

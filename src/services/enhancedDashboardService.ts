@@ -91,45 +91,31 @@ export const fetchSalesKPIs = async (): Promise<SalesKPIs> => {
   const { startDate: currentStartDate, endDate: currentEndDate } = getMonthDateRange(currentYear, currentMonth);
   const { startDate: lastStartDate, endDate: lastEndDate } = getMonthDateRange(lastMonthYear, lastMonth);
 
-  // Utilise la table properties : statut = 'vendu', updated_at = date de vente
-  const { data: allProperties } = await supabase
-    .from('properties')
-    .select('prix, statut, updated_at');
+  const [
+    { data: soldThisMonth },
+    { data: soldLastMonth },
+    { data: allSold },
+    { data: allProperties },
+  ] = await Promise.all([
+    supabase.from('properties').select('prix').eq('statut', 'vendu').gte('updated_at', currentStartDate).lt('updated_at', currentEndDate),
+    supabase.from('properties').select('prix').eq('statut', 'vendu').gte('updated_at', lastStartDate).lt('updated_at', lastEndDate),
+    supabase.from('properties').select('id').eq('statut', 'vendu'),
+    supabase.from('properties').select('id'),
+  ]);
 
-  const soldThisMonth = allProperties?.filter(p =>
-    p.statut === 'vendu' &&
-    p.updated_at >= currentStartDate &&
-    p.updated_at < currentEndDate
-  ) || [];
-
-  const soldLastMonth = allProperties?.filter(p =>
-    p.statut === 'vendu' &&
-    p.updated_at >= lastStartDate &&
-    p.updated_at < lastEndDate
-  ) || [];
-
-  const allSold = allProperties?.filter(p => p.statut === 'vendu') || [];
-  const totalProperties = allProperties?.length || 0;
-
-  const monthlyRevenue = soldThisMonth.reduce((sum, p) => sum + (p.prix || 0), 0);
-  const lastMonthRevenue = soldLastMonth.reduce((sum, p) => sum + (p.prix || 0), 0);
-  const totalDeals = soldThisMonth.length;
+  const monthlyRevenue = soldThisMonth?.reduce((sum, p) => sum + (p.prix || 0), 0) || 0;
+  const lastMonthRevenue = soldLastMonth?.reduce((sum, p) => sum + (p.prix || 0), 0) || 0;
+  const totalDeals = soldThisMonth?.length || 0;
   const averageDealValue = totalDeals > 0 ? monthlyRevenue / totalDeals : 0;
-  const conversionRate = totalProperties > 0 ? (allSold.length / totalProperties) * 100 : 0;
+  const conversionRate = (allProperties?.length || 0) > 0
+    ? ((allSold?.length || 0) / (allProperties?.length || 1)) * 100 : 0;
 
   const revenueTrend = {
     percentage: lastMonthRevenue > 0 ? Math.abs(((monthlyRevenue - lastMonthRevenue) / lastMonthRevenue) * 100) : 0,
-    isPositive: monthlyRevenue >= lastMonthRevenue
+    isPositive: monthlyRevenue >= lastMonthRevenue,
   };
 
-  return {
-    monthlyRevenue,
-    lastMonthRevenue,
-    totalDeals,
-    averageDealValue,
-    conversionRate,
-    revenueTrend
-  };
+  return { monthlyRevenue, lastMonthRevenue, totalDeals, averageDealValue, conversionRate, revenueTrend };
 };
 
 export const fetchClientKPIs = async (): Promise<ClientKPIs> => {
