@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { Calendar, Home, Users, Building2, UserPlus, Settings, LogOut, ClipboardList } from "lucide-react";
+import { Calendar, Home, Users, Building2, UserPlus, LogOut } from "lucide-react";
 import { useRole } from "@/hooks/useRole";
 import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
@@ -48,11 +48,6 @@ const items = [
     title: "Agents",
     url: "/?tab=agents",
     icon: UserPlus,
-  },
-  {
-    title: "Journal",
-    url: "/?tab=audit",
-    icon: ClipboardList,
   },
 ];
 
@@ -124,9 +119,6 @@ export function AppSidebar() {
                   return null;
                 }
                 if (tabName === 'agents' && !isAdmin()) {
-                  return null;
-                }
-                if (tabName === 'audit' && !canAccessDashboard()) {
                   return null;
                 }
 
