@@ -207,11 +207,11 @@ export const fetchVisitKPIs = async (): Promise<VisitKPIs> => {
   ).length || 0;
 
   const today = new Date().toISOString().split('T')[0];
-  const scheduledToday = visits?.filter(v => 
-    v.date === today && v.statut === 'programmee'
+  const scheduledToday = visits?.filter(v =>
+    v.date === today && v.statut === 'planifiee'
   ).length || 0;
 
-  const completedVisits = visits?.filter(v => v.statut === 'effectuee').length || 0;
+  const completedVisits = visits?.filter(v => v.statut === 'realisee').length || 0;
 
   // Calculate visit to sale conversion
   const { data: soldProperties } = await supabase

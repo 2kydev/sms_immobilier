@@ -3,7 +3,7 @@ import { useEnhancedDashboard } from '@/hooks/useEnhancedDashboard';
 import {
   TrendingUp, TrendingDown, Building2, Users, Calendar,
   DollarSign, Target, Activity, AlertTriangle, CheckCircle2,
-  ArrowUpRight, ArrowDownRight, BarChart3, Eye
+  ArrowUpRight, ArrowDownRight, BarChart3, Eye, Home
 } from 'lucide-react';
 import {
   AreaChart, Area, BarChart, Bar, XAxis, YAxis, CartesianGrid,
@@ -282,6 +282,11 @@ const DGDashboard: React.FC = () => {
 
   const { propertyKPIs, salesKPIs, clientKPIs, visitKPIs, transactionPipeline, alerts, monthlyData, agentPerformance } = dashboardData;
 
+  // Vente vs Location
+  const ventePct = propertyKPIs.totalProperties > 0
+    ? Math.round(((propertyKPIs.saleCountByType?.terrain + propertyKPIs.saleCountByType?.maison + propertyKPIs.saleCountByType?.immeuble + propertyKPIs.saleCountByType?.entrepot + propertyKPIs.saleCountByType?.autres) / propertyKPIs.totalProperties) * 100)
+    : 0;
+
   // YTD revenue: sum of monthlyData
   const ytdRevenue = monthlyData.reduce((s, m) => s + m.revenue, 0);
 
@@ -302,7 +307,7 @@ const DGDashboard: React.FC = () => {
       </div>
 
       {/* KPI Row */}
-      <div className="grid grid-cols-2 lg:grid-cols-5 gap-4">
+      <div className="grid grid-cols-2 lg:grid-cols-6 gap-4">
         <KPICard
           title="CA du mois"
           value={fmt(salesKPIs.monthlyRevenue)}
@@ -339,6 +344,13 @@ const DGDashboard: React.FC = () => {
           trend={propertyKPIs.salesTrend}
           icon={Building2}
           accent="bg-amber-500"
+        />
+        <KPICard
+          title="Part Vente / Location"
+          value={`${ventePct}% vente`}
+          sub={`${100 - ventePct}% location`}
+          icon={Home}
+          accent="bg-rose-500"
         />
       </div>
 

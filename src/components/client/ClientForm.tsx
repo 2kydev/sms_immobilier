@@ -12,6 +12,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { logAction } from '@/services/auditService';
 import { Client, TYPES_BIEN } from './types';
+import { CI_CITIES, CI_CLIENT_TYPES } from '@/constants/coteIvoire';
 
 interface ClientFormProps {
   isOpen: boolean;
@@ -192,10 +193,9 @@ const ClientForm: React.FC<ClientFormProps> = ({
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                      <SelectItem value="acheteur">Acheteur</SelectItem>
-                      <SelectItem value="vendeur">Vendeur</SelectItem>
-                      <SelectItem value="locataire">Locataire</SelectItem>
-                      <SelectItem value="prospect">Prospect</SelectItem>
+                      {CI_CLIENT_TYPES.map(t => (
+                        <SelectItem key={t.value} value={t.value}>{t.label}</SelectItem>
+                      ))}
                     </SelectContent>
                   </Select>
                   <FormMessage />
@@ -281,10 +281,19 @@ const ClientForm: React.FC<ClientFormProps> = ({
               rules={{ required: "La ville préférée est obligatoire" }}
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Ville préférée *</FormLabel>
-                  <FormControl>
-                    <Input {...field} placeholder="Entrez la ville préférée" />
-                  </FormControl>
+                  <FormLabel>Ville / Commune préférée *</FormLabel>
+                  <Select onValueChange={field.onChange} defaultValue={field.value}>
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Sélectionner une ville" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      {CI_CITIES.map(c => (
+                        <SelectItem key={c.value} value={c.value}>{c.label}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                   <FormMessage />
                 </FormItem>
               )}
